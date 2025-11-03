@@ -9,3 +9,13 @@ All changes must be made via pull requests from feature branches.
 5. Get review, then merge
 
 **Branch naming:** `osuid/feature-description` (e.g., `linpatr/hello-world`)
+
+## Directory Structure
+```
+paw-match/
+├── backend/     # Express.js server
+├── frontend/    # React application (TBD)
+└── .gitignore   # Ignores node_modules/ for both frontend and backend
+```
+
+Run `npm install` in `backend/` and `frontend/` directories separately to install dependencies.
