@@ -1,4 +1,4 @@
-import dog1 from '../assets/dog1.jpg';
+const API_BASE_URL = 'http://localhost:4516';
 
 interface Animal {
   id: string;
@@ -15,21 +15,10 @@ interface Animal {
   date_created: string;
 }
 
-const sampleAnimal: Animal = {
-  id: '123',
-  name: 'Buddy',
-  type: 'dog',
-  breed: 'Golden Retriever',
-  age: 3,
-  gender: 'Male',
-  size: 'Large',
-  images: [dog1],
-  disposition: ['Friendly', 'Good with kids', 'Energetic'],
-  availability: 'Available',
-  shelter_id: 'shelter-1',
-  date_created: '2025-01-01',
-};
-
-export const getAnimals = (count: number): Animal[] => {
-  return Array(count).fill(sampleAnimal);
+export const getAnimals = async (count: number): Promise<Animal[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/animals?count=${count}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch animals');
+  }
+  return response.json();
 };

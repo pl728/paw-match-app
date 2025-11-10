@@ -17,10 +17,14 @@ const SearchPage = () => {
     console.log(`Animal ${animalId} saved: ${isSaved}`);
   };
 
-  const handleSearch = () => {
-    const results = getAnimals(15);
-    setAnimals(results);
-    setHasSearched(true);
+  const handleSearch = async () => {
+    try {
+      const results = await getAnimals(15);
+      setAnimals(results);
+      setHasSearched(true);
+    } catch (error) {
+      console.error('Error fetching animals:', error);
+    }
   };
 
   return (

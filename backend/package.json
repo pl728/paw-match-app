@@ -2,6 +2,7 @@
   "name": "cs361-paw-match",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,6 +11,7 @@
   "author": "Jin Luo, Renacia Shuhie, Patrick Lin, Marcin Matthews, Giovanita Bell",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "forever": "^4.0.3"
   }
