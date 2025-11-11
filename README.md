@@ -19,3 +19,8 @@ paw-match/
 ```
 
 Run `npm install` in `backend/` and `frontend/` directories separately to install dependencies.
+
+
+### Database - Entity-Relationship Diagram:
+
+<img width="1099" height="1065" alt="image" src="https://github.com/user-attachments/assets/a389cd6e-20d7-42fb-bcbf-2e375ee77b6f" />
