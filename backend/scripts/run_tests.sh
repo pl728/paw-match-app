@@ -10,6 +10,6 @@ export DATABASE_URL="${TEST_DATABASE_URL}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-"${SCRIPT_DIR}/reset_test_db.sh"
+bash "${SCRIPT_DIR}/reset_test_db.sh"
 
 npx jest
