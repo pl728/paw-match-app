@@ -1,21 +1,48 @@
-/*
-    SETUP
-*/
-var express = require('express');   // We are using the express library for the web server
-var app     = express();            // We need to instantiate an express object to interact with the server in our code
-PORT        = 4516;                 // Set a port number at the top so it's easy to change in the future
+var express = require('express');
+var db = require('./db');
+var usersRoutes = require('./routes/users');
+var sheltersRoutes = require('./routes/shelters');
+var petsRoutes = require('./routes/pets');
 
-/*
-    ROUTES
-*/
-app.get('/', function(req, res)                 // This is the basic syntax for what is called a 'route'
-    {
-        res.send("Hello world!")      // This function literally sends the string "The server is running!" to the computer
-    });                                         // requesting the web site.
+var app = express();
+var PORT = process.env.PORT || 4516;
 
-/*
-    LISTENER
-*/
-app.listen(PORT, function(){            // This is the basic syntax for what is called the 'listener' which receives incoming requests on the specified PORT.
-    console.log('Express started on http://localhost:' + PORT + '; press Ctrl-C to terminate.')
+app.use(express.json());
+
+if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL is not set; database requests will fail.');
+}
+
+app.get('/', function (req, res) {
+    res.send("Paw Match API is running!")
 });
+
+app.get('/health', async function (req, res) {
+    try {
+        var result = await db.query('SELECT 1 AS ok');
+        res.json({ ok: result.rows[0].ok === 1 });
+    } catch (err) {
+        console.error('Health check failed', err);
+        res.status(500).json({ ok: false });
+    }
+});
+
+app.use('/users', usersRoutes);
+app.use('/shelters', sheltersRoutes);
+app.use('/pets', petsRoutes);
+
+app.use(function (err, req, res, next) {
+    console.error('Unhandled error', err);
+    if (res.headersSent) {
+        return next(err);
+    }
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+if (require.main === module) {
+    app.listen(PORT, function () {
+        console.log('Express started on http://localhost:' + PORT + '; press Ctrl-C to terminate.')
+    });
+}
+
+module.exports = app;

@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: paw_match_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pawmatch
+      POSTGRES_PASSWORD: pawmatch
+      POSTGRES_DB: paw_match
+    ports:
+      - "5432:5432"
+    volumes:
+      - paw_match_db_data:/var/lib/postgresql/data
+
+volumes:
+  paw_match_db_data:
