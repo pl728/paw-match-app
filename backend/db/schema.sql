@@ -108,3 +108,16 @@ CREATE TABLE IF NOT EXISTS feed_events (
 		REFERENCES shelter_posts (id)
 		ON DELETE CASCADE
 )  ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;
+
+CREATE TABLE IF NOT EXISTS favorites (
+    user_id CHAR(36) NOT NULL,
+    pet_id CHAR(36) NOT NULL,
+    favorited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id , pet_id),
+    CONSTRAINT favorites_user_fk FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+    CONSTRAINT favorites_pet_fk FOREIGN KEY (pet_id)
+        REFERENCES pets (id)
+        ON DELETE CASCADE
+)  ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;
