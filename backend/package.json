@@ -4,15 +4,16 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "bash ./scripts/run_tests.sh",
+    "test": "node ./scripts/run_tests.js",
     "start": "node main.js"
   },
   "author": "Jin Luo, Renacia Shuhie, Patrick Lin, Marcin Matthews, Giovanita Bell",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "forever": "^4.0.3",
-    "pg": "^8.13.1"
+    "mysql2": "^3.14.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

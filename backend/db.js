@@ -1,18 +1,32 @@
-var { Pool } = require('pg');
+var mysql = require('mysql2/promise');
 
-var pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+var pool;
 
-pool.on('error', function(err) {
-    console.error('Unexpected idle client error', err);
-});
+function getPool() {
+    if (pool) {
+        return pool;
+    }
+
+    if (!process.env.DATABASE_URL) {
+        var err = new Error('DATABASE_URL is not set');
+        err.code = 'NO_DATABASE_URL';
+        throw err;
+    }
+
+    pool = mysql.createPool(process.env.DATABASE_URL);
+    return pool;
+}
 
 module.exports = {
-    query: function(text, params) {
-        return pool.query(text, params);
+    query: async function (text, params) {
+        var connection = getPool();
+        var result = await connection.query(text, params);
+        return { rows: result[0] };
     },
-    end: function() {
-        return pool.end();
+    end: async function () {
+        if (!pool) {
+            return;
+        }
+        await pool.end();
     }
 };

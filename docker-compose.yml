@@ -1,16 +1,17 @@
 services:
   db:
-    image: postgres:16
+    image: mysql:8.0
     container_name: paw_match_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: pawmatch
-      POSTGRES_PASSWORD: pawmatch
-      POSTGRES_DB: paw_match
+      MYSQL_ROOT_PASSWORD: pawmatch_root
+      MYSQL_USER: pawmatch
+      MYSQL_PASSWORD: pawmatch
+      MYSQL_DATABASE: paw_match
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - paw_match_db_data:/var/lib/postgresql/data
+      - paw_match_db_data:/var/lib/mysql
 
 volumes:
   paw_match_db_data:
