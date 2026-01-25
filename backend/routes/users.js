@@ -1,4 +1,5 @@
 var express = require('express');
+var crypto = require('crypto');
 var db = require('../db');
 var asyncHandler = require('../utils/async-handler');
 
@@ -13,25 +14,30 @@ router.post('/', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'email and password_hash are required' });
     }
 
-    var result;
+    var userId = crypto.randomUUID();
     try {
-        result = await db.query(
-            'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role, created_at, updated_at',
-            [email, passwordHash, role]
+        await db.query(
+            'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
+            [userId, email, passwordHash, role]
         );
     } catch (err) {
-        if (err.code === '23505') {
+        if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'email already exists' });
         }
         throw err;
     }
+
+    var result = await db.query(
+        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
+        [userId]
+    );
 
     res.status(201).json(result.rows[0]);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
     var result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = $1',
+        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
         [req.params.id]
     );
 
