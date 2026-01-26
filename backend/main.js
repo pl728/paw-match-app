@@ -4,6 +4,11 @@ var db = require('./db');
 var usersRoutes = require('./routes/users');
 var sheltersRoutes = require('./routes/shelters');
 var petsRoutes = require('./routes/pets');
+var favoritesRoutes = require('./routes/favorites');
+var shelterFollowsRoutes = require('./routes/shelter_follows');
+var shelterPostsRoutes = require('./routes/shelter_posts');
+var feedEventsRoutes = require('./routes/feed_events');
+var emailNotificationsRoutes = require('./routes/email_notifications');
 
 var app = express();
 var PORT = process.env.PORT || 4516;
@@ -28,9 +33,20 @@ app.get('/health', async function (req, res) {
     }
 });
 
+// Core resources
 app.use('/users', usersRoutes);
 app.use('/shelters', sheltersRoutes);
 app.use('/pets', petsRoutes);
+
+// Engagement & activity
+app.use('/api/favorites', favoritesRoutes);
+app.use('/api/shelter-follows', shelterFollowsRoutes);
+app.use('/api/shelter-posts', shelterPostsRoutes);
+app.use('/api/feed', feedEventsRoutes);
+
+// Preferences & notifications
+app.use('/api/email-notifications', emailNotificationsRoutes);
+
 
 app.use(function (err, req, res, next) {
     console.error('Unhandled error', err);
