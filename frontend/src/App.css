@@ -6,8 +6,8 @@ body,
 }
 
 body {
-  background-color: #0b1220; /* dark background */
-  color: #e5e7eb;           /* light text */
+  background-color: #0b1220; 
+  color: #e5e7eb;
 }
 
 /* app wrapper */
@@ -46,7 +46,7 @@ body {
   color: #9ca3af;
 }
 
-/* buttons (no hover, no effects) */
+/* button */
 .App button,
 .button {
   background-color: #1f2937;
