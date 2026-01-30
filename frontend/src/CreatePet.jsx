@@ -1,38 +1,76 @@
 import React from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import pawmatchlogo from './assets/pawmatch_logo.png'
+import './App.css' 
 import { Link } from "react-router-dom";
 
+
+
 // References: https://react.dev/reference/react-dom/components/select
+// Returns the form to create a new pet
 function CreatePet() {
+  // Navigates the user to diff page after submission  
+  const navigate = useNavigate();
+  // Store all pet data 
+  const [formData, setFormData] = useState({
+    name: "",
+    species: "",
+    breed: "",
+    age: "",
+    sex: "",
+    size: "small",
+  }); 
+
+  // Handles the form submission when event occurs
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    const response = await fetch('/api/pets', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData)
+    });
+
+    // navigate to main view pets page after successful form submission
+    if (response.ok) {
+      navigate('/view-pets');  
+    }
+  }
+   
+  function handleChange(e) {
+    const { name, value } = e.target;
+  }
   return (
     <div style={{ padding: "2rem" }}>
       <h1>Create a Pet</h1>
-      <p>This is where your pet creation form will go.</p>
+      <p>Please submit details about this pet to add to the shelter database.</p>
 
-      <form>
+      <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="name">Pet Name:</label>
-          <input type="text" id="name" name="name" />
+          <input name = "name" onChange={handleChange} />
         </div>
         <div>
           <label htmlFor="species">Species:</label>
-          <input type="text" id="species" name="species" />
+          <input name = "species" onChange={handleChange} />
         </div>
         <div>
           <label htmlFor="breed">Breed:</label>
-          <input type="text" id="breed" name="breed" />
+          <input name="breed" onChange={handleChange} />
         </div>
         <div>
           <label htmlFor="age">Age:</label>
-          <input type="number" placeholder="Age (in years)" name="age" />
+          <input placeholder="Age (in years)" name="age" onChange={handleChange} />
         </div>
         <div>
           <label htmlFor="sex">Sex:</label>
-          <input type="text" id="sex" name="sex" />
+          <input type="text" id="sex" name="sex" onChange={handleChange} />
         </div>
         <form>
          
           <label>Size:
-            <select name="size" id="size">
+            <select name="size" onChange={handleChange}>
               <option value="small">Small</option>
               <option value="medium">Medium</option>
               <option value="large">Large</option>
@@ -40,7 +78,7 @@ function CreatePet() {
           </label>
         </form>
         
-        <button type="submit">Create Pet</button>
+        <Link to="/view-pets"><button type="submit">Create Pet</button></Link>
       </form>
 
       <p>
