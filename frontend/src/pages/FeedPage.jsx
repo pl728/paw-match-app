@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import FeedList from "../components/FeedList.jsx";
 import { mockFeedItems } from "../data/mockFeedItems.js";
+import { Link } from "react-router-dom";
 
 function simulateFetch({ mode }) {
   return new Promise((resolve, reject) => {
@@ -56,6 +57,10 @@ export default function FeedPage() {
           <h1>Animal Activity Feed</h1>
           <p className="muted">Latest updates from shelters and pets.</p>
         </div>
+
+        <p>
+          <Link to="/"><button>Home</button></Link>
+        </p>
 
         <div className="controls">
           <label className="control">

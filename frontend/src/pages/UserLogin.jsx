@@ -38,7 +38,7 @@ function UserLogin() {
         Don’t have an account? <Link to="/register">Register</Link> // To be implemented
       </p>
       <p>
-        <Link to="/">Back to Home</Link>
+        <Link to="/"><button>Home</button></Link>
       </p>
     </div>
   );

@@ -252,3 +252,9 @@ select {
     transform: translateX(100%);
   }
 }
+
+.home-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
