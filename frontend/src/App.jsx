@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import pawmatchlogo from './assets/pawmatch_logo.png'
 import CreatePet from './CreatePet.jsx' 
+import ViewPets from './ViewPets.jsx'
 import './App.css'
 import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
 
@@ -45,6 +44,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/create-pet" element={<CreatePet />} />
+      <Route path="/view-pets" element={<ViewPets />} />
     </Routes>
   );
 }
