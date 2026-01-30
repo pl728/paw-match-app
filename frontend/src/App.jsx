@@ -1,35 +1,51 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
+import pawmatchlogo from './assets/pawmatch_logo.png'
+import CreatePet from './CreatePet.jsx' 
 import './App.css'
+import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
 
-function App() {
+// References: 
+// https://www.geeksforgeeks.org/reactjs/reactjs-components
+// https://dev.to/techcheck/creating-a-react-node-and-express-app-1ieg
+
+// Home page component
+
+function Home() {
   const [count, setCount] = useState(0)
 
   return (
     <>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <header>
+          <img src={pawmatchlogo} className="logo" alt="Pawmatch logo"/>
+        </header>
       </div>
-      <h1>Vite + React</h1>
+      <h1>Welcome!</h1>
+
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
+
         <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+          <Link to="/create-pet">Create Pet</Link>
+          <p></p>
+          <Link to="/view-pets">View Pets</Link> 
         </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
 
+// Main App component with routing
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/create-pet" element={<CreatePet />} />
+    </Routes>
+  );
+}
 export default App

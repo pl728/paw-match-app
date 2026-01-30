@@ -1,0 +1,24 @@
+{
+  "name": "paw-match-app",
+  "version": "1.0.0",
+  "description": "**DO NOT push features/code directly to `main`!**\r All changes must be made via pull requests from feature branches.",
+  "homepage": "https://github.com/pl728/paw-match-app#readme",
+  "bugs": {
+    "url": "https://github.com/pl728/paw-match-app/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pl728/paw-match-app.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {}
+}
