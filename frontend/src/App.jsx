@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import pawmatchlogo from './assets/pawmatch_logo.png'
-import CreatePet from './CreatePet.jsx' 
-import ViewPets from './ViewPets.jsx'
+import CreatePet from './pages/CreatePet.jsx' 
+import ViewPets from './pages/ViewPets.jsx'
+import UserLogin from './pages/UserLogin.jsx'
 import './App.css'
 import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
 
@@ -32,6 +33,8 @@ function Home() {
           <Link to="/create-pet">Create Pet</Link>
           <p></p>
           <Link to="/view-pets">View Pets</Link> 
+          <p></p>
+          <Link to="/user-login">Login</Link>
         </p>
       </div>
     </>
@@ -45,6 +48,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/create-pet" element={<CreatePet />} />
       <Route path="/view-pets" element={<ViewPets />} />
+      <Route path="/user-login" element={<UserLogin />} />
     </Routes>
   );
 }

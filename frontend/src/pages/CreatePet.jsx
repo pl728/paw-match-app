@@ -1,8 +1,6 @@
 import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import pawmatchlogo from './assets/pawmatch_logo.png'
-import './App.css' 
 import { Link } from "react-router-dom";
 
 
