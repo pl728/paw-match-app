@@ -20,6 +20,11 @@ router.post('/', asyncHandler(async function (req, res) {
             'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
             [userId, email, passwordHash, role]
         );
+        // default email preferences
+        await db.query(
+            `INSERT INTO email_notifications (user_id) VALUES (?)`, [userId]
+        );
+
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'email already exists' });
