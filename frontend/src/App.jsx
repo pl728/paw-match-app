@@ -3,6 +3,7 @@ import pawmatchlogo from './assets/pawmatch_logo.png'
 import CreatePet from './pages/CreatePet.jsx' 
 import ViewPets from './pages/ViewPets.jsx'
 import UserLogin from './pages/UserLogin.jsx'
+import PetDetails from './pages/PetDetails.jsx'
 import './App.css'
 import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
 
@@ -33,6 +34,7 @@ function Home() {
           <Link to="/create-pet">Create Pet</Link>
           <p></p>
           <Link to="/view-pets">View Pets</Link> 
+          <Route path="/pets/:id" element={<PetDetails />} />
           <p></p>
           <Link to="/user-login">Login</Link>
         </p>
@@ -49,6 +51,7 @@ function App() {
       <Route path="/create-pet" element={<CreatePet />} />
       <Route path="/view-pets" element={<ViewPets />} />
       <Route path="/user-login" element={<UserLogin />} />
+      <Route path="/pets/:id" element={<PetDetails />} />
     </Routes>
   );
 }
