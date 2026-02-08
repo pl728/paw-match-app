@@ -34,7 +34,6 @@ function Home() {
           <Link to="/create-pet">Create Pet</Link>
           <p></p>
           <Link to="/view-pets">View Pets</Link> 
-          <Route path="/pets/:id" element={<PetDetails />} />
           <p></p>
           <Link to="/user-login">Login</Link>
         </p>
