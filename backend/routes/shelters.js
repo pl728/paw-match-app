@@ -1,7 +1,6 @@
 import express from 'express';
-import crypto from 'node:crypto';
-import db from '../db.js';
 import asyncHandler from '../utils/async-handler.js';
+import { createShelter, getShelterById, updateShelter } from '../dao/shelters.js';
 
 var router = express.Router();
 
@@ -21,12 +20,19 @@ router.post('/', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'user_id and name are required' });
     }
 
-    var shelterId = crypto.randomUUID();
     try {
-        await db.query(
-            'INSERT INTO shelters (id, user_id, name, description, phone, email, address_line1, address_line2, city, state, postal_code) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-            [shelterId, userId, name, description, phone, email, addressLine1, addressLine2, city, state, postalCode]
-        );
+        var created = await createShelter({
+            userId: userId,
+            name: name,
+            description: description,
+            phone: phone,
+            email: email,
+            addressLine1: addressLine1,
+            addressLine2: addressLine2,
+            city: city,
+            state: state,
+            postalCode: postalCode
+        });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'shelter already exists for user' });
@@ -34,16 +40,15 @@ router.post('/', asyncHandler(async function (req, res) {
         throw err;
     }
 
-    var result = await db.query('SELECT * FROM shelters WHERE id = ?', [shelterId]);
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(created);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query('SELECT * FROM shelters WHERE id = ?', [req.params.id]);
-    if (result.rows.length === 0) {
+    var shelter = await getShelterById(req.params.id);
+    if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found' });
     }
-    res.json(result.rows[0]);
+    res.json(shelter);
 }));
 
 router.put('/:id', asyncHandler(async function (req, res) {
@@ -59,31 +64,20 @@ router.put('/:id', asyncHandler(async function (req, res) {
         postal_code: req.body.postal_code
     };
 
-    var setClauses = [];
-    var values = [];
-
-    Object.keys(fields).forEach(function (key) {
-        if (fields[key] !== undefined) {
-            setClauses.push(key + ' = ?');
-            values.push(fields[key]);
-        }
+    var hasUpdates = Object.keys(fields).some(function (key) {
+        return fields[key] !== undefined;
     });
 
-    if (setClauses.length === 0) {
+    if (!hasUpdates) {
         return res.status(400).json({ error: 'No valid fields provided' });
     }
 
-    values.push(req.params.id);
-
-    var query = 'UPDATE shelters SET ' + setClauses.join(', ') + ', updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-    await db.query(query, values);
-    var result = await db.query('SELECT * FROM shelters WHERE id = ?', [req.params.id]);
-
-    if (result.rows.length === 0) {
+    var updated = await updateShelter(req.params.id, fields);
+    if (!updated) {
         return res.status(404).json({ error: 'Shelter not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(updated);
 }));
 
 export default router;

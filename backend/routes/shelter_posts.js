@@ -1,7 +1,12 @@
 import express from 'express';
-import crypto from 'node:crypto';
-import db from '../db.js';
 import asyncHandler from '../utils/async-handler.js';
+import {
+    createShelterPost,
+    listShelterPosts,
+    getShelterPostById,
+    getShelterPostPublishInfo,
+    publishShelterPost
+} from '../dao/shelter_posts.js';
 
 var router = express.Router();
 
@@ -19,25 +24,16 @@ router.post('/', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'shelter_id, type, title, and body are required' });
     }
 
-    var postId = crypto.randomUUID();
+    var created = await createShelterPost({
+        shelterId: shelter_id,
+        petId: pet_id,
+        type: type,
+        title: title,
+        body: body,
+        publishedAt: publish ? new Date() : null
+    });
 
-    await db.query(
-        `INSERT INTO shelter_posts
-            (id, shelter_id, pet_id, type, title, body, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [postId, shelter_id, pet_id, type, title, body, publish ? new Date() : null]
-    );
-
-    var result = await db.query(
-        `SELECT
-            id, shelter_id, pet_id, type, title, body,
-            published_at, created_at, updated_at
-         FROM shelter_posts
-         WHERE id = ?`,
-        [postId]
-    );
-
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(created);
 }));
 
 /**
@@ -57,38 +53,16 @@ router.get('/', asyncHandler(async function (req, res) {
     var limit = Math.min(Number(req.query.limit) || 50, 200);
     var offset = Math.max(Number(req.query.offset) || 0, 0);
 
-    var where = [];
-    var params = [];
-
-    if (shelter_id) {
-        where.push('sp.shelter_id = ?');
-        params.push(shelter_id);
-    }
-
-    if (pet_id) {
-        where.push('sp.pet_id = ?');
-        params.push(pet_id);
-    }
-
-    if (published_only) {
-        where.push('sp.published_at IS NOT NULL');
-    }
-
-    var whereSql = where.length ? ('WHERE ' + where.join(' AND ')) : '';
-
-    var result = await db.query(
-        `SELECT
-            sp.id, sp.shelter_id, sp.pet_id, sp.type, sp.title, sp.body,
-            sp.published_at, sp.created_at, sp.updated_at
-         FROM shelter_posts sp
-         ${whereSql}
-         ORDER BY COALESCE(sp.published_at, sp.created_at) DESC
-         LIMIT ? OFFSET ?`,
-        [...params, limit, offset]
-    );
+    var posts = await listShelterPosts({
+        shelterId: shelter_id,
+        petId: pet_id,
+        publishedOnly: published_only,
+        limit: limit,
+        offset: offset
+    });
 
     res.json({
-        items: result.rows,
+        items: posts,
         limit: limit,
         offset: offset
     });
@@ -98,20 +72,12 @@ router.get('/', asyncHandler(async function (req, res) {
  * GET /api/shelter-posts/:id
  */
 router.get('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query(
-        `SELECT
-            id, shelter_id, pet_id, type, title, body,
-            published_at, created_at, updated_at
-         FROM shelter_posts
-         WHERE id = ?`,
-        [req.params.id]
-    );
-
-    if (result.rows.length === 0) {
+    var post = await getShelterPostById(req.params.id);
+    if (!post) {
         return res.status(404).json({ error: 'Post not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(post);
 }));
 
 /**
@@ -121,37 +87,17 @@ router.get('/:id', asyncHandler(async function (req, res) {
 router.patch('/:id/publish', asyncHandler(async function (req, res) {
     var postId = req.params.id;
 
-    var existing = await db.query(
-        'SELECT id, published_at FROM shelter_posts WHERE id = ?',
-        [postId]
-    );
-
-    if (existing.rows.length === 0) {
+    var existing = await getShelterPostPublishInfo(postId);
+    if (!existing) {
         return res.status(404).json({ error: 'Post not found' });
     }
 
-    if (existing.rows[0].published_at) {
+    if (existing.published_at) {
         return res.status(409).json({ error: 'Post is already published' });
     }
 
-    await db.query(
-        `UPDATE shelter_posts
-         SET published_at = CURRENT_TIMESTAMP,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [postId]
-    );
-
-    var result = await db.query(
-        `SELECT
-            id, shelter_id, pet_id, type, title, body,
-            published_at, created_at, updated_at
-         FROM shelter_posts
-         WHERE id = ?`,
-        [postId]
-    );
-
-    res.json(result.rows[0]);
+    var updated = await publishShelterPost(postId);
+    res.json(updated);
 }));
 
 export default router;

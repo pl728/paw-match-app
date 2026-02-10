@@ -1,38 +1,32 @@
 import express from 'express';
-import db from '../db.js';
 import asyncHandler from '../utils/async-handler.js';
+import { addFavorite, removeFavorite } from '../dao/favorites.js';
 
 var router = express.Router();
 
 // Favorite a shelter
 router.post('/', asyncHandler(async function (req, res) {
-    if (!user_id || !pet_id) {
+    var userId = req.body.user_id;
+    var petId = req.body.pet_id;
+
+    if (!userId || !petId) {
         return res.status(400).json({ error: 'user_id and pet_id are required' });
     }
-   
-    var { user_id, pet_id } = req.body;
 
-    await db.query(
-        'INSERT IGNORE INTO favorites (user_id, pet_id) VALUES (?, ?)',
-        [user_id, pet_id]
-    );
-
+    await addFavorite(userId, petId);
     res.status(204).end();
 }));
 
 // Unfavorite a shelter
 router.delete('/', asyncHandler(async function (req, res) {
-    if (!user_id || !pet_id) {
+    var userId = req.body.user_id;
+    var petId = req.body.pet_id;
+
+    if (!userId || !petId) {
         return res.status(400).json({ error: 'user_id and pet_id are required' });
     }
 
-    var { user_id, pet_id } = req.body;
-
-    await db.query(
-        'DELETE FROM favorites WHERE user_id = ? AND pet_id = ?',
-        [user_id, pet_id]
-    );
-
+    await removeFavorite(userId, petId);
     res.status(204).end();
 }));
 

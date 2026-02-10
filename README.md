@@ -23,6 +23,7 @@ paw-match/
 
 Run `npm install` in `backend/` and `frontend/` directories separately to install dependencies.
 
+For backend + MySQL setup (Docker, WSL/Ubuntu, macOS), see `backend/README.md`.
 
 ### Database - Entity-Relationship Diagram:
 

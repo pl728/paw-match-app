@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from '../main.js';
-import db from '../db.js';
+import db from '../db/index.js';
 
 afterAll(async function () {
     await db.end();

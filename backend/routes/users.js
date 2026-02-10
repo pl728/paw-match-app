@@ -1,7 +1,6 @@
 import express from 'express';
-import crypto from 'node:crypto';
-import db from '../db.js';
 import asyncHandler from '../utils/async-handler.js';
+import { createUser, getUserById } from '../dao/users.js';
 
 var router = express.Router();
 
@@ -14,43 +13,23 @@ router.post('/', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'email and password_hash are required' });
     }
 
-    var userId = crypto.randomUUID();
     try {
-        await db.query(
-            'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
-            [userId, email, passwordHash, role]
-        );
-        // default email preferences
-        await db.query(
-            `INSERT INTO email_notifications (user_id) VALUES (?)`, [userId]
-        );
-
+        var created = await createUser({ email: email, passwordHash: passwordHash, role: role });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'email already exists' });
         }
         throw err;
     }
-
-    var result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
-        [userId]
-    );
-
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(created);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
-        [req.params.id]
-    );
-
-    if (result.rows.length === 0) {
+    var user = await getUserById(req.params.id);
+    if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
-
-    res.json(result.rows[0]);
+    res.json(user);
 }));
 
 export default router;

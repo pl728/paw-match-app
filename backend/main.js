@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import db from './db.js';
+import db from './db/index.js';
 import usersRoutes from './routes/users.js';
 import sheltersRoutes from './routes/shelters.js';
 import petsRoutes from './routes/pets.js';
