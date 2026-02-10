@@ -40,6 +40,14 @@ export async function getPetById(petId) {
     return result.rows[0];
 }
 
+export async function getPetsByShelterId(shelterId) {
+    const result = await db.query(
+        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, status, created_at FROM pets WHERE shelter_id = ? ORDER BY created_at DESC',
+        [shelterId]
+    );
+    return result.rows;
+}
+
 export async function getPetId(petId) {
     const result = await db.query('SELECT id FROM pets WHERE id = ?', [petId]);
     if (result.rows.length === 0) {

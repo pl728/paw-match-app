@@ -23,6 +23,13 @@ export async function createShelter(options) {
     return result.rows[0];
 }
 
+export async function listShelters() {
+    const result = await db.query(
+        'SELECT id, name, description, phone, email, city, state, created_at FROM shelters ORDER BY name ASC'
+    );
+    return result.rows;
+}
+
 export async function getShelterById(shelterId) {
     const result = await db.query('SELECT * FROM shelters WHERE id = ?', [shelterId]);
     if (result.rows.length === 0) {
@@ -60,4 +67,11 @@ export async function updateShelter(shelterId, fields) {
     await db.query(query, values);
 
     return getShelterById(shelterId);
+}
+
+export async function deleteShelter(shelterId) {
+    // Delete all pets associated with this shelter first
+    await db.query('DELETE FROM pets WHERE shelter_id = ?', [shelterId]);
+    // Then delete the shelter
+    await db.query('DELETE FROM shelters WHERE id = ?', [shelterId]);
 }

@@ -34,10 +34,14 @@ function ViewPets() {
     }, []);
 
     return (
-        <div style={{ padding: "2rem" }}> 
+        <div style={{
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '48px 20px'
+        }}>
             <Card size="3" variant="ghost">
                 <Flex direction="column" gap="3">
-                    <Heading size="6">View Pets</Heading>
+                    <Heading size="6">Browse Pets</Heading>
                     {loading && <Text size="2" color="gray">Loading pets…</Text>}
                     {error && <Text size="2" color="red">{error}</Text>}
                     {!loading && !error && (
@@ -45,11 +49,9 @@ function ViewPets() {
                             {JSON.stringify(pets, null, 2)}
                         </pre>
                     )}
-                    <Link to="/home"><button>Home</button></Link>
                 </Flex>
             </Card>
         </div>
-        
     );  
 }
 

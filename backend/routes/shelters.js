@@ -1,11 +1,17 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
-import { createShelter, getShelterById, updateShelter } from '../dao/shelters.js';
+import { createShelter, getShelterById, updateShelter, listShelters, deleteShelter, getShelterByUserId } from '../dao/shelters.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', asyncHandler(async function (req, res) {
-    const userId = req.body.user_id;
+router.get('/', asyncHandler(async function (req, res) {
+    const shelters = await listShelters();
+    res.json(shelters);
+}));
+
+router.post('/', requireAuth, asyncHandler(async function (req, res) {
+    const userId = req.userId;
     const name = req.body.name;
     const description = req.body.description || null;
     const phone = req.body.phone || null;
@@ -79,6 +85,22 @@ router.put('/:id', asyncHandler(async function (req, res) {
     }
 
     res.json(updated);
+}));
+
+router.delete('/:id', requireAuth, asyncHandler(async function (req, res) {
+    const shelter = await getShelterById(req.params.id);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found' });
+    }
+
+    // Check if user owns this shelter
+    const userShelter = await getShelterByUserId(req.userId);
+    if (!userShelter || userShelter.id !== req.params.id) {
+        return res.status(403).json({ error: 'Not allowed to delete this shelter' });
+    }
+
+    await deleteShelter(req.params.id);
+    res.json({ deleted: true, id: req.params.id });
 }));
 
 export default router;

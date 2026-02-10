@@ -3,7 +3,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
 import { createUser, getUserAuthByUsername } from '../dao/users.js';
-import { createShelter } from '../dao/shelters.js';
 
 const router = express.Router();
 
@@ -53,14 +52,6 @@ router.post('/register', asyncHandler(async function (req, res) {
             return res.status(409).json({ error: 'username already exists' });
         }
         throw err;
-    }
-
-    if (role === 'shelter_admin') {
-        const name = shelterName || `${username} Shelter`;
-        await createShelter({
-            userId: created.id,
-            name: name
-        });
     }
 
     const token = jwt.sign(
