@@ -13,9 +13,12 @@ All changes must be made via pull requests from feature branches.
 ## Directory Structure
 ```
 paw-match/
-├── backend/     # Express.js server
-├── frontend/    # React application (TBD)
-└── .gitignore   # Ignores node_modules/ for both frontend and backend
+├── backend/                 # Express.js server
+├── frontend/                # React application
+├── .github/                 # GitHub configuration (issues, workflows)
+│   ├── workflows/           # CI workflows
+│   └── ISSUE_TEMPLATE/      # Issue templates and config
+└── .gitignore               # Git ignore rules
 ```
 
 Run `npm install` in `backend/` and `frontend/` directories separately to install dependencies.
