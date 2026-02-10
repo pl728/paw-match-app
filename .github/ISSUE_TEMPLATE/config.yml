@@ -3,15 +3,3 @@ contact_links:
   - name: PawMatch Discussions
     url: https://github.com/pl728/paw-match-app/discussions
     about: Ask general questions or discuss ideas before opening an issue.
-  - type: dropdown
-    id: severity
-    attributes:
-      label: Severity
-      description: How badly does this bug impact users?
-      options:
-        - Blocking (app unusable)
-        - High (major feature broken)
-        - Medium (workaround exists)
-        - Low (minor issue)
-    validations:
-      required: true
