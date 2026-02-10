@@ -4,6 +4,7 @@ import CreatePet from './pages/CreatePet.jsx'
 import ViewPets from './pages/ViewPets.jsx'
 import UserLogin from './pages/UserLogin.jsx'
 import FeedPage from './pages/FeedPage.jsx'
+import PetDetails from './pages/PetDetails.jsx'
 import './App.css'
 import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
 
@@ -45,6 +46,7 @@ function App() {
       <Route path="/view-pets" element={<ViewPets />} />
       <Route path="/user-login" element={<UserLogin />} />
       <Route path="/feed" element={<FeedPage />} />
+      <Route path="/pets/:id" element={<PetDetails />} />
     </Routes>
   );
 }

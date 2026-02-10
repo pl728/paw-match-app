@@ -17,6 +17,11 @@ SELECT s.id, 'Milo', 'Dog', 'Lab Mix', 3, 'M', 'Medium', 'Friendly and energetic
 FROM shelters s
 WHERE s.name = 'Happy Tails Shelter';
 
+INSERT INTO pet_photos (pet_id, url)
+SELECT p.id, 'https://placedog.net/500/400?id=1'
+FROM pets p
+WHERE p.name = 'Milo';
+
 -- ENGAGEMENT --
 INSERT INTO shelter_posts (shelter_id, type, title, body, published_at)
 SELECT s.id, 'SHELTER_POST', 'Adoption Event This Weekend', 'Join us Saturday from 12–4 PM!', CURRENT_TIMESTAMP 
