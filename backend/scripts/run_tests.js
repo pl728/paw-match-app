@@ -7,8 +7,8 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resetDatabase } from './reset_db.js';
 
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
@@ -22,11 +22,11 @@ export async function runTests() {
     console.log('Test database reset complete.');
 
     await new Promise(function (resolve, reject) {
-        var backendRoot = path.join(__dirname, '..');
-        var configPath = path.join(backendRoot, 'jest.config.cjs');
-        var jestBin = path.join(backendRoot, 'node_modules', 'jest', 'bin', 'jest.js');
+        const backendRoot = path.join(__dirname, '..');
+        const configPath = path.join(backendRoot, 'jest.config.cjs');
+        const jestBin = path.join(backendRoot, 'node_modules', 'jest', 'bin', 'jest.js');
 
-        var child = spawn(process.execPath, ['--experimental-vm-modules', jestBin, '--config', configPath], {
+        const child = spawn(process.execPath, ['--experimental-vm-modules', jestBin, '--config', configPath], {
             stdio: 'inherit',
             shell: false,
             cwd: backendRoot
@@ -42,7 +42,7 @@ export async function runTests() {
     });
 }
 
-var isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 if (isMain) {
     runTests().catch(function (err) {

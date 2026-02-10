@@ -8,7 +8,7 @@ export function getPool() {
     }
 
     if (!process.env.DATABASE_URL) {
-        var err = new Error('DATABASE_URL is not set');
+        const err = new Error('DATABASE_URL is not set');
         err.code = 'NO_DATABASE_URL';
         throw err;
     }

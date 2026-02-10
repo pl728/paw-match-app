@@ -2,9 +2,9 @@ import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
 import { getEmailNotifications, updateEmailNotifications } from '../dao/email_notifications.js';
 
-var router = express.Router();
+const router = express.Router();
 
-var ALLOWED_DIGEST_FREQUENCIES = [
+const ALLOWED_DIGEST_FREQUENCIES = [
     'immediately',
     'daily',
     'weekly',
@@ -14,13 +14,13 @@ var ALLOWED_DIGEST_FREQUENCIES = [
 
 // Returns the user's email notification preferences.
  router.get('/:userId', asyncHandler(async function (req, res) {
-    var userId = req.params.userId;
+    const userId = req.params.userId;
 
     if (!userId) {
         return res.status(400).json({ error: 'userId is required' });
     }
 
-    var preferences = await getEmailNotifications(userId);
+    const preferences = await getEmailNotifications(userId);
     if (!preferences) {
         return res.status(404).json({ error: 'Notification preferences not found' });
     }
@@ -30,13 +30,13 @@ var ALLOWED_DIGEST_FREQUENCIES = [
 
 // Updates one or more email notification preferences.
 router.patch('/:userId', asyncHandler(async function (req, res) {
-    var userId = req.params.userId;
+    const userId = req.params.userId;
 
     if (!userId) {
         return res.status(400).json({ error: 'userId is required' });
     }
 
-    var updates = {};
+    const updates = {};
 
     if (typeof req.body.adoption_updates === 'boolean') {
         updates.adoption_updates = req.body.adoption_updates;
@@ -66,12 +66,12 @@ router.patch('/:userId', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'No valid fields provided to update' });
     }
 
-    var result = await updateEmailNotifications(userId, updates);
+    const result = await updateEmailNotifications(userId, updates);
     if (!result || result.affectedRows === 0) {
         return res.status(404).json({ error: 'Notification preferences not found' });
     }
 
-    var updated = await getEmailNotifications(userId);
+    const updated = await getEmailNotifications(userId);
     res.json(updated);
 }));
 

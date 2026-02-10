@@ -7,8 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import mysql from 'mysql2/promise';
 
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
@@ -17,13 +17,13 @@ export async function resetDatabase(databaseUrl, label) {
         throw new Error(label + ' is required (e.g., mysql://user:pass@localhost:3306/paw_match)');
     }
 
-    var url = new URL(databaseUrl);
-    var dbName = url.pathname.replace(/^\//, '');
+    const url = new URL(databaseUrl);
+    const dbName = url.pathname.replace(/^\//, '');
     if (!dbName) {
         throw new Error(label + ' must include a database name');
     }
 
-    var adminConnection = await mysql.createConnection({
+    const adminConnection = await mysql.createConnection({
         host: url.hostname || 'localhost',
         port: url.port ? Number(url.port) : 3306,
         user: url.username || 'root',
@@ -38,12 +38,12 @@ export async function resetDatabase(databaseUrl, label) {
         await adminConnection.end();
     }
 
-    var schemaPath = path.join(__dirname, '..', 'db', 'schema.sql');
-    var seedPath = path.join(__dirname, '..', 'db', 'seed.sql');
-    var schemaSql = await fs.readFile(schemaPath, 'utf8');
-    var seedSql = await fs.readFile(seedPath, 'utf8');
+    const schemaPath = path.join(__dirname, '..', 'db', 'schema.sql');
+    const seedPath = path.join(__dirname, '..', 'db', 'seed.sql');
+    const schemaSql = await fs.readFile(schemaPath, 'utf8');
+    const seedSql = await fs.readFile(seedPath, 'utf8');
 
-    var appConnection = await mysql.createConnection({
+    const appConnection = await mysql.createConnection({
         host: url.hostname || 'localhost',
         port: url.port ? Number(url.port) : 3306,
         user: url.username || 'root',
@@ -69,7 +69,7 @@ async function main() {
     console.log('Database reset complete.');
 }
 
-var isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 if (isMain) {
     main().catch(function (err) {

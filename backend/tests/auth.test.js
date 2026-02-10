@@ -10,10 +10,10 @@ afterAll(async function () {
 
 describe('auth endpoints', function () {
     it('registers a user and returns a token', async function () {
-        var unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        var email = 'auth1+' + unique + '@test.com';
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const email = 'auth1+' + unique + '@test.com';
 
-        var res = await request(app)
+        const res = await request(app)
             .post('/auth/register')
             .send({ email: email, password: 'password123' })
             .expect(201);
@@ -25,15 +25,15 @@ describe('auth endpoints', function () {
     });
 
     it('logs in an existing user and returns a token', async function () {
-        var unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        var email = 'auth2+' + unique + '@test.com';
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const email = 'auth2+' + unique + '@test.com';
 
         await request(app)
             .post('/auth/register')
             .send({ email: email, password: 'password123' })
             .expect(201);
 
-        var res = await request(app)
+        const res = await request(app)
             .post('/auth/login')
             .send({ email: email, password: 'password123' })
             .expect(200);
@@ -44,8 +44,8 @@ describe('auth endpoints', function () {
     });
 
     it('rejects duplicate registrations', async function () {
-        var unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        var email = 'auth3+' + unique + '@test.com';
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const email = 'auth3+' + unique + '@test.com';
 
         await request(app)
             .post('/auth/register')
@@ -59,8 +59,8 @@ describe('auth endpoints', function () {
     });
 
     it('rejects invalid login', async function () {
-        var unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        var email = 'auth4+' + unique + '@test.com';
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const email = 'auth4+' + unique + '@test.com';
 
         await request(app)
             .post('/auth/register')

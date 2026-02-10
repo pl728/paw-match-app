@@ -2,11 +2,11 @@ import crypto from 'node:crypto';
 import db from '../db/index.js';
 
 export async function createUser(options) {
-    var email = options.email;
-    var passwordHash = options.passwordHash;
-    var role = options.role || 'adopter';
+    const email = options.email;
+    const passwordHash = options.passwordHash;
+    const role = options.role || 'adopter';
 
-    var userId = crypto.randomUUID();
+    const userId = crypto.randomUUID();
 
     await db.query(
         'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
@@ -15,7 +15,7 @@ export async function createUser(options) {
 
     await db.query('INSERT INTO email_notifications (user_id) VALUES (?)', [userId]);
 
-    var result = await db.query(
+    const result = await db.query(
         'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
@@ -24,7 +24,7 @@ export async function createUser(options) {
 }
 
 export async function getUserById(userId) {
-    var result = await db.query(
+    const result = await db.query(
         'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
@@ -37,7 +37,7 @@ export async function getUserById(userId) {
 }
 
 export async function getUserByEmail(email) {
-    var result = await db.query(
+    const result = await db.query(
         'SELECT id, email, role, created_at, updated_at FROM users WHERE email = ?',
         [email]
     );
@@ -50,7 +50,7 @@ export async function getUserByEmail(email) {
 }
 
 export async function getUserAuthByEmail(email) {
-    var result = await db.query(
+    const result = await db.query(
         'SELECT id, email, role, password_hash FROM users WHERE email = ?',
         [email]
     );

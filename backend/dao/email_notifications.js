@@ -1,7 +1,7 @@
 import db from '../db/index.js';
 
 export async function getEmailNotifications(userId) {
-    var result = await db.query(
+    const result = await db.query(
         `SELECT
             user_id,
             adoption_updates,
@@ -25,8 +25,8 @@ export async function getEmailNotifications(userId) {
 }
 
 export async function updateEmailNotifications(userId, updates) {
-    var setClauses = [];
-    var params = [];
+    const setClauses = [];
+    const params = [];
 
     Object.keys(updates).forEach(function (key) {
         setClauses.push(key + ' = ?');
@@ -39,7 +39,7 @@ export async function updateEmailNotifications(userId, updates) {
 
     setClauses.push('updated_at = CURRENT_TIMESTAMP');
 
-    var result = await db.query(
+    const result = await db.query(
         `UPDATE email_notifications
          SET ${setClauses.join(', ')}
          WHERE user_id = ?`,

@@ -13,8 +13,8 @@ import shelterPostsRoutes from './routes/shelter_posts.js';
 import feedEventsRoutes from './routes/feed_events.js';
 import emailNotificationsRoutes from './routes/email_notifications.js';
 
-var app = express();
-var PORT = process.env.PORT || 4516;
+const app = express();
+const PORT = process.env.PORT || 4516;
 
 app.use(express.json());
 
@@ -28,7 +28,7 @@ app.get('/', function (req, res) {
 
 app.get('/health', async function (req, res) {
     try {
-        var result = await db.query('SELECT 1 AS ok');
+        const result = await db.query('SELECT 1 AS ok');
         res.json({ ok: result.rows[0].ok === 1 });
     } catch (err) {
         console.error('Health check failed', err);
@@ -60,7 +60,7 @@ app.use(function (err, req, res, next) {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-var isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isMain) {
     app.listen(PORT, function () {

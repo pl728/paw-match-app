@@ -2,14 +2,14 @@ import crypto from 'node:crypto';
 import db from '../db/index.js';
 
 export async function createShelterPost(options) {
-    var shelterId = options.shelterId;
-    var petId = options.petId || null;
-    var type = options.type;
-    var title = options.title;
-    var body = options.body;
-    var publishedAt = options.publishedAt || null;
+    const shelterId = options.shelterId;
+    const petId = options.petId || null;
+    const type = options.type;
+    const title = options.title;
+    const body = options.body;
+    const publishedAt = options.publishedAt || null;
 
-    var postId = crypto.randomUUID();
+    const postId = crypto.randomUUID();
 
     await db.query(
         `INSERT INTO shelter_posts
@@ -22,8 +22,8 @@ export async function createShelterPost(options) {
 }
 
 export async function listShelterPosts(options) {
-    var where = [];
-    var params = [];
+    const where = [];
+    const params = [];
 
     if (options.shelterId) {
         where.push('sp.shelter_id = ?');
@@ -39,9 +39,9 @@ export async function listShelterPosts(options) {
         where.push('sp.published_at IS NOT NULL');
     }
 
-    var whereSql = where.length ? ('WHERE ' + where.join(' AND ')) : '';
+    const whereSql = where.length ? ('WHERE ' + where.join(' AND ')) : '';
 
-    var result = await db.query(
+    const result = await db.query(
         `SELECT
             sp.id, sp.shelter_id, sp.pet_id, sp.type, sp.title, sp.body,
             sp.published_at, sp.created_at, sp.updated_at
@@ -56,7 +56,7 @@ export async function listShelterPosts(options) {
 }
 
 export async function getShelterPostById(postId) {
-    var result = await db.query(
+    const result = await db.query(
         `SELECT
             id, shelter_id, pet_id, type, title, body,
             published_at, created_at, updated_at
@@ -73,7 +73,7 @@ export async function getShelterPostById(postId) {
 }
 
 export async function getShelterPostPublishInfo(postId) {
-    var result = await db.query(
+    const result = await db.query(
         'SELECT id, published_at FROM shelter_posts WHERE id = ?',
         [postId]
     );

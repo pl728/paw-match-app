@@ -1,7 +1,7 @@
 import db from '../db/index.js';
 
 export async function listFeedEvents(limit) {
-    var result = await db.query(`
+    const result = await db.query(`
         SELECT
             fe.id,
             fe.event_type,

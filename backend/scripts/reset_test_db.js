@@ -6,8 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resetDatabase } from './reset_db.js';
 
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
@@ -16,7 +16,7 @@ export async function resetTestDatabase() {
     console.log('Test database reset complete.');
 }
 
-var isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 if (isMain) {
     resetTestDatabase().catch(function (err) {

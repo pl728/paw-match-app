@@ -9,24 +9,24 @@ import {
     deletePet
 } from '../dao/pets.js';
 
-var router = express.Router();
+const router = express.Router();
 
 router.post('/', asyncHandler(async function (req, res) {
-    var shelterId = req.body.shelter_id;
-    var name = req.body.name;
-    var species = req.body.species || null;
-    var breed = req.body.breed || null;
-    var ageYears = req.body.age_years || null;
-    var sex = req.body.sex || null;
-    var size = req.body.size || null;
-    var description = req.body.description || null;
-    var status = req.body.status || 'available';
+    const shelterId = req.body.shelter_id;
+    const name = req.body.name;
+    const species = req.body.species || null;
+    const breed = req.body.breed || null;
+    const ageYears = req.body.age_years || null;
+    const sex = req.body.sex || null;
+    const size = req.body.size || null;
+    const description = req.body.description || null;
+    const status = req.body.status || 'available';
 
     if (!shelterId || !name) {
         return res.status(400).json({ error: 'shelter_id and name are required' });
     }
 
-    var created = await createPet({
+    const created = await createPet({
         shelterId: shelterId,
         name: name,
         species: species,
@@ -41,12 +41,12 @@ router.post('/', asyncHandler(async function (req, res) {
 }));
 
 router.get('/', asyncHandler(async function (req, res) {
-    var pets = await listPets();
+    const pets = await listPets();
     res.json(pets);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
-    var pet = await getPetById(req.params.id);
+    const pet = await getPetById(req.params.id);
     if (!pet) {
         return res.status(404).json({ error: 'Pet not found' });
     }
@@ -55,7 +55,7 @@ router.get('/:id', asyncHandler(async function (req, res) {
 }));
 
 router.put('/:id', asyncHandler(async function (req, res) {
-    var fields = {
+    const fields = {
         name: req.body.name,
         species: req.body.species,
         breed: req.body.breed,
@@ -66,7 +66,7 @@ router.put('/:id', asyncHandler(async function (req, res) {
         status: req.body.status
     };
 
-    var hasUpdates = Object.keys(fields).some(function (key) {
+    const hasUpdates = Object.keys(fields).some(function (key) {
         return fields[key] !== undefined;
     });
 
@@ -74,7 +74,7 @@ router.put('/:id', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'No valid fields provided' });
     }
 
-    var updated = await updatePet(req.params.id, fields);
+    const updated = await updatePet(req.params.id, fields);
     if (!updated) {
         return res.status(404).json({ error: 'Pet not found' });
     }
@@ -83,7 +83,7 @@ router.put('/:id', asyncHandler(async function (req, res) {
 }));
 
 router.delete('/:id', asyncHandler(async function (req, res) {
-    var petId = await getPetId(req.params.id);
+    const petId = await getPetId(req.params.id);
     if (!petId) {
         return res.status(404).json({ error: 'Pet not found' });
     }

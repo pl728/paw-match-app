@@ -2,26 +2,27 @@ import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
 import { createShelter, getShelterById, updateShelter } from '../dao/shelters.js';
 
-var router = express.Router();
+const router = express.Router();
 
 router.post('/', asyncHandler(async function (req, res) {
-    var userId = req.body.user_id;
-    var name = req.body.name;
-    var description = req.body.description || null;
-    var phone = req.body.phone || null;
-    var email = req.body.email || null;
-    var addressLine1 = req.body.address_line1 || null;
-    var addressLine2 = req.body.address_line2 || null;
-    var city = req.body.city || null;
-    var state = req.body.state || null;
-    var postalCode = req.body.postal_code || null;
+    const userId = req.body.user_id;
+    const name = req.body.name;
+    const description = req.body.description || null;
+    const phone = req.body.phone || null;
+    const email = req.body.email || null;
+    const addressLine1 = req.body.address_line1 || null;
+    const addressLine2 = req.body.address_line2 || null;
+    const city = req.body.city || null;
+    const state = req.body.state || null;
+    const postalCode = req.body.postal_code || null;
 
     if (!userId || !name) {
         return res.status(400).json({ error: 'user_id and name are required' });
     }
 
+    let created;
     try {
-        var created = await createShelter({
+        created = await createShelter({
             userId: userId,
             name: name,
             description: description,
@@ -44,7 +45,7 @@ router.post('/', asyncHandler(async function (req, res) {
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
-    var shelter = await getShelterById(req.params.id);
+    const shelter = await getShelterById(req.params.id);
     if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found' });
     }
@@ -52,7 +53,7 @@ router.get('/:id', asyncHandler(async function (req, res) {
 }));
 
 router.put('/:id', asyncHandler(async function (req, res) {
-    var fields = {
+    const fields = {
         name: req.body.name,
         description: req.body.description,
         phone: req.body.phone,
@@ -64,7 +65,7 @@ router.put('/:id', asyncHandler(async function (req, res) {
         postal_code: req.body.postal_code
     };
 
-    var hasUpdates = Object.keys(fields).some(function (key) {
+    const hasUpdates = Object.keys(fields).some(function (key) {
         return fields[key] !== undefined;
     });
 
@@ -72,7 +73,7 @@ router.put('/:id', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'No valid fields provided' });
     }
 
-    var updated = await updateShelter(req.params.id, fields);
+    const updated = await updateShelter(req.params.id, fields);
     if (!updated) {
         return res.status(404).json({ error: 'Shelter not found' });
     }
