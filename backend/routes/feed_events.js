@@ -1,6 +1,6 @@
-var express = require('express');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import db from '../db.js';
+import asyncHandler from '../utils/async-handler.js';
 
 var router = express.Router();
 
@@ -29,4 +29,4 @@ router.get('/', asyncHandler(async function (req, res) {
     res.json(result.rows);
 }));
 
-module.exports = router;
+export default router;

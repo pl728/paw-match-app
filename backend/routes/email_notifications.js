@@ -1,6 +1,6 @@
-var express = require('express');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import db from '../db.js';
+import asyncHandler from '../utils/async-handler.js';
 
 var router = express.Router();
 
@@ -119,4 +119,4 @@ router.patch('/:userId', asyncHandler(async function (req, res) {
     res.json(updated.rows[0]);
 }));
 
-module.exports = router;
+export default router;

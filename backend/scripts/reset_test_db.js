@@ -1,20 +1,26 @@
 #!/usr/bin/env node
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { resetDatabase } from './reset_db.js';
 
-var resetDatabase = require('./reset_db').resetDatabase;
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
 
-async function main() {
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+export async function resetTestDatabase() {
     await resetDatabase(process.env.TEST_DATABASE_URL, 'TEST_DATABASE_URL');
     console.log('Test database reset complete.');
 }
 
-if (require.main === module) {
-    main().catch(function (err) {
+var isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+
+if (isMain) {
+    resetTestDatabase().catch(function (err) {
         console.error(err.message);
         process.exit(1);
     });
 }
-
-module.exports = { resetTestDatabase: main };

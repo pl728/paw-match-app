@@ -1,13 +1,20 @@
 #!/usr/bin/env node
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import mysql from 'mysql2/promise';
+
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 if (typeof fetch !== 'function') {
     throw new Error('Global fetch is not available; use Node.js 18+.');
 }
 
-var mysql = require('mysql2/promise');
 var apiBase = process.env.API_BASE || 'http://localhost:4516';
 var unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 var payload = {

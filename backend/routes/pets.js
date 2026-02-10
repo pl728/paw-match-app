@@ -1,7 +1,7 @@
-var express = require('express');
-var crypto = require('crypto');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import crypto from 'node:crypto';
+import db from '../db.js';
+import asyncHandler from '../utils/async-handler.js';
 
 var router = express.Router();
 
@@ -97,4 +97,4 @@ router.delete('/:id', asyncHandler(async function (req, res) {
     res.json({ deleted: true, id: result.rows[0].id });
 }));
 
-module.exports = router;
+export default router;

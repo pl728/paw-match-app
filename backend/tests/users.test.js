@@ -1,6 +1,6 @@
-var request = require('supertest');
-var app = require('../main');
-var db = require('../db');
+import request from 'supertest';
+import app from '../main.js';
+import db from '../db.js';
 
 afterAll(async function () {
     await db.end();

@@ -1,4 +1,4 @@
-var mysql = require('mysql2/promise');
+import mysql from 'mysql2/promise';
 
 var pool;
 
@@ -17,7 +17,7 @@ function getPool() {
     return pool;
 }
 
-module.exports = {
+var db = {
     query: async function (text, params) {
         var connection = getPool();
         var result = await connection.query(text, params);
@@ -30,3 +30,5 @@ module.exports = {
         await pool.end();
     }
 };
+
+export default db;

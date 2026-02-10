@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+import dotenv from 'dotenv';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import mysql from 'mysql2/promise';
 
-var fs = require('fs/promises');
-var path = require('path');
-var mysql = require('mysql2/promise');
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
 
-async function resetDatabase(databaseUrl, label) {
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+export async function resetDatabase(databaseUrl, label) {
     if (!databaseUrl) {
         throw new Error(label + ' is required (e.g., mysql://user:pass@localhost:3306/paw_match)');
     }
@@ -64,11 +69,11 @@ async function main() {
     console.log('Database reset complete.');
 }
 
-if (require.main === module) {
+var isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+
+if (isMain) {
     main().catch(function (err) {
         console.error(err.message);
         process.exit(1);
     });
 }
-
-module.exports = { resetDatabase: resetDatabase };
