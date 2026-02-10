@@ -1,24 +1,22 @@
 import React, { useState } from "react";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import { Button, Card, Flex, Heading, Link, Text, TextField } from "@radix-ui/themes";
-import { loginUser } from "../services/auth.js";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Button, Card, Flex, Heading, Link, Select, Text, TextField } from "@radix-ui/themes";
+import { registerUser } from "../services/auth.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
-function UserLogin() {
+function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
+  const [role, setRole] = useState("adopter");
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
-  const from = location.state?.from?.pathname || "/home";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await loginUser({ username, password });
+      const data = await registerUser({ username, password, role });
       login({ user: data.user, token: data.token });
-      navigate(from, { replace: true });
+      navigate("/home", { replace: true });
     } catch (err) {
       alert(err.message);
     }
@@ -28,12 +26,12 @@ function UserLogin() {
     <div className="auth-page">
       <Card size="3" variant="ghost">
         <Flex direction="column" gap="4">
-          <Heading size="6">Log in</Heading>
+          <Heading size="6">Create your account</Heading>
           <Text size="2" color="gray">
-            Please Log in to Continue
+            Registration form placeholder. We will add verification and profile setup next.
           </Text>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form className="auth-form" onSubmit={handleSubmit}>
             <Flex direction="column" gap="3">
               <TextField.Root
                 type="text"
@@ -42,6 +40,16 @@ function UserLogin() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
+              <Flex direction="column" gap="2">
+                <Text size="2" color="gray">Account type</Text>
+                <Select.Root value={role} onValueChange={setRole}>
+                  <Select.Trigger />
+                  <Select.Content>
+                    <Select.Item value="adopter">Adopter</Select.Item>
+                    <Select.Item value="shelter_admin">Shelter</Select.Item>
+                  </Select.Content>
+                </Select.Root>
+              </Flex>
               <TextField.Root
                 type="password"
                 placeholder="Password"
@@ -49,14 +57,14 @@ function UserLogin() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <Button type="submit">Log In</Button>
+              <Button type="submit">Create account</Button>
             </Flex>
           </form>
 
           <Text size="2">
-            Don’t have an account?{" "}
+            Already have an account?{" "}
             <Link asChild>
-              <RouterLink to="/register">Register</RouterLink>
+              <RouterLink to="/login">Log in</RouterLink>
             </Link>
           </Text>
           <Link asChild size="2">
@@ -66,6 +74,6 @@ function UserLogin() {
       </Card>
     </div>
   );
-}   
+}
 
-export default UserLogin;
+export default Register;

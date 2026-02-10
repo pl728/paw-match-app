@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { createPet } from "../services/pets.js";
 
 
 
@@ -11,8 +12,6 @@ function CreatePet() {
   // Navigates the user to diff page after submission  
   const navigate = useNavigate();
 
-  // Stores the list of shelters to populate the dropdown menu
-  const [shelters, setShelters] = useState([]);
   // Stores the form data for the pet to be created
   const [formData, setFormData] = useState({
     name: "",
@@ -20,23 +19,8 @@ function CreatePet() {
     breed: "",
     age_years: "",
     sex: "",
-    size: "small",
-    shelter_id: ""
+    size: "small"
   }); 
-
-  // Fetches the list of shelters from the backend to populate the dropdown menu
-  useEffect(() => {
-    // Temporarily hardcoding shelters until we implement shelter creation and fetching
-    setShelters([
-      { id: "269702b5-04b8-11f1-bb9a-66a9427986d5", name: "Happy Tails Shelter" }
-    ]);
-    //async function fetchShelters() {
-      //const response = await fetch("/shelters");
-      //const data = await response.json();
-      //setShelters(data);
-    //}
-    //fetchShelters();
-  }, []);
 
   // Handles the change in form data with user input
   function handleChange(e) {
@@ -48,18 +32,11 @@ function CreatePet() {
     console.log(formData);
     e.preventDefault();
     
-    const response = await fetch('/pets', {
-      method: 'POST',
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
-    });
-
-    // navigate to main view pets page after successful form submission
-    if (response.ok) {
+    try {
+      await createPet(formData);
       navigate('/view-pets');  
-    } else {
-      const errorData = await response.json();
-      alert(`Error creating pet: ${errorData.error}`);
+    } catch (err) {
+      alert(`Error creating pet: ${err.message}`);
     }
   }
    
@@ -98,23 +75,6 @@ function CreatePet() {
               <option value="large">Large</option>
             </select>
           </label>
-        <div>
-          <label htmlFor="shelter">Select Your Shelter:</label>
-          <select
-            name="shelter_id"
-            value={formData.shelter_id}
-            onChange={(e) =>
-              setFormData({...formData, shelter_id: e.target.value})
-            }
-          >
-            <option value="">--Select Your Shelter:--</option>
-            {shelters.map((shelter) => (
-              <option key={shelter.id} value={shelter.id}>
-                {shelter.name}
-              </option>
-            ))}
-          </select>
-        </div>
             <button type="submit">Create Pet</button>
         </form>
       <p>
