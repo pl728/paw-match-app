@@ -10,13 +10,14 @@ describe('shelters endpoints', function () {
     it('creates and retrieves a shelter', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const user = await request(app)
-            .post('/users')
-            .send({ username: 'shelteruser_' + unique, password_hash: 'hash', role: 'shelter_admin' })
+            .post('/auth/register')
+            .send({ username: 'shelteruser_' + unique, password: 'password123', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)
             .post('/shelters')
-            .send({ user_id: user.body.id, name: 'Happy Tails', city: 'Corvallis', state: 'OR' })
+            .set('Authorization', 'Bearer ' + user.body.token)
+            .send({ name: 'Happy Tails', city: 'Corvallis', state: 'OR' })
             .expect(201);
 
         const res = await request(app)
@@ -30,13 +31,14 @@ describe('shelters endpoints', function () {
     it('updates a shelter', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const user = await request(app)
-            .post('/users')
-            .send({ username: 'shelteruser2_' + unique, password_hash: 'hash', role: 'shelter_admin' })
+            .post('/auth/register')
+            .send({ username: 'shelteruser2_' + unique, password: 'password123', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)
             .post('/shelters')
-            .send({ user_id: user.body.id, name: 'Before Update' })
+            .set('Authorization', 'Bearer ' + user.body.token)
+            .send({ name: 'Before Update' })
             .expect(201);
 
         const res = await request(app)

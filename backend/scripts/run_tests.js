@@ -17,6 +17,8 @@ export async function runTests() {
         throw new Error('TEST_DATABASE_URL is required (e.g., mysql://user:pass@localhost:3306/paw_match_test)');
     }
 
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     await resetDatabase(process.env.TEST_DATABASE_URL, 'TEST_DATABASE_URL');
     console.log('Test database reset complete.');

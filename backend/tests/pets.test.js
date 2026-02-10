@@ -16,7 +16,8 @@ describe('pets endpoints', function () {
 
         const shelter = await request(app)
             .post('/shelters')
-            .send({ user_id: register.body.user.id, name: 'Pet Shelter' })
+            .set('Authorization', 'Bearer ' + register.body.token)
+            .send({ name: 'Pet Shelter' })
             .expect(201);
 
         return { shelterId: shelter.body.id, token: register.body.token };
