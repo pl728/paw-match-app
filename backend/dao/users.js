@@ -35,3 +35,29 @@ export async function getUserById(userId) {
 
     return result.rows[0];
 }
+
+export async function getUserByEmail(email) {
+    var result = await db.query(
+        'SELECT id, email, role, created_at, updated_at FROM users WHERE email = ?',
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+export async function getUserAuthByEmail(email) {
+    var result = await db.query(
+        'SELECT id, email, role, password_hash FROM users WHERE email = ?',
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}

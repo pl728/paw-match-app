@@ -11,10 +11,12 @@
   "author": "Jin Luo, Renacia Shuhie, Patrick Lin, Marcin Matthews, Giovanita Bell",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "forever": "^4.0.3",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.0"
   },
   "devDependencies": {

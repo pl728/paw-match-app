@@ -6,6 +6,7 @@ import db from './db/index.js';
 import usersRoutes from './routes/users.js';
 import sheltersRoutes from './routes/shelters.js';
 import petsRoutes from './routes/pets.js';
+import authRoutes from './routes/auth.js';
 import favoritesRoutes from './routes/favorites.js';
 import shelterFollowsRoutes from './routes/shelter_follows.js';
 import shelterPostsRoutes from './routes/shelter_posts.js';
@@ -39,6 +40,7 @@ app.get('/health', async function (req, res) {
 app.use('/users', usersRoutes);
 app.use('/shelters', sheltersRoutes);
 app.use('/pets', petsRoutes);
+app.use('/auth', authRoutes);
 
 // Engagement & activity
 app.use('/api/favorites', favoritesRoutes);
