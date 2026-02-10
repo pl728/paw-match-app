@@ -118,7 +118,7 @@ function CreatePet() {
             <button type="submit">Create Pet</button>
         </form>
       <p>
-        <Link to="/">Back to Home</Link>
+        <Link to="/"><button>Home</button></Link>
       </p>
     </div>
   );

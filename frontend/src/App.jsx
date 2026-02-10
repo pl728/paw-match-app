@@ -3,6 +3,7 @@ import pawmatchlogo from './assets/pawmatch_logo.png'
 import CreatePet from './pages/CreatePet.jsx' 
 import ViewPets from './pages/ViewPets.jsx'
 import UserLogin from './pages/UserLogin.jsx'
+import FeedPage from './pages/FeedPage.jsx'
 import PetDetails from './pages/PetDetails.jsx'
 import './App.css'
 import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
@@ -14,7 +15,6 @@ import { Link, Routes, Route, BrowserRouter } from "react-router-dom"
 // Home page component
 
 function Home() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
@@ -26,17 +26,12 @@ function Home() {
       <h1>Welcome!</h1>
 
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-
-        <p>
-          <Link to="/create-pet">Create Pet</Link>
-          <p></p>
-          <Link to="/view-pets">View Pets</Link> 
-          <p></p>
+        <div className="home-links">
+          <Link to="/create-pet">Create a Pet</Link>
+          <Link to="/view-pets">View Pets</Link>
           <Link to="/user-login">Login</Link>
-        </p>
+          <Link to="/feed">Feed Page</Link>
+        </div>
       </div>
     </>
   )
@@ -50,6 +45,7 @@ function App() {
       <Route path="/create-pet" element={<CreatePet />} />
       <Route path="/view-pets" element={<ViewPets />} />
       <Route path="/user-login" element={<UserLogin />} />
+      <Route path="/feed" element={<FeedPage />} />
       <Route path="/pets/:id" element={<PetDetails />} />
     </Routes>
   );
