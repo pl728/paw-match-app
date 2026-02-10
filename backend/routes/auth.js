@@ -2,7 +2,8 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
-import { createUser, getUserAuthByEmail } from '../dao/users.js';
+import { createUser, getUserAuthByUsername } from '../dao/users.js';
+import { createShelter } from '../dao/shelters.js';
 
 const router = express.Router();
 
@@ -18,18 +19,19 @@ function requireJwtSecret(res) {
 function buildUserResponse(user) {
     return {
         id: user.id,
-        email: user.email,
+        username: user.username,
         role: user.role
     };
 }
 
 router.post('/register', asyncHandler(async function (req, res) {
-    const email = req.body.email;
+    const username = req.body.username;
     const password = req.body.password;
     const role = req.body.role || 'adopter';
+    const shelterName = req.body.shelter_name;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'email and password are required' });
+    if (!username || !password) {
+        return res.status(400).json({ error: 'username and password are required' });
     }
 
     if (role !== 'adopter' && role !== 'shelter_admin') {
@@ -45,12 +47,20 @@ router.post('/register', asyncHandler(async function (req, res) {
 
     let created;
     try {
-        created = await createUser({ email: email, passwordHash: passwordHash, role: role });
+        created = await createUser({ username: username, passwordHash: passwordHash, role: role });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: 'email already exists' });
+            return res.status(409).json({ error: 'username already exists' });
         }
         throw err;
+    }
+
+    if (role === 'shelter_admin') {
+        const name = shelterName || `${username} Shelter`;
+        await createShelter({
+            userId: created.id,
+            name: name
+        });
     }
 
     const token = jwt.sign(
@@ -63,11 +73,11 @@ router.post('/register', asyncHandler(async function (req, res) {
 }));
 
 router.post('/login', asyncHandler(async function (req, res) {
-    const email = req.body.email;
+    const username = req.body.username;
     const password = req.body.password;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'email and password are required' });
+    if (!username || !password) {
+        return res.status(400).json({ error: 'username and password are required' });
     }
 
     const jwtSecret = requireJwtSecret(res);
@@ -75,14 +85,14 @@ router.post('/login', asyncHandler(async function (req, res) {
         return;
     }
 
-    const user = await getUserAuthByEmail(email);
+    const user = await getUserAuthByUsername(username);
     if (!user) {
-        return res.status(401).json({ error: 'Invalid email or password' });
+        return res.status(401).json({ error: 'Invalid username or password' });
     }
 
     const matches = await bcrypt.compare(password, user.password_hash);
     if (!matches) {
-        return res.status(401).json({ error: 'Invalid email or password' });
+        return res.status(401).json({ error: 'Invalid username or password' });
     }
 
     const token = jwt.sign(

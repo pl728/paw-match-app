@@ -9,25 +9,26 @@ afterAll(async function () {
 describe('pets endpoints', function () {
     async function createShelter() {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const user = await request(app)
-            .post('/users')
-            .send({ email: 'petadmin+' + unique + '@test.com', password_hash: 'hash', role: 'shelter_admin' })
+        const register = await request(app)
+            .post('/auth/register')
+            .send({ username: 'petadmin_' + unique, password: 'password123', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)
             .post('/shelters')
-            .send({ user_id: user.body.id, name: 'Pet Shelter' })
+            .send({ user_id: register.body.user.id, name: 'Pet Shelter' })
             .expect(201);
 
-        return shelter.body.id;
+        return { shelterId: shelter.body.id, token: register.body.token };
     }
 
     it('creates and retrieves a pet', async function () {
-        const shelterId = await createShelter();
+        const { token } = await createShelter();
 
         const created = await request(app)
             .post('/pets')
-            .send({ shelter_id: shelterId, name: 'Milo', species: 'Dog', age_years: 3 })
+            .set('Authorization', 'Bearer ' + token)
+            .send({ name: 'Milo', species: 'Dog', age_years: 3 })
             .expect(201);
 
         const res = await request(app)
@@ -39,11 +40,12 @@ describe('pets endpoints', function () {
     });
 
     it('lists pets', async function () {
-        const shelterId = await createShelter();
+        const { token } = await createShelter();
 
         await request(app)
             .post('/pets')
-            .send({ shelter_id: shelterId, name: 'Luna', species: 'Cat' })
+            .set('Authorization', 'Bearer ' + token)
+            .send({ name: 'Luna', species: 'Cat' })
             .expect(201);
 
         const res = await request(app)
@@ -55,15 +57,17 @@ describe('pets endpoints', function () {
     });
 
     it('updates a pet', async function () {
-        const shelterId = await createShelter();
+        const { token } = await createShelter();
 
         const created = await request(app)
             .post('/pets')
-            .send({ shelter_id: shelterId, name: 'Otis', species: 'Dog' })
+            .set('Authorization', 'Bearer ' + token)
+            .send({ name: 'Otis', species: 'Dog' })
             .expect(201);
 
         const res = await request(app)
             .put('/pets/' + created.body.id)
+            .set('Authorization', 'Bearer ' + token)
             .send({ status: 'pending', description: 'In foster' })
             .expect(200);
 
@@ -72,15 +76,17 @@ describe('pets endpoints', function () {
     });
 
     it('deletes a pet', async function () {
-        const shelterId = await createShelter();
+        const { token } = await createShelter();
 
         const created = await request(app)
             .post('/pets')
-            .send({ shelter_id: shelterId, name: 'Zoe', species: 'Cat' })
+            .set('Authorization', 'Bearer ' + token)
+            .send({ name: 'Zoe', species: 'Cat' })
             .expect(201);
 
         await request(app)
             .delete('/pets/' + created.body.id)
+            .set('Authorization', 'Bearer ' + token)
             .expect(200);
 
         await request(app)

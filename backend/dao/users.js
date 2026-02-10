@@ -2,21 +2,21 @@ import crypto from 'node:crypto';
 import db from '../db/index.js';
 
 export async function createUser(options) {
-    const email = options.email;
+    const username = options.username;
     const passwordHash = options.passwordHash;
     const role = options.role || 'adopter';
 
     const userId = crypto.randomUUID();
 
     await db.query(
-        'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
-        [userId, email, passwordHash, role]
+        'INSERT INTO users (id, username, password_hash, role) VALUES (?, ?, ?, ?)',
+        [userId, username, passwordHash, role]
     );
 
     await db.query('INSERT INTO email_notifications (user_id) VALUES (?)', [userId]);
 
     const result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, role, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -25,7 +25,7 @@ export async function createUser(options) {
 
 export async function getUserById(userId) {
     const result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, role, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -36,10 +36,10 @@ export async function getUserById(userId) {
     return result.rows[0];
 }
 
-export async function getUserByEmail(email) {
+export async function getUserByUsername(username) {
     const result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE email = ?',
-        [email]
+        'SELECT id, username, role, created_at, updated_at FROM users WHERE username = ?',
+        [username]
     );
 
     if (result.rows.length === 0) {
@@ -49,10 +49,10 @@ export async function getUserByEmail(email) {
     return result.rows[0];
 }
 
-export async function getUserAuthByEmail(email) {
+export async function getUserAuthByUsername(username) {
     const result = await db.query(
-        'SELECT id, email, role, password_hash FROM users WHERE email = ?',
-        [email]
+        'SELECT id, username, role, password_hash FROM users WHERE username = ?',
+        [username]
     );
 
     if (result.rows.length === 0) {

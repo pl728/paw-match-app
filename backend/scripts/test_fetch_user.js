@@ -18,7 +18,7 @@ if (typeof fetch !== 'function') {
 const apiBase = process.env.API_BASE || 'http://localhost:4516';
 const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const payload = {
-    email: 'demo_user+' + unique + '@test.com',
+    username: 'demo_user_' + unique,
     password_hash: 'demo_hash',
     role: 'adopter'
 };

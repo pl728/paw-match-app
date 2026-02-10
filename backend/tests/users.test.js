@@ -11,11 +11,11 @@ describe('users endpoints', function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const res = await request(app)
             .post('/users')
-            .send({ email: 'user1+' + unique + '@test.com', password_hash: 'hash', role: 'adopter' })
+            .send({ username: 'user1_' + unique, password_hash: 'hash', role: 'adopter' })
             .expect(201);
 
         expect(res.body).toHaveProperty('id');
-        expect(res.body.email).toBe('user1+' + unique + '@test.com');
+        expect(res.body.username).toBe('user1_' + unique);
         expect(res.body.role).toBe('adopter');
     });
 
@@ -23,7 +23,7 @@ describe('users endpoints', function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const created = await request(app)
             .post('/users')
-            .send({ email: 'user2+' + unique + '@test.com', password_hash: 'hash', role: 'adopter' })
+            .send({ username: 'user2_' + unique, password_hash: 'hash', role: 'adopter' })
             .expect(201);
 
         const res = await request(app)
@@ -31,7 +31,7 @@ describe('users endpoints', function () {
             .expect(200);
 
         expect(res.body.id).toBe(created.body.id);
-        expect(res.body.email).toBe('user2+' + unique + '@test.com');
+        expect(res.body.username).toBe('user2_' + unique);
     });
 
     it('returns 404 for missing user', async function () {

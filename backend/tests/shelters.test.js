@@ -11,7 +11,7 @@ describe('shelters endpoints', function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const user = await request(app)
             .post('/users')
-            .send({ email: 'shelteruser+' + unique + '@test.com', password_hash: 'hash', role: 'shelter_admin' })
+            .send({ username: 'shelteruser_' + unique, password_hash: 'hash', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)
@@ -31,7 +31,7 @@ describe('shelters endpoints', function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const user = await request(app)
             .post('/users')
-            .send({ email: 'shelteruser2+' + unique + '@test.com', password_hash: 'hash', role: 'shelter_admin' })
+            .send({ username: 'shelteruser2_' + unique, password_hash: 'hash', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)

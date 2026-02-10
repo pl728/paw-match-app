@@ -2,7 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    email VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('adopter', 'shelter_admin') NOT NULL DEFAULT 'adopter',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

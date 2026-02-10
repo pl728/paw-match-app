@@ -1,4 +1,4 @@
-export { createUser, getUserById, getUserByEmail, getUserAuthByEmail } from './users.js';
+export { createUser, getUserById, getUserByUsername, getUserAuthByUsername } from './users.js';
 export { createShelter, getShelterById, updateShelter } from './shelters.js';
 export { createPet, listPets, getPetById, getPetId, updatePet, deletePet } from './pets.js';
 export { addFavorite, removeFavorite } from './favorites.js';

@@ -11,65 +11,65 @@ afterAll(async function () {
 describe('auth endpoints', function () {
     it('registers a user and returns a token', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const email = 'auth1+' + unique + '@test.com';
+        const username = 'auth1_' + unique;
 
         const res = await request(app)
             .post('/auth/register')
-            .send({ email: email, password: 'password123' })
+            .send({ username: username, password: 'password123' })
             .expect(201);
 
         expect(res.body).toHaveProperty('token');
         expect(res.body).toHaveProperty('user');
-        expect(res.body.user.email).toBe(email);
+        expect(res.body.user.username).toBe(username);
         expect(res.body.user.role).toBe('adopter');
     });
 
     it('logs in an existing user and returns a token', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const email = 'auth2+' + unique + '@test.com';
+        const username = 'auth2_' + unique;
 
         await request(app)
             .post('/auth/register')
-            .send({ email: email, password: 'password123' })
+            .send({ username: username, password: 'password123' })
             .expect(201);
 
         const res = await request(app)
             .post('/auth/login')
-            .send({ email: email, password: 'password123' })
+            .send({ username: username, password: 'password123' })
             .expect(200);
 
         expect(res.body).toHaveProperty('token');
         expect(res.body).toHaveProperty('user');
-        expect(res.body.user.email).toBe(email);
+        expect(res.body.user.username).toBe(username);
     });
 
     it('rejects duplicate registrations', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const email = 'auth3+' + unique + '@test.com';
+        const username = 'auth3_' + unique;
 
         await request(app)
             .post('/auth/register')
-            .send({ email: email, password: 'password123' })
+            .send({ username: username, password: 'password123' })
             .expect(201);
 
         await request(app)
             .post('/auth/register')
-            .send({ email: email, password: 'password123' })
+            .send({ username: username, password: 'password123' })
             .expect(409);
     });
 
     it('rejects invalid login', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const email = 'auth4+' + unique + '@test.com';
+        const username = 'auth4_' + unique;
 
         await request(app)
             .post('/auth/register')
-            .send({ email: email, password: 'password123' })
+            .send({ username: username, password: 'password123' })
             .expect(201);
 
         await request(app)
             .post('/auth/login')
-            .send({ email: email, password: 'wrongpassword' })
+            .send({ username: username, password: 'wrongpassword' })
             .expect(401);
     });
 });

@@ -1,15 +1,15 @@
 -- CORE --
 
-INSERT INTO users (email, password_hash, role)
+INSERT INTO users (username, password_hash, role)
 VALUES
-    ('shelter1@pawmatch.test', 'dev_hash_1', 'shelter_admin'),
-    ('adopter1@pawmatch.test', 'dev_hash_2', 'adopter')
-ON DUPLICATE KEY UPDATE email = email;
+    ('shelter1', 'dev_hash_1', 'shelter_admin'),
+    ('adopter1', 'dev_hash_2', 'adopter')
+ON DUPLICATE KEY UPDATE username = username;
 
 INSERT INTO shelters (user_id, name, description, phone, email, city, state, postal_code)
 SELECT u.id, 'Happy Tails Shelter', 'Rescue and adoption center.', '555-0101', 'hello@happytails.test', 'Corvallis', 'OR', '97330'
 FROM users u
-WHERE u.email = 'shelter1@pawmatch.test'
+WHERE u.username = 'shelter1'
 ON DUPLICATE KEY UPDATE name = name;
 
 INSERT INTO pets (shelter_id, name, species, breed, age_years, sex, size, description, status)
@@ -33,14 +33,14 @@ SELECT u.id, s.id
 FROM users u
 JOIN shelters s
 	ON s.name = 'Happy Tails Shelter'
-WHERE u.email = 'adopter1@pawmatch.test';
+WHERE u.username = 'adopter1';
 
 INSERT INTO favorites (user_id, pet_id)
 SELECT u.id, p.id
 FROM users u
 JOIN pets p
 	ON p.name = 'Milo'
-WHERE u.email = 'adopter1@pawmatch.test';
+WHERE u.username = 'adopter1';
 
 INSERT INTO feed_events (event_type, shelter_id, post_id)
 SELECT type, shelter_id, id
@@ -57,4 +57,4 @@ WHERE s.name = 'Happy Tails Shelter';
 INSERT INTO email_notifications (user_id)
 SELECT u.id
 FROM users u
-WHERE u.email = 'adopter1@pawmatch.test';
+WHERE u.username = 'adopter1';

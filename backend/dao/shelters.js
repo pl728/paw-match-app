@@ -31,6 +31,14 @@ export async function getShelterById(shelterId) {
     return result.rows[0];
 }
 
+export async function getShelterByUserId(userId) {
+    const result = await db.query('SELECT * FROM shelters WHERE user_id = ?', [userId]);
+    if (result.rows.length === 0) {
+        return null;
+    }
+    return result.rows[0];
+}
+
 export async function updateShelter(shelterId, fields) {
     const setClauses = [];
     const values = [];
