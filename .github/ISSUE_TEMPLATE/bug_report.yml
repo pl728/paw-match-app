@@ -1,0 +1,13 @@
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How badly does this bug impact users?
+      options:
+        - Blocking (app unusable)
+        - High (major feature broken)
+        - Medium (workaround exists)
+        - Low (minor issue)
+    validations:
+      required: true
