@@ -3,11 +3,11 @@ import asyncHandler from '../utils/async-handler.js';
 import { createUser, getUserById } from '../dao/users.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { getPetsByShelterId } from '../dao/pets.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', asyncHandler(async function (req, res) {
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const username = req.body.username;
     const passwordHash = req.body.password_hash;
     const role = req.body.role || 'adopter';
@@ -53,7 +53,7 @@ router.get('/me', requireAuth, asyncHandler(async function (req, res) {
     res.json(profile);
 }));
 
-router.get('/:id', asyncHandler(async function (req, res) {
+router.get('/:id', requireAuth, asyncHandler(async function (req, res) {
     const user = await getUserById(req.params.id);
     if (!user) {
         return res.status(404).json({ error: 'User not found' });

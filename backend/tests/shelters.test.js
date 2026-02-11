@@ -2,6 +2,8 @@ import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
 
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+
 afterAll(async function () {
     await db.end();
 });
@@ -43,6 +45,7 @@ describe('shelters endpoints', function () {
 
         const res = await request(app)
             .put('/shelters/' + shelter.body.id)
+            .set('Authorization', 'Bearer ' + user.body.token)
             .send({ phone: '555-1010', description: 'Updated' })
             .expect(200);
 

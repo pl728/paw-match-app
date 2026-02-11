@@ -2,6 +2,8 @@ import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
 
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+
 afterAll(async function () {
     await db.end();
 });

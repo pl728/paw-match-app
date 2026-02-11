@@ -23,3 +23,19 @@ export function requireAuth(req, res, next) {
         return res.status(401).json({ error: 'Invalid token' });
     }
 }
+
+export function requireRole(roles) {
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
+    return function (req, res, next) {
+        if (!req.userRole) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        if (!allowedRoles.includes(req.userRole)) {
+            return res.status(403).json({ error: 'Insufficient role' });
+        }
+
+        next();
+    };
+}

@@ -1,7 +1,7 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
 import { createShelter, getShelterById, updateShelter, listShelters, deleteShelter, getShelterByUserId } from '../dao/shelters.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.get('/', asyncHandler(async function (req, res) {
     res.json(shelters);
 }));
 
-router.post('/', requireAuth, asyncHandler(async function (req, res) {
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const userId = req.userId;
     const name = req.body.name;
     const description = req.body.description || null;
@@ -58,7 +58,7 @@ router.get('/:id', asyncHandler(async function (req, res) {
     res.json(shelter);
 }));
 
-router.put('/:id', asyncHandler(async function (req, res) {
+router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const fields = {
         name: req.body.name,
         description: req.body.description,
@@ -79,6 +79,15 @@ router.put('/:id', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'No valid fields provided' });
     }
 
+    const existing = await getShelterById(req.params.id);
+    if (!existing) {
+        return res.status(404).json({ error: 'Shelter not found' });
+    }
+
+    if (existing.user_id !== req.userId) {
+        return res.status(403).json({ error: 'Not allowed to update this shelter' });
+    }
+
     const updated = await updateShelter(req.params.id, fields);
     if (!updated) {
         return res.status(404).json({ error: 'Shelter not found' });
@@ -87,7 +96,7 @@ router.put('/:id', asyncHandler(async function (req, res) {
     res.json(updated);
 }));
 
-router.delete('/:id', requireAuth, asyncHandler(async function (req, res) {
+router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const shelter = await getShelterById(req.params.id);
     if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found' });

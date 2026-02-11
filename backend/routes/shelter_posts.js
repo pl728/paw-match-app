@@ -4,15 +4,16 @@ import {
     createShelterPost,
     listShelterPosts,
     getShelterPostById,
-    getShelterPostPublishInfo,
     publishShelterPost
 } from '../dao/shelter_posts.js';
+import { getShelterByUserId } from '../dao/shelters.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Create a new Post
 // If publish === true, published_at is set to NOW(). Otherwise it stays NULL.
-router.post('/', asyncHandler(async function (req, res) {
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const shelter_id = req.body.shelter_id;
     const pet_id = req.body.pet_id || null;
     const type = req.body.type;
@@ -22,6 +23,15 @@ router.post('/', asyncHandler(async function (req, res) {
 
     if (!shelter_id || !type || !title || !body) {
         return res.status(400).json({ error: 'shelter_id, type, title, and body are required' });
+    }
+
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    if (shelter.id !== shelter_id) {
+        return res.status(403).json({ error: 'Not allowed to post for this shelter' });
     }
 
     const created = await createShelterPost({
@@ -84,12 +94,21 @@ router.get('/:id', asyncHandler(async function (req, res) {
  * PATCH /api/shelter-posts/:id/publish
  * Publishes a post by setting published_at to NOW().
  */
-router.patch('/:id/publish', asyncHandler(async function (req, res) {
+router.patch('/:id/publish', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const postId = req.params.id;
 
-    const existing = await getShelterPostPublishInfo(postId);
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    const existing = await getShelterPostById(postId);
     if (!existing) {
         return res.status(404).json({ error: 'Post not found' });
+    }
+
+    if (existing.shelter_id !== shelter.id) {
+        return res.status(403).json({ error: 'Not allowed to publish this post' });
     }
 
     if (existing.published_at) {
