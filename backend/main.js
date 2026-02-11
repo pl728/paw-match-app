@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import swaggerUi from 'swagger-ui-express';
 import db from './db/index.js';
 import usersRoutes from './routes/users.js';
 import sheltersRoutes from './routes/shelters.js';
@@ -12,6 +14,9 @@ import shelterFollowsRoutes from './routes/shelter_follows.js';
 import shelterPostsRoutes from './routes/shelter_posts.js';
 import feedEventsRoutes from './routes/feed_events.js';
 import emailNotificationsRoutes from './routes/email_notifications.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 4516;
@@ -51,6 +56,22 @@ app.use('/api/feed', feedEventsRoutes);
 // Preferences & notifications
 app.use('/api/email-notifications', emailNotificationsRoutes);
 
+const swaggerPath = path.join(__dirname, 'swagger-output.json');
+let swaggerDocument = null;
+try {
+    const raw = fs.readFileSync(swaggerPath, 'utf8');
+    swaggerDocument = JSON.parse(raw);
+} catch (err) {
+    console.warn('Swagger spec not found. Run `npm start` or `npm run swagger` to generate it.');
+}
+
+if (swaggerDocument) {
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.get('/openapi.json', function (req, res) {
+        res.json(swaggerDocument);
+    });
+}
+
 
 app.use(function (err, req, res, next) {
     console.error('Unhandled error', err);
@@ -60,7 +81,7 @@ app.use(function (err, req, res, next) {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 if (isMain) {
     app.listen(PORT, function () {

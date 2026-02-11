@@ -20,7 +20,7 @@ node scripts/reset_db.js
 ```
 4) Start the API:
 ```
-node main.js
+npm start
 ```
 
 ## Option B: Local MySQL (no Docker)
@@ -60,7 +60,7 @@ PORT=4516
 ```
 npm install
 node scripts/reset_db.js
-node main.js
+npm start
 ```
 
 ### Verifying MySQL is running on port 3306
@@ -82,3 +82,14 @@ npm test
 Notes:
 - The reset scripts drop and recreate the target database (destructive).
 - Use `127.0.0.1` instead of `localhost` to force TCP.
+
+## API Docs
+Swagger/OpenAPI docs are auto-generated on `npm start`.
+```
+http://localhost:4516/docs
+http://localhost:4516/openapi.json
+```
+To regenerate without starting the server:
+```
+npm run swagger
+```
