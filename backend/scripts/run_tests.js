@@ -1,22 +1,38 @@
 #!/usr/bin/env node
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { resetDatabase } from './reset_db.js';
 
-var { spawn } = require('child_process');
-var resetDatabase = require('./reset_db').resetDatabase;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function runTests() {
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+export async function runTests() {
     if (!process.env.TEST_DATABASE_URL) {
         throw new Error('TEST_DATABASE_URL is required (e.g., mysql://user:pass@localhost:3306/paw_match_test)');
     }
+
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     await resetDatabase(process.env.TEST_DATABASE_URL, 'TEST_DATABASE_URL');
     console.log('Test database reset complete.');
 
     await new Promise(function (resolve, reject) {
-        var child = spawn('npx', ['jest'], { stdio: 'inherit', shell: false });
+        const backendRoot = path.join(__dirname, '..');
+        const configPath = path.join(backendRoot, 'jest.config.cjs');
+        const jestBin = path.join(backendRoot, 'node_modules', 'jest', 'bin', 'jest.js');
+
+        const child = spawn(process.execPath, ['--experimental-vm-modules', jestBin, '--config', configPath], {
+            stdio: 'inherit',
+            shell: false,
+            cwd: backendRoot
+        });
         child.on('close', function (code) {
             if (code === 0) {
                 resolve();
@@ -28,7 +44,9 @@ async function runTests() {
     });
 }
 
-if (require.main === module) {
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+
+if (isMain) {
     runTests().catch(function (err) {
         console.error(err.message);
         process.exit(1);

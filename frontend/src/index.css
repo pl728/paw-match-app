@@ -24,8 +24,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
   min-width: 320px;
   min-height: 100vh;
   background: #0b0c10;
@@ -251,10 +250,4 @@ select {
   100% {
     transform: translateX(100%);
   }
-}
-
-.home-links {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }

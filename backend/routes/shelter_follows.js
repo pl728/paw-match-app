@@ -1,39 +1,34 @@
-var express = require('express');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import asyncHandler from '../utils/async-handler.js';
+import { followShelter, unfollowShelter } from '../dao/shelter_follows.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
-var router = express.Router();
+const router = express.Router();
 
 // Follow a shelter
-router.post('/', asyncHandler(async function (req, res) {
-    if (!user_id || !shelter_id) {
-        return res.status(400).json({ error: 'user_id and shelter_id are required' });
+router.post('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {
+    const userId = req.userId;
+    const shelterId = req.body.shelter_id;
+
+    if (!shelterId) {
+        return res.status(400).json({ error: 'shelter_id is required' });
     }
 
-    var { user_id, shelter_id } = req.body;
-
-    await db.query(
-        'INSERT IGNORE INTO shelter_follows (user_id, shelter_id) VALUES (?, ?)',
-        [user_id, shelter_id]
-    );
-
+    await followShelter(userId, shelterId);
     res.status(204).end();
 }));
 
 // Unfollow a shelter
-router.delete('/', asyncHandler(async function (req, res) {
-    if (!user_id || !shelter_id) {
-        return res.status(400).json({ error: 'user_id and shelter_id are required' });
+router.delete('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {
+    const userId = req.userId;
+    const shelterId = req.body.shelter_id;
+
+    if (!shelterId) {
+        return res.status(400).json({ error: 'shelter_id is required' });
     }
 
-    var { user_id, shelter_id } = req.body;
-
-    await db.query(
-        'DELETE FROM shelter_follows WHERE user_id = ? AND shelter_id = ?',
-        [user_id, shelter_id]
-    );
-
+    await unfollowShelter(userId, shelterId);
     res.status(204).end();
 }));
 
-module.exports = router;
+export default router;

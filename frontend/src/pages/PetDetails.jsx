@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { getPetById } from "../services/pets.js";
 
 export default function PetDetails() {
   const { id } = useParams();
@@ -11,13 +12,7 @@ export default function PetDetails() {
   useEffect(() => {
     async function fetchPet() {
       try {
-        const response = await fetch(`/pets/${id}`);
-
-        if (!response.ok) {
-          throw new Error("Pet not found");
-        }
-
-        const data = await response.json();
+        const data = await getPetById(id);
         setPet(data);
       } catch (err) {
         setError(err.message);

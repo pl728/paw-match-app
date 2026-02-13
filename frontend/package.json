@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "Paw Match",
   "version": "0.0.0",
   "private": true,
   "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
@@ -14,6 +14,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/themes": "^3.3.0",
     "express": "^5.2.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

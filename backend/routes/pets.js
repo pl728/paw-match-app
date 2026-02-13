@@ -1,56 +1,81 @@
-var express = require('express');
-var crypto = require('crypto');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import asyncHandler from '../utils/async-handler.js';
+import {
+    createPet,
+    listPets,
+    getPetById,
+    updatePet,
+    deletePet
+} from '../dao/pets.js';
+import { getShelterByUserId } from '../dao/shelters.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
-var router = express.Router();
+const router = express.Router();
 
-router.post('/', asyncHandler(async function (req, res) {
-    var shelterId = req.body.shelter_id;
-    var name = req.body.name;
-    var species = req.body.species || null;
-    var breed = req.body.breed || null;
-    var ageYears = req.body.age_years || null;
-    var sex = req.body.sex || null;
-    var size = req.body.size || null;
-    var description = req.body.description || null;
-    var status = req.body.status || 'available';
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
 
-    if (!shelterId || !name) {
-        return res.status(400).json({ error: 'shelter_id and name are required' });
+    const name = req.body.name;
+    const species = req.body.species || null;
+    const breed = req.body.breed || null;
+    const ageYears = req.body.age_years || null;
+    const sex = req.body.sex || null;
+    const size = req.body.size || null;
+    const description = req.body.description || null;
+    const status = req.body.status || 'available';
+
+    if (!name) {
+        return res.status(400).json({ error: 'name is required' });
     }
 
-    var petId = crypto.randomUUID();
-    await db.query(
-        'INSERT INTO pets (id, shelter_id, name, species, breed, age_years, sex, size, description, status) VALUES (?,?,?,?,?,?,?,?,?,?)',
-        [petId, shelterId, name, species, breed, ageYears, sex, size, description, status]
-    );
-    var result = await db.query('SELECT * FROM pets WHERE id = ?', [petId]);
-    res.status(201).json(result.rows[0]);
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    const created = await createPet({
+        shelterId: shelter.id,
+        name: name,
+        species: species,
+        breed: breed,
+        ageYears: ageYears,
+        sex: sex,
+        size: size,
+        description: description,
+        status: status
+    });
+    res.status(201).json(created);
 }));
 
 router.get('/', asyncHandler(async function (req, res) {
-    var result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, status FROM pets ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
+    const pets = await listPets();
+    res.json(pets);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status FROM pets WHERE id = ?',
-        [req.params.id]
-    );
-
-    if (result.rows.length === 0) {
+    const pet = await getPetById(req.params.id);
+    if (!pet) {
         return res.status(404).json({ error: 'Pet not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(pet);
 }));
 
-router.put('/:id', asyncHandler(async function (req, res) {
-    var fields = {
+router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    const pet = await getPetById(req.params.id);
+    if (!pet) {
+        return res.status(404).json({ error: 'Pet not found' });
+    }
+
+    if (pet.shelter_id !== shelter.id) {
+        return res.status(403).json({ error: 'Not allowed to update this pet' });
+    }
+
+    const fields = {
         name: req.body.name,
         species: req.body.species,
         breed: req.body.breed,
@@ -61,40 +86,39 @@ router.put('/:id', asyncHandler(async function (req, res) {
         status: req.body.status
     };
 
-    var setClauses = [];
-    var values = [];
-
-    Object.keys(fields).forEach(function (key) {
-        if (fields[key] !== undefined) {
-            setClauses.push(key + ' = ?');
-            values.push(fields[key]);
-        }
+    const hasUpdates = Object.keys(fields).some(function (key) {
+        return fields[key] !== undefined;
     });
 
-    if (setClauses.length === 0) {
+    if (!hasUpdates) {
         return res.status(400).json({ error: 'No valid fields provided' });
     }
 
-    values.push(req.params.id);
-
-    var query = 'UPDATE pets SET ' + setClauses.join(', ') + ', updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-    await db.query(query, values);
-    var result = await db.query('SELECT * FROM pets WHERE id = ?', [req.params.id]);
-
-    if (result.rows.length === 0) {
+    const updated = await updatePet(req.params.id, fields);
+    if (!updated) {
         return res.status(404).json({ error: 'Pet not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(updated);
 }));
 
-router.delete('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query('SELECT id FROM pets WHERE id = ?', [req.params.id]);
-    if (result.rows.length === 0) {
+router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    const pet = await getPetById(req.params.id);
+    if (!pet) {
         return res.status(404).json({ error: 'Pet not found' });
     }
-    await db.query('DELETE FROM pets WHERE id = ?', [req.params.id]);
-    res.json({ deleted: true, id: result.rows[0].id });
+
+    if (pet.shelter_id !== shelter.id) {
+        return res.status(403).json({ error: 'Not allowed to delete this pet' });
+    }
+
+    await deletePet(req.params.id);
+    res.json({ deleted: true, id: pet.id });
 }));
 
-module.exports = router;
+export default router;

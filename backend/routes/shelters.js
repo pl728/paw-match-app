@@ -1,32 +1,45 @@
-var express = require('express');
-var crypto = require('crypto');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import asyncHandler from '../utils/async-handler.js';
+import { createShelter, getShelterById, updateShelter, listShelters, deleteShelter, getShelterByUserId } from '../dao/shelters.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
-var router = express.Router();
+const router = express.Router();
 
-router.post('/', asyncHandler(async function (req, res) {
-    var userId = req.body.user_id;
-    var name = req.body.name;
-    var description = req.body.description || null;
-    var phone = req.body.phone || null;
-    var email = req.body.email || null;
-    var addressLine1 = req.body.address_line1 || null;
-    var addressLine2 = req.body.address_line2 || null;
-    var city = req.body.city || null;
-    var state = req.body.state || null;
-    var postalCode = req.body.postal_code || null;
+router.get('/', asyncHandler(async function (req, res) {
+    const shelters = await listShelters();
+    res.json(shelters);
+}));
+
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const userId = req.userId;
+    const name = req.body.name;
+    const description = req.body.description || null;
+    const phone = req.body.phone || null;
+    const email = req.body.email || null;
+    const addressLine1 = req.body.address_line1 || null;
+    const addressLine2 = req.body.address_line2 || null;
+    const city = req.body.city || null;
+    const state = req.body.state || null;
+    const postalCode = req.body.postal_code || null;
 
     if (!userId || !name) {
         return res.status(400).json({ error: 'user_id and name are required' });
     }
 
-    var shelterId = crypto.randomUUID();
+    let created;
     try {
-        await db.query(
-            'INSERT INTO shelters (id, user_id, name, description, phone, email, address_line1, address_line2, city, state, postal_code) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-            [shelterId, userId, name, description, phone, email, addressLine1, addressLine2, city, state, postalCode]
-        );
+        created = await createShelter({
+            userId: userId,
+            name: name,
+            description: description,
+            phone: phone,
+            email: email,
+            addressLine1: addressLine1,
+            addressLine2: addressLine2,
+            city: city,
+            state: state,
+            postalCode: postalCode
+        });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'shelter already exists for user' });
@@ -34,20 +47,19 @@ router.post('/', asyncHandler(async function (req, res) {
         throw err;
     }
 
-    var result = await db.query('SELECT * FROM shelters WHERE id = ?', [shelterId]);
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(created);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query('SELECT * FROM shelters WHERE id = ?', [req.params.id]);
-    if (result.rows.length === 0) {
+    const shelter = await getShelterById(req.params.id);
+    if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found' });
     }
-    res.json(result.rows[0]);
+    res.json(shelter);
 }));
 
-router.put('/:id', asyncHandler(async function (req, res) {
-    var fields = {
+router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const fields = {
         name: req.body.name,
         description: req.body.description,
         phone: req.body.phone,
@@ -59,31 +71,45 @@ router.put('/:id', asyncHandler(async function (req, res) {
         postal_code: req.body.postal_code
     };
 
-    var setClauses = [];
-    var values = [];
-
-    Object.keys(fields).forEach(function (key) {
-        if (fields[key] !== undefined) {
-            setClauses.push(key + ' = ?');
-            values.push(fields[key]);
-        }
+    const hasUpdates = Object.keys(fields).some(function (key) {
+        return fields[key] !== undefined;
     });
 
-    if (setClauses.length === 0) {
+    if (!hasUpdates) {
         return res.status(400).json({ error: 'No valid fields provided' });
     }
 
-    values.push(req.params.id);
-
-    var query = 'UPDATE shelters SET ' + setClauses.join(', ') + ', updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-    await db.query(query, values);
-    var result = await db.query('SELECT * FROM shelters WHERE id = ?', [req.params.id]);
-
-    if (result.rows.length === 0) {
+    const existing = await getShelterById(req.params.id);
+    if (!existing) {
         return res.status(404).json({ error: 'Shelter not found' });
     }
 
-    res.json(result.rows[0]);
+    if (existing.user_id !== req.userId) {
+        return res.status(403).json({ error: 'Not allowed to update this shelter' });
+    }
+
+    const updated = await updateShelter(req.params.id, fields);
+    if (!updated) {
+        return res.status(404).json({ error: 'Shelter not found' });
+    }
+
+    res.json(updated);
 }));
 
-module.exports = router;
+router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const shelter = await getShelterById(req.params.id);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found' });
+    }
+
+    // Check if user owns this shelter
+    const userShelter = await getShelterByUserId(req.userId);
+    if (!userShelter || userShelter.id !== req.params.id) {
+        return res.status(403).json({ error: 'Not allowed to delete this shelter' });
+    }
+
+    await deleteShelter(req.params.id);
+    res.json({ deleted: true, id: req.params.id });
+}));
+
+export default router;

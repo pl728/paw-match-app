@@ -1,17 +1,20 @@
-require('dotenv').config();
-var express = require('express');
-var db = require('./db');
-var usersRoutes = require('./routes/users');
-var sheltersRoutes = require('./routes/shelters');
-var petsRoutes = require('./routes/pets');
-var favoritesRoutes = require('./routes/favorites');
-var shelterFollowsRoutes = require('./routes/shelter_follows');
-var shelterPostsRoutes = require('./routes/shelter_posts');
-var feedEventsRoutes = require('./routes/feed_events');
-var emailNotificationsRoutes = require('./routes/email_notifications');
+import 'dotenv/config';
+import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import db from './db/index.js';
+import usersRoutes from './routes/users.js';
+import sheltersRoutes from './routes/shelters.js';
+import petsRoutes from './routes/pets.js';
+import authRoutes from './routes/auth.js';
+import favoritesRoutes from './routes/favorites.js';
+import shelterFollowsRoutes from './routes/shelter_follows.js';
+import shelterPostsRoutes from './routes/shelter_posts.js';
+import feedEventsRoutes from './routes/feed_events.js';
+import emailNotificationsRoutes from './routes/email_notifications.js';
 
-var app = express();
-var PORT = process.env.PORT || 4516;
+const app = express();
+const PORT = process.env.PORT || 4516;
 
 app.use(express.json());
 
@@ -25,7 +28,7 @@ app.get('/', function (req, res) {
 
 app.get('/health', async function (req, res) {
     try {
-        var result = await db.query('SELECT 1 AS ok');
+        const result = await db.query('SELECT 1 AS ok');
         res.json({ ok: result.rows[0].ok === 1 });
     } catch (err) {
         console.error('Health check failed', err);
@@ -37,6 +40,7 @@ app.get('/health', async function (req, res) {
 app.use('/users', usersRoutes);
 app.use('/shelters', sheltersRoutes);
 app.use('/pets', petsRoutes);
+app.use('/auth', authRoutes);
 
 // Engagement & activity
 app.use('/api/favorites', favoritesRoutes);
@@ -56,10 +60,12 @@ app.use(function (err, req, res, next) {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-if (require.main === module) {
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
     app.listen(PORT, function () {
-        console.log('Express started on http://localhost:' + PORT + '; press Ctrl-C to terminate.')
+        console.log('Express started on http://localhost:' + PORT + '; press Ctrl-C to terminate.');
     });
 }
 
-module.exports = app;
+export default app;

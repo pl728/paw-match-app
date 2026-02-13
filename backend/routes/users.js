@@ -1,56 +1,64 @@
-var express = require('express');
-var crypto = require('crypto');
-var db = require('../db');
-var asyncHandler = require('../utils/async-handler');
+import express from 'express';
+import asyncHandler from '../utils/async-handler.js';
+import { createUser, getUserById } from '../dao/users.js';
+import { getShelterByUserId } from '../dao/shelters.js';
+import { getPetsByShelterId } from '../dao/pets.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
-var router = express.Router();
+const router = express.Router();
 
-router.post('/', asyncHandler(async function (req, res) {
-    var email = req.body.email;
-    var passwordHash = req.body.password_hash;
-    var role = req.body.role || 'adopter';
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const username = req.body.username;
+    const passwordHash = req.body.password_hash;
+    const role = req.body.role || 'adopter';
 
-    if (!email || !passwordHash) {
-        return res.status(400).json({ error: 'email and password_hash are required' });
+    if (!username || !passwordHash) {
+        return res.status(400).json({ error: 'username and password_hash are required' });
     }
 
-    var userId = crypto.randomUUID();
+    let created;
     try {
-        await db.query(
-            'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)',
-            [userId, email, passwordHash, role]
-        );
-        // default email preferences
-        await db.query(
-            `INSERT INTO email_notifications (user_id) VALUES (?)`, [userId]
-        );
-
+        created = await createUser({ username: username, passwordHash: passwordHash, role: role });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: 'email already exists' });
+            return res.status(409).json({ error: 'username already exists' });
         }
         throw err;
     }
-
-    var result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
-        [userId]
-    );
-
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(created);
 }));
 
-router.get('/:id', asyncHandler(async function (req, res) {
-    var result = await db.query(
-        'SELECT id, email, role, created_at, updated_at FROM users WHERE id = ?',
-        [req.params.id]
-    );
-
-    if (result.rows.length === 0) {
+router.get('/me', requireAuth, asyncHandler(async function (req, res) {
+    const user = await getUserById(req.userId);
+    if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(result.rows[0]);
+    const profile = {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        created_at: user.created_at
+    };
+
+    if (user.role === 'shelter_admin') {
+        const shelter = await getShelterByUserId(user.id);
+        if (shelter) {
+            profile.shelter = shelter;
+            const pets = await getPetsByShelterId(shelter.id);
+            profile.pets = pets;
+        }
+    }
+
+    res.json(profile);
 }));
 
-module.exports = router;
+router.get('/:id', requireAuth, asyncHandler(async function (req, res) {
+    const user = await getUserById(req.params.id);
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+}));
+
+export default router;

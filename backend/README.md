@@ -25,11 +25,35 @@ node main.js
 
 ## Option B: Local MySQL (no Docker)
 1) Install MySQL Server and start it.
-2) Ensure a user with privileges to create/drop databases (or use root).
-3) Set env vars in `backend/.env`:
+   - WSL/Ubuntu:
+     ```
+     sudo apt update
+     sudo apt install -y mysql-server
+     sudo service mysql start
+     ```
+   - macOS (Homebrew):
+     ```
+     brew install mysql
+     brew services start mysql
+     ```
+2) Create a DB user that can create/drop databases (recommended).
+   - WSL/Ubuntu:
+     ```
+     sudo mysql -e "CREATE USER IF NOT EXISTS 'pawmatch'@'localhost' IDENTIFIED BY 'pawmatch'; GRANT CREATE, DROP ON *.* TO 'pawmatch'@'localhost'; GRANT ALL PRIVILEGES ON paw_match.* TO 'pawmatch'@'localhost'; GRANT ALL PRIVILEGES ON paw_match_test.* TO 'pawmatch'@'localhost'; FLUSH PRIVILEGES;"
+     ```
+   - macOS:
+     ```
+     mysql -u root -e "CREATE USER IF NOT EXISTS 'pawmatch'@'localhost' IDENTIFIED BY 'pawmatch'; GRANT CREATE, DROP ON *.* TO 'pawmatch'@'localhost'; GRANT ALL PRIVILEGES ON paw_match.* TO 'pawmatch'@'localhost'; GRANT ALL PRIVILEGES ON paw_match_test.* TO 'pawmatch'@'localhost'; FLUSH PRIVILEGES;"
+     ```
+     (If that fails, try `mysql -u root -p -e "..."`.)
+3) Set env vars in `backend/.env` (recommended: copy from `.env.example`):
 ```
-DATABASE_URL=mysql://root:your_password@127.0.0.1:3306/paw_match
-TEST_DATABASE_URL=mysql://root:your_password@127.0.0.1:3306/paw_match_test
+cp .env.example .env
+```
+Then edit `backend/.env` to:
+```
+DATABASE_URL=mysql://pawmatch:pawmatch@127.0.0.1:3306/paw_match
+TEST_DATABASE_URL=mysql://pawmatch:pawmatch@127.0.0.1:3306/paw_match_test
 PORT=4516
 ```
 4) Run:
@@ -37,6 +61,16 @@ PORT=4516
 npm install
 node scripts/reset_db.js
 node main.js
+```
+
+### Verifying MySQL is running on port 3306
+In MySQL:
+```sql
+SHOW VARIABLES LIKE 'port';
+```
+Or from the shell (Linux/WSL):
+```
+sudo ss -lntp | rg ':(3306)\\b|mysqld'
 ```
 
 ## Tests
