@@ -1,6 +1,6 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
-import { addFavorite, removeFavorite } from '../dao/favorites.js';
+import { addFavorite, removeFavorite, listFavorites } from '../dao/favorites.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -30,5 +30,13 @@ router.delete('/', requireAuth, requireRole('adopter'), asyncHandler(async funct
     await removeFavorite(userId, petId);
     res.status(204).end();
 }));
+
+// Get a list of favored shelters
+router.get('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {
+  const userId = req.userId;
+  const rows = await listFavorites(userId);
+  res.json(rows);
+}));
+
 
 export default router;

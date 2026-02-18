@@ -1,14 +1,13 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
-import { listFeedEvents } from '../dao/feed_events.js';
+import { listRecentActivity } from '../dao/feed_events.js';
 
 const router = express.Router();
 
-router.get('/', asyncHandler(async function (req, res) {
-    const limit = Number(req.query.limit) || 50;
-
-    const events = await listFeedEvents(limit);
-    res.json(events);
+router.get('/', asyncHandler(async (req, res) => {
+  const limit = req.query.limit;
+  const rows = await listRecentActivity(limit);
+  res.json(rows);
 }));
 
 export default router;

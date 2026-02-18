@@ -13,3 +13,11 @@ export async function removeFavorite(userId, petId) {
         [userId, petId]
     );
 }
+
+export async function listFavorites(userId) {
+  const result = await db.query(
+    'SELECT pet_id FROM favorites WHERE user_id = ?',
+    [userId]
+  );
+  return result.rows;
+}
