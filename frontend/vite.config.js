@@ -18,6 +18,7 @@ export default defineConfig({
       '/pets': 'http://localhost:4516',
       '/shelters': 'http://localhost:4516',
       '/users': 'http://localhost:4516',
+      '/feed_events': 'http://localhost:4516',
       '/api': 'http://localhost:4516'
     }
   }

@@ -99,6 +99,7 @@ function App() {
         <Route path="/create-pet" element={<RequireRole role="shelter_admin"><CreatePet /></RequireRole>} />
         <Route path="/view-pets" element={<RequireAuth><ViewPets /></RequireAuth>} />
         <Route path="/browse-shelters" element={<RequireAuth><BrowseShelters /></RequireAuth>} />
+        <Route path="/feed" element={<RequireAuth><FeedPage /></RequireAuth>} />
         <Route path="/login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
         <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
         <Route path="/user-login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
