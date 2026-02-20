@@ -1,0 +1,5 @@
+project_id  = "your-gcp-project-id"
+region      = "us-central1"
+db_password = "change-me-strong-password"
+jwt_secret  = "change-me-jwt-secret"
+image       = "us-central1-docker.pkg.dev/your-gcp-project-id/paw-match/backend:latest"

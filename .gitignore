@@ -1,3 +1,9 @@
 node_modules/
 backend/.env
 package-lock.json
+
+# Terraform — contains secrets, never commit
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup

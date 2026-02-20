@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db from './db/index.js';
@@ -16,6 +17,7 @@ import emailNotificationsRoutes from './routes/email_notifications.js';
 const app = express();
 const PORT = process.env.PORT || 4516;
 
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 if (!process.env.DATABASE_URL) {
