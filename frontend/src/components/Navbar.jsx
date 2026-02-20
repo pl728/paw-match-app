@@ -83,6 +83,20 @@ function Navbar() {
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
+              <NavigationMenu.Item>
+                <NavigationMenu.Link asChild>
+                  <Link to="/feed" style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: location.pathname === '/feed' ? '#fff' : '#cdd6e3',
+                    background: location.pathname === '/feed' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                  }}>
+                    Feed
+                  </Link>
+                </NavigationMenu.Link>
+              </NavigationMenu.Item>
+
               {user?.role === 'shelter_admin' && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>

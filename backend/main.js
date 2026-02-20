@@ -48,13 +48,13 @@ app.use('/pets', petsRoutes);
 app.use('/auth', authRoutes);
 
 // Engagement & activity
-app.use('/api/favorites', favoritesRoutes);
-app.use('/api/shelter-follows', shelterFollowsRoutes);
-app.use('/api/shelter-posts', shelterPostsRoutes);
-app.use('/api/feed', feedEventsRoutes);
+app.use('/favorites', favoritesRoutes);
+app.use('/shelter-follows', shelterFollowsRoutes);
+app.use('/shelter-posts', shelterPostsRoutes);
+app.use('/feed_events', feedEventsRoutes);
 
 // Preferences & notifications
-app.use('/api/email-notifications', emailNotificationsRoutes);
+app.use('/email-notifications', emailNotificationsRoutes);
 
 const swaggerPath = path.join(__dirname, 'swagger-output.json');
 let swaggerDocument = null;

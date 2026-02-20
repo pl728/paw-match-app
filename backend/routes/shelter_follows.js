@@ -1,16 +1,17 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
 import { followShelter, unfollowShelter } from '../dao/shelter_follows.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Follow a shelter
-router.post('/', asyncHandler(async function (req, res) {
-    const userId = req.body.user_id;
+router.post('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {
+    const userId = req.userId;
     const shelterId = req.body.shelter_id;
 
-    if (!userId || !shelterId) {
-        return res.status(400).json({ error: 'user_id and shelter_id are required' });
+    if (!shelterId) {
+        return res.status(400).json({ error: 'shelter_id is required' });
     }
 
     await followShelter(userId, shelterId);
@@ -18,12 +19,12 @@ router.post('/', asyncHandler(async function (req, res) {
 }));
 
 // Unfollow a shelter
-router.delete('/', asyncHandler(async function (req, res) {
-    const userId = req.body.user_id;
+router.delete('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {
+    const userId = req.userId;
     const shelterId = req.body.shelter_id;
 
-    if (!userId || !shelterId) {
-        return res.status(400).json({ error: 'user_id and shelter_id are required' });
+    if (!shelterId) {
+        return res.status(400).json({ error: 'shelter_id is required' });
     }
 
     await unfollowShelter(userId, shelterId);

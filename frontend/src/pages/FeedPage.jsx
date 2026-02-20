@@ -1,16 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import FeedList from "../components/FeedList.jsx";
-import { mockFeedItems } from "../data/mockFeedItems.js";
-import { Link } from "react-router-dom";
 
-function simulateFetch({ mode }) {
-  return new Promise((resolve, reject) => {
-    window.setTimeout(() => {
-      if (mode === "error") return reject(new Error("Failed to load feed."));
-      if (mode === "empty") return resolve([]);
-      return resolve(mockFeedItems);
-    }, 500);
-  });
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+function mapRowToFeedItem(row) {
+  return {
+    id: row.id,
+    type: row.event_type,
+    createdAt: row.created_at,
+    shelter: {
+      id: row.shelter_id,
+      name: row.shelter_name,
+      location: row.shelter_location ?? "",
+    },
+    pet: row.pet_id
+      ? {
+          id: row.pet_id,
+          name: row.pet_name ?? "",
+          primaryPhotoUrl: row.primary_photo_url ?? "",
+        }
+      : null,
+    title: row.title,
+    body: row.body,
+  };
 }
 
 export default function FeedPage() {
@@ -19,7 +31,6 @@ export default function FeedPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [filterType, setFilterType] = useState("all");
-  const [demoMode, setDemoMode] = useState("normal"); // normal | empty | error
 
   useEffect(() => {
     let isAlive = true;
@@ -27,23 +38,35 @@ export default function FeedPage() {
     async function load() {
       setStatus("loading");
       setErrorMsg("");
+
       try {
-        const data = await simulateFetch({ mode: demoMode });
+        const res = await fetch(`${API_BASE}/feed_events?limit=50`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error(`Failed to load feed (${res.status})`);
+
+        const data = await res.json();
+
+        const rows = Array.isArray(data) ? data : (data.items ?? []);
+        const mapped = rows.map(mapRowToFeedItem);
+
         if (!isAlive) return;
-        setItems(data);
+        setItems(mapped);
         setStatus("ready");
       } catch (err) {
         if (!isAlive) return;
         setErrorMsg(err?.message || "Unknown error");
         setStatus("error");
       }
+
     }
 
     load();
     return () => {
       isAlive = false;
     };
-  }, [demoMode]);
+  }, []);
 
   const visibleItems = useMemo(() => {
     if (filterType === "all") return items;
@@ -58,10 +81,6 @@ export default function FeedPage() {
           <p className="muted">Latest updates from shelters and pets.</p>
         </div>
 
-        <p>
-          <Link to="/"><button>Home</button></Link>
-        </p>
-
         <div className="controls">
           <label className="control">
             <span className="control-label">Type</span>
@@ -75,14 +94,9 @@ export default function FeedPage() {
             </select>
           </label>
 
-          <label className="control">
-            <span className="control-label">Demo</span>
-            <select value={demoMode} onChange={(e) => setDemoMode(e.target.value)}>
-              <option value="normal">Normal</option>
-              <option value="empty">Empty</option>
-              <option value="error">Error</option>
-            </select>
-          </label>
+          <button className="btn" onClick={() => window.location.reload()}>
+            Refresh
+          </button>
         </div>
       </div>
 
@@ -98,7 +112,7 @@ export default function FeedPage() {
         <div className="card">
           <h2>Could not load feed</h2>
           <p className="muted">{errorMsg}</p>
-          <button className="btn" onClick={() => setDemoMode("normal")}>
+          <button className="btn" onClick={() => window.location.reload()}>
             Retry
           </button>
         </div>
@@ -107,9 +121,7 @@ export default function FeedPage() {
       {status === "ready" && visibleItems.length === 0 && (
         <div className="card">
           <h2>No activity yet</h2>
-          <p className="muted">
-            Try switching the filter to “All” or check back later.
-          </p>
+          <p className="muted">Check back later.</p>
         </div>
       )}
 

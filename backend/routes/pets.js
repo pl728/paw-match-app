@@ -1,5 +1,4 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
 import {
     createPet,
@@ -9,58 +8,11 @@ import {
     deletePet
 } from '../dao/pets.js';
 import { getShelterByUserId } from '../dao/shelters.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-function requireJwtSecret(res) {
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-        res.status(500).json({ error: 'JWT_SECRET is not set' });
-        return null;
-    }
-    return jwtSecret;
-}
-
-function getAuthPayload(req, res) {
-    const authHeader = req.headers.authorization || '';
-    if (!authHeader.startsWith('Bearer ')) {
-        res.status(401).json({ error: 'Missing auth token' });
-        return null;
-    }
-
-    const jwtSecret = requireJwtSecret(res);
-    if (!jwtSecret) {
-        return null;
-    }
-
-    const token = authHeader.slice('Bearer '.length).trim();
-    try {
-        return jwt.verify(token, jwtSecret);
-    } catch (err) {
-        res.status(401).json({ error: 'Invalid or expired token' });
-        return null;
-    }
-}
-
-async function requireShelterAdmin(req, res) {
-    const payload = getAuthPayload(req, res);
-    if (!payload) {
-        return null;
-    }
-
-    if (payload.role !== 'shelter_admin') {
-        res.status(403).json({ error: 'Shelter admin access required' });
-        return null;
-    }
-
-    return payload;
-}
-
-router.post('/', asyncHandler(async function (req, res) {
-    const payload = await requireShelterAdmin(req, res);
-    if (!payload) {
-        return;
-    }
+router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
 
     const name = req.body.name;
     const species = req.body.species || null;
@@ -75,7 +27,7 @@ router.post('/', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'name is required' });
     }
 
-    const shelter = await getShelterByUserId(payload.sub);
+    const shelter = await getShelterByUserId(req.userId);
     if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found for user' });
     }
@@ -108,13 +60,8 @@ router.get('/:id', asyncHandler(async function (req, res) {
     res.json(pet);
 }));
 
-router.put('/:id', asyncHandler(async function (req, res) {
-    const payload = await requireShelterAdmin(req, res);
-    if (!payload) {
-        return;
-    }
-
-    const shelter = await getShelterByUserId(payload.sub);
+router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const shelter = await getShelterByUserId(req.userId);
     if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found for user' });
     }
@@ -155,13 +102,8 @@ router.put('/:id', asyncHandler(async function (req, res) {
     res.json(updated);
 }));
 
-router.delete('/:id', asyncHandler(async function (req, res) {
-    const payload = await requireShelterAdmin(req, res);
-    if (!payload) {
-        return;
-    }
-
-    const shelter = await getShelterByUserId(payload.sub);
+router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const shelter = await getShelterByUserId(req.userId);
     if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found for user' });
     }

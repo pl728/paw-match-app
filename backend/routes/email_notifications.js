@@ -1,6 +1,7 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
 import { getEmailNotifications, updateEmailNotifications } from '../dao/email_notifications.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -13,11 +14,15 @@ const ALLOWED_DIGEST_FREQUENCIES = [
 ];
 
 // Returns the user's email notification preferences.
- router.get('/:userId', asyncHandler(async function (req, res) {
+router.get('/:userId', requireAuth, asyncHandler(async function (req, res) {
     const userId = req.params.userId;
 
     if (!userId) {
         return res.status(400).json({ error: 'userId is required' });
+    }
+
+    if (userId !== req.userId) {
+        return res.status(403).json({ error: 'Not allowed to access these preferences' });
     }
 
     const preferences = await getEmailNotifications(userId);
@@ -29,11 +34,15 @@ const ALLOWED_DIGEST_FREQUENCIES = [
 }));
 
 // Updates one or more email notification preferences.
-router.patch('/:userId', asyncHandler(async function (req, res) {
+router.patch('/:userId', requireAuth, asyncHandler(async function (req, res) {
     const userId = req.params.userId;
 
     if (!userId) {
         return res.status(400).json({ error: 'userId is required' });
+    }
+
+    if (userId !== req.userId) {
+        return res.status(403).json({ error: 'Not allowed to update these preferences' });
     }
 
     const updates = {};
