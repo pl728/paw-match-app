@@ -11,6 +11,7 @@ import AuthedHome from './pages/AuthedHome.jsx'
 import Profile from './pages/Profile.jsx'
 import SetupShelter from './pages/SetupShelter.jsx'
 import Navbar from './components/Navbar.jsx'
+import BrowseAllPets from "./pages/BrowseAllPets.jsx";
 import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/AuthContext.jsx"
@@ -34,6 +35,11 @@ function Home() {
           <Link to="/register" className="cta">Get started</Link>
         </div>
       </main>
+
+      <div style={{ marginTop: 32 }}>
+        <BrowseAllPets />
+      </div>
+
     </div>
   )
 }
@@ -98,6 +104,7 @@ function App() {
         <Route path="/setup-shelter" element={<RequireRole role="shelter_admin"><SetupShelter /></RequireRole>} />
         <Route path="/create-pet" element={<RequireRole role="shelter_admin"><CreatePet /></RequireRole>} />
         <Route path="/view-pets" element={<RequireAuth><ViewPets /></RequireAuth>} />
+        <Route path="/browse-all-pets" element={<RequireAuth><BrowseAllPets /></RequireAuth>} />
         <Route path="/browse-shelters" element={<RequireAuth><BrowseShelters /></RequireAuth>} />
         <Route path="/feed" element={<RequireAuth><FeedPage /></RequireAuth>} />
         <Route path="/login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
