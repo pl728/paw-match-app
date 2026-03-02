@@ -9,6 +9,7 @@ import {
 } from '../dao/pets.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { createFeedEvent } from '../dao/feed_events.js';
 
 const router = express.Router();
 
@@ -43,6 +44,21 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
         description: description,
         status: status
     });
+
+    try {
+        await createFeedEvent('new_pet', {
+            shelter_id: shelter.id,
+            pet_id: created.id,
+            payload: {
+                title: `New pet: ${name}`,
+                body: description || `${name} is now available at ${shelter.name}.`,
+                primaryPhotoUrl: null,
+            },
+        });
+    } catch (e) {
+        console.error('Failed to create feed event for new pet:', e);
+    }
+
     res.status(201).json(created);
 }));
 
@@ -97,6 +113,22 @@ router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async
     const updated = await updatePet(req.params.id, fields);
     if (!updated) {
         return res.status(404).json({ error: 'Pet not found' });
+    }
+
+    if (fields.status === 'adopted' || fields.status === 'available') {
+        const eventType = fields.status === 'adopted' ? 'adoption_event' : 'status_change';
+        const title = fields.status === 'adopted'
+            ? `${pet.name} has been adopted!`
+            : `${pet.name} is available for adoption`;
+        try {
+            await createFeedEvent(eventType, {
+                shelter_id: shelter.id,
+                pet_id: pet.id,
+                payload: { title, body: null, primaryPhotoUrl: null },
+            });
+        } catch (e) {
+            console.error('Failed to create feed event for pet status change:', e);
+        }
     }
 
     res.json(updated);
