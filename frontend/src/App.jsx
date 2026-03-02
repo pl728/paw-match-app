@@ -1,7 +1,6 @@
 import React from 'react'
 import pawmatchlogo from './assets/pawmatch_logo.png'
 import CreatePet from './pages/CreatePet.jsx'
-import ViewPets from './pages/ViewPets.jsx'
 import BrowseShelters from './pages/BrowseShelters.jsx'
 import UserLogin from './pages/UserLogin.jsx'
 import FeedPage from './pages/FeedPage.jsx'
@@ -14,6 +13,9 @@ import Navbar from './components/Navbar.jsx'
 import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/AuthContext.jsx"
+import FindAndBrowse from './pages/FindAndBrowse.jsx'
+import BrowsePets from './pages/BrowsePets.jsx'
+import PetFinder from './pages/PetFinder.jsx'
 
 // References: 
 // https://www.geeksforgeeks.org/reactjs/reactjs-components
@@ -97,7 +99,9 @@ function App() {
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/setup-shelter" element={<RequireRole role="shelter_admin"><SetupShelter /></RequireRole>} />
         <Route path="/create-pet" element={<RequireRole role="shelter_admin"><CreatePet /></RequireRole>} />
-        <Route path="/view-pets" element={<RequireAuth><ViewPets /></RequireAuth>} />
+        <Route path="/find-and-browse" element={<RequireAuth><FindAndBrowse/></RequireAuth>} />
+        <Route path="/pet-finder" element={<RequireAuth><PetFinder/></RequireAuth>} />
+        <Route path="/browse-pets" element={<RequireAuth><BrowsePets/></RequireAuth>} />
         <Route path="/browse-shelters" element={<RequireAuth><BrowseShelters /></RequireAuth>} />
         <Route path="/feed" element={<RequireAuth><FeedPage /></RequireAuth>} />
         <Route path="/login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
