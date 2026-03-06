@@ -43,14 +43,14 @@ JOIN pets p
 WHERE u.username = 'adopter1';
 
 INSERT INTO feed_events (event_type, shelter_id, post_id)
-SELECT type, shelter_id, id
+SELECT 'shelter_post', shelter_id, id
 FROM shelter_posts sp
 WHERE sp.title = 'Adoption Event This Weekend';
 
 INSERT INTO feed_events (event_type, shelter_id, pet_id, payload)
-SELECT 'PET_CREATED', s.id, p.id, JSON_OBJECT('pet_name', p.name)
+SELECT 'new_pet', s.id, p.id, JSON_OBJECT('title', CONCAT('New pet: ', p.name), 'body', p.description, 'primaryPhotoUrl', NULL)
 FROM shelters s
-JOIN pets p 
+JOIN pets p
 	ON p.shelter_id = s.id
 WHERE s.name = 'Happy Tails Shelter';
 
