@@ -1,4 +1,14 @@
+import crypto from 'node:crypto';
 import db from '../db/index.js';
+
+export async function createFeedEvent(eventType, { shelter_id = null, pet_id = null, post_id = null, payload = null } = {}) {
+  const id = crypto.randomUUID();
+  await db.query(
+    `INSERT INTO feed_events (id, event_type, shelter_id, pet_id, post_id, payload)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [id, eventType, shelter_id, pet_id, post_id, payload ? JSON.stringify(payload) : null]
+  );
+}
 
 export async function listRecentActivity(limit = 25) {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 25, 100));

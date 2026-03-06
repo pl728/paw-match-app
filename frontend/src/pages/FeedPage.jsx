@@ -32,40 +32,32 @@ export default function FeedPage() {
 
   const [filterType, setFilterType] = useState("all");
 
-  useEffect(() => {
-    let isAlive = true;
+  async function load() {
+    setStatus("loading");
+    setErrorMsg("");
 
-    async function load() {
-      setStatus("loading");
-      setErrorMsg("");
+    try {
+      const res = await fetch(`${API_BASE}/feed_events?limit=50`, {
+        credentials: "include",
+      });
 
-      try {
-        const res = await fetch(`${API_BASE}/feed_events?limit=50`, {
-          credentials: "include",
-        });
+      if (!res.ok) throw new Error(`Failed to load feed (${res.status})`);
 
-        if (!res.ok) throw new Error(`Failed to load feed (${res.status})`);
+      const data = await res.json();
 
-        const data = await res.json();
+      const rows = Array.isArray(data) ? data : (data.items ?? []);
+      const mapped = rows.map(mapRowToFeedItem);
 
-        const rows = Array.isArray(data) ? data : (data.items ?? []);
-        const mapped = rows.map(mapRowToFeedItem);
-
-        if (!isAlive) return;
-        setItems(mapped);
-        setStatus("ready");
-      } catch (err) {
-        if (!isAlive) return;
-        setErrorMsg(err?.message || "Unknown error");
-        setStatus("error");
-      }
-
+      setItems(mapped);
+      setStatus("ready");
+    } catch (err) {
+      setErrorMsg(err?.message || "Unknown error");
+      setStatus("error");
     }
+  }
 
+  useEffect(() => {
     load();
-    return () => {
-      isAlive = false;
-    };
   }, []);
 
   const visibleItems = useMemo(() => {
@@ -94,7 +86,7 @@ export default function FeedPage() {
             </select>
           </label>
 
-          <button className="btn" onClick={() => window.location.reload()}>
+          <button className="btn" onClick={load}>
             Refresh
           </button>
         </div>
@@ -112,7 +104,7 @@ export default function FeedPage() {
         <div className="card">
           <h2>Could not load feed</h2>
           <p className="muted">{errorMsg}</p>
-          <button className="btn" onClick={() => window.location.reload()}>
+          <button className="btn" onClick={load}>
             Retry
           </button>
         </div>
