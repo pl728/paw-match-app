@@ -62,7 +62,13 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/browse-all-pets" style={navLinkStyle('/browse-all-pets')}>
+                  <Link to="/find-and-browse" style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: location.pathname === '/find-and-browse' ? '#fff' : '#cdd6e3',
+                    background: location.pathname === '/find-and-browse' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                  }}>
                     Browse Pets
                   </Link>
                 </NavigationMenu.Link>

@@ -28,7 +28,7 @@ export async function runTests() {
         const configPath = path.join(backendRoot, 'jest.config.cjs');
         const jestBin = path.join(backendRoot, 'node_modules', 'jest', 'bin', 'jest.js');
 
-        const child = spawn(process.execPath, ['--experimental-vm-modules', jestBin, '--config', configPath], {
+        const child = spawn(process.execPath, ['--experimental-vm-modules', jestBin, '--config', configPath, '--runInBand'], {
             stdio: 'inherit',
             shell: false,
             cwd: backendRoot

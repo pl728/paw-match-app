@@ -12,6 +12,7 @@ function AuthedHome() {
       textAlign: 'center'
     }}>
       <h1>Welcome back, {user?.username || "user"}</h1>
+      <p></p>
     </div>
   );
 }

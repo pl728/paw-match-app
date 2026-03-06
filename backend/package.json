@@ -5,6 +5,8 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
+    "prestart": "node ./scripts/generate_swagger.js",
+    "swagger": "node ./scripts/generate_swagger.js",
     "test": "node ./scripts/run_tests.js",
     "start": "node main.js"
   },
@@ -17,7 +19,10 @@
     "express": "^5.1.0",
     "forever": "^4.0.3",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.0"
+    "mysql2": "^3.14.0",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
