@@ -30,15 +30,29 @@ export async function listPets() {
 }
 
 export async function getPetById(petId) {
-    const result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status FROM pets WHERE id = ?',
-        [petId]
-    );
-    if (result.rows.length === 0) {
-        return null;
-    }
-    return result.rows[0];
+  const petResult = await db.query(
+    `SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status
+     FROM pets
+     WHERE id = ?`,
+    [petId]
+  );
+
+  if (petResult.rows.length === 0) return null;
+
+  const pet = petResult.rows[0];
+
+  const photosResult = await db.query(
+    `SELECT id, url
+     FROM pet_photos
+     WHERE pet_id = ?
+     ORDER BY created_at DESC`,
+    [petId]
+  );
+
+  pet.photos = photosResult.rows;
+  return pet;
 }
+
 
 export async function getPetsByShelterId(shelterId) {
     const result = await db.query(

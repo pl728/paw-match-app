@@ -15,6 +15,14 @@ function Navbar() {
     navigate('/', { replace: true });
   };
 
+  const navLinkStyle = (path) => ({
+    padding: '8px 16px',
+    borderRadius: '8px',
+    textDecoration: 'none',
+    color: location.pathname === path ? '#fff' : '#cdd6e3',
+    background: location.pathname === path ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+  });
+
   return (
     <nav style={{
       position: 'sticky',
@@ -33,7 +41,10 @@ function Navbar() {
         justifyContent: 'space-between',
         gap: '24px'
       }}>
-        <Link to={isAuthed ? "/home" : "/"} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit' }}>
+        <Link
+          to={isAuthed ? "/home" : "/"}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit' }}
+        >
           <img src={pawmatchlogo} style={{ height: '36px' }} alt="PawMatch" />
           <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>PawMatch</span>
         </Link>
@@ -43,13 +54,7 @@ function Navbar() {
             <NavigationMenu.List style={{ display: 'flex', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/home" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/home' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/home' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
+                  <Link to="/home" style={navLinkStyle('/home')}>
                     Home
                   </Link>
                 </NavigationMenu.Link>
@@ -69,15 +74,19 @@ function Navbar() {
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
+              {user?.role === 'shelter_admin' && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/view-pets" style={navLinkStyle('/view-pets')}>
+                      View Pets
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/browse-shelters" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/browse-shelters' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/browse-shelters' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
+                  <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
                     Browse Shelters
                   </Link>
                 </NavigationMenu.Link>
@@ -85,13 +94,7 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/feed" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/feed' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/feed' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
+                  <Link to="/feed" style={navLinkStyle('/feed')}>
                     Feed
                   </Link>
                 </NavigationMenu.Link>
@@ -100,13 +103,7 @@ function Navbar() {
               {user?.role === 'shelter_admin' && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
-                    <Link to="/create-pet" style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      color: location.pathname === '/create-pet' ? '#fff' : '#cdd6e3',
-                      background: location.pathname === '/create-pet' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                    }}>
+                    <Link to="/create-pet" style={navLinkStyle('/create-pet')}>
                       Add Pet
                     </Link>
                   </NavigationMenu.Link>
@@ -142,22 +139,28 @@ function Navbar() {
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
                   zIndex: 9999
                 }}>
-                  <DropdownMenu.Item style={{
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    color: '#cdd6e3',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }} onSelect={() => navigate('/profile')}>
+                  <DropdownMenu.Item
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      color: '#cdd6e3',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                    onSelect={() => navigate('/profile')}
+                  >
                     Profile
                   </DropdownMenu.Item>
-                  <DropdownMenu.Item style={{
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    color: '#cdd6e3',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }} onSelect={handleLogout}>
+                  <DropdownMenu.Item
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      color: '#cdd6e3',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                    onSelect={handleLogout}
+                  >
                     Logout
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>

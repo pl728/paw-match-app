@@ -11,6 +11,7 @@ import AuthedHome from './pages/AuthedHome.jsx'
 import Profile from './pages/Profile.jsx'
 import SetupShelter from './pages/SetupShelter.jsx'
 import Navbar from './components/Navbar.jsx'
+import BrowseAllPets from "./pages/BrowseAllPets.jsx";
 import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/AuthContext.jsx"
