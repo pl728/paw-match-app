@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useAuth } from '../auth/AuthContext.jsx';
+import { useAuth } from '../auth/useAuth.js';
 import pawmatchlogo from '../assets/pawmatch_logo.png';
 
 function Navbar() {
@@ -62,14 +62,16 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/find-and-browse" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/find-and-browse' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/find-and-browse' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
-                    Browse Pets
+                  <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
+                    Browse
+                  </Link>
+                </NavigationMenu.Link>
+              </NavigationMenu.Item>
+
+              <NavigationMenu.Item>
+                <NavigationMenu.Link asChild>
+                  <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
+                    Search
                   </Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>

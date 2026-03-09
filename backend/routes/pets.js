@@ -63,8 +63,8 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
 }));
 
 router.get('/', asyncHandler(async function (req, res) {
-    const pets = await listPets();
-    res.json(pets);
+    const result = await listPets({ page: req.query.page, limit: req.query.limit });
+    res.json(result);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {

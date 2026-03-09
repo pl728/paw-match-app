@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Text, Flex, Box } from "@radix-ui/themes";
-import BrowsePets from "./BrowsePets";
 
 export default function FindAndBrowse() {
   const navigate = useNavigate();

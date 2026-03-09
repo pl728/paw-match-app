@@ -22,11 +22,24 @@ export async function createPet(options) {
     return result.rows[0];
 }
 
-export async function listPets() {
+export async function listPets({ page = 1, limit = 25 } = {}) {
+    const safeLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
+    const safePage = Math.max(Number(page) || 1, 1);
+    const offset = (safePage - 1) * safeLimit;
+
+    const countResult = await db.query('SELECT COUNT(*) AS total FROM pets');
+    const total = Number(countResult.rows[0].total);
+
     const result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, status FROM pets ORDER BY created_at DESC'
+        `SELECT p.id, p.shelter_id, p.name, p.species, p.breed, p.age_years, p.sex, p.size, p.status,
+                (SELECT url FROM pet_photos WHERE pet_id = p.id ORDER BY created_at DESC LIMIT 1) AS primary_photo_url
+         FROM pets p
+         ORDER BY p.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [safeLimit, offset]
     );
-    return result.rows;
+
+    return { data: result.rows, total, page: safePage, limit: safeLimit };
 }
 
 export async function getPetById(petId) {

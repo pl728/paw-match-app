@@ -21,8 +21,8 @@ function PetFinder() {
     let isActive = true;
     async function fetchPets() {
       try {
-        const data = await getPets();
-        if (isActive) setPets(data);
+        const result = await getPets();
+        if (isActive) setPets(result.data);
       } catch (err) {
         if (isActive) setError(err.message);
       } finally {
@@ -69,7 +69,6 @@ function PetFinder() {
     Dog: ["Labrador", "Golden Retriever", "Other"],
     Cat: ["Siamese", "Persian", "Other"]
   };
-  const sexOptions = ["Male", "Female"];
   const ageOptions = ["Young", "Middle-Aged", "Senior-Citizen"];
   const sizeOptions = ["XS", "Small", "Medium", "Large", "XL"];
 

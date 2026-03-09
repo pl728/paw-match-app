@@ -8,8 +8,8 @@ export function createPet(payload) {
   });
 }
 
-export function getPets() {
-  return apiFetch("/pets");
+export function getPets({ page = 1, limit = 25 } = {}) {
+  return apiFetch(`/pets?page=${page}&limit=${limit}`);
 }
 
 export function getPetById(id) {
