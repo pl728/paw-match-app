@@ -55,8 +55,9 @@ describe('pets endpoints', function () {
             .get('/pets')
             .expect(200);
 
-        expect(Array.isArray(res.body)).toBe(true);
-        expect(res.body.length).toBeGreaterThan(0);
+        expect(Array.isArray(res.body.data)).toBe(true);
+        expect(res.body.data.length).toBeGreaterThan(0);
+        expect(typeof res.body.total).toBe('number');
     });
 
     it('updates a pet', async function () {
