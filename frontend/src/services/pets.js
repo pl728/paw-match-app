@@ -1,6 +1,13 @@
 import { apiFetch } from "./api.js";
 
 export function createPet(payload) {
+  if (payload instanceof FormData) {
+    return apiFetch("/pets", {
+      method: "POST",
+      body: payload,
+    });
+  }
+
   return apiFetch("/pets", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

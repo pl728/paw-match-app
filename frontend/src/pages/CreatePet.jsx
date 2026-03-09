@@ -25,11 +25,13 @@ function CreatePet() {
     breed: "",
     age_years: "",
     sex: "",
-    size: "small"
+    size: "small",
+    description: ""
   });
 
   const [breedSearch, setBreedSearch] = useState("");
   const [checkingShelter, setCheckingShelter] = useState(true);
+  const [photoFile, setPhotoFile] = useState(null);
 
   useEffect(() => {
     async function checkShelter() {
@@ -60,8 +62,17 @@ function CreatePet() {
     e.preventDefault();
 
     try {
-      await createPet(formData);
-      navigate('/view-pets');
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        payload.append(key, value);
+      });
+
+      if (photoFile) {
+        payload.append("photo", photoFile);
+      }
+
+      await createPet(payload);
+      navigate('/profile');
     } catch (err) {
       alert(`Error creating pet: ${err.message}`);
     }
@@ -194,6 +205,28 @@ function CreatePet() {
                     <Select.Item value="large">Large</Select.Item>
                   </Select.Content>
                 </Select.Root>
+              </label>
+
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Description</Text>
+                <TextField.Root
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Add a short description"
+                />
+              </label>
+
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Pet Photo (optional)</Text>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                />
+                <Text as="div" size="1" color="gray" mt="1">
+                  If you skip this, the app will use the default cat, dog, or animal image.
+                </Text>
               </label>
 
               <Button type="submit" size="3" style={{ marginTop: '12px' }}>

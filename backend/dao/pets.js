@@ -22,6 +22,15 @@ export async function createPet(options) {
     return result.rows[0];
 }
 
+export async function addPetPhoto(petId, url) {
+    const photoId = crypto.randomUUID();
+    await db.query(
+        'INSERT INTO pet_photos (id, pet_id, url) VALUES (?, ?, ?)',
+        [photoId, petId, url]
+    );
+    return { id: photoId, pet_id: petId, url: url };
+}
+
 export async function listPets({ page = 1, limit = 25 } = {}) {
     const safeLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
     const safePage = Math.max(Number(page) || 1, 1);
@@ -64,6 +73,39 @@ export async function getPetById(petId) {
 
   pet.photos = photosResult.rows;
   return pet;
+}
+
+export async function getPrimaryPetPhoto(petId) {
+    const result = await db.query(
+        `SELECT id, url
+         FROM pet_photos
+         WHERE pet_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [petId]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+export async function getPetPhotoById(petId, photoId) {
+    const result = await db.query(
+        `SELECT id, url
+         FROM pet_photos
+         WHERE pet_id = ? AND id = ?
+         LIMIT 1`,
+        [petId, photoId]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
 }
 
 

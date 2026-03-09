@@ -62,29 +62,19 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
-                    Browse
+                  <Link to="/feed" style={navLinkStyle('/feed')}>
+                    Feed
                   </Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
-                    Search
+                  <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
+                    Browse Pets
                   </Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
-
-              {user?.role === 'shelter_admin' && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/view-pets" style={navLinkStyle('/view-pets')}>
-                      View Pets
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
@@ -96,8 +86,8 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/feed" style={navLinkStyle('/feed')}>
-                    Feed
+                  <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
+                    Search
                   </Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
