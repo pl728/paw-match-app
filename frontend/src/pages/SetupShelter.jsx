@@ -3,6 +3,42 @@ import { useNavigate } from "react-router-dom";
 import { Card, Flex, Heading, Text, TextField, TextArea, Button } from "@radix-ui/themes";
 import { createShelter } from "../services/shelters.js";
 
+const SHELTER_PREFIXES = ["Happy", "Sunny", "Cozy", "Gentle", "Silver", "River", "Maple", "Bright"];
+const SHELTER_SUFFIXES = ["Paws", "Tails", "Haven", "Rescue", "Harbor", "Hearts", "Friends", "Sanctuary"];
+const STREET_NAMES = ["Oak", "Maple", "Cedar", "Pine", "Willow", "Sunset", "Lake", "Hill"];
+const CITIES = [
+  { city: "Portland", state: "OR", postal_code: "97205" },
+  { city: "Seattle", state: "WA", postal_code: "98101" },
+  { city: "Boise", state: "ID", postal_code: "83702" },
+  { city: "Denver", state: "CO", postal_code: "80203" },
+  { city: "Austin", state: "TX", postal_code: "78701" }
+];
+
+function randomFrom(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function buildRandomShelterForm() {
+  const prefix = randomFrom(SHELTER_PREFIXES);
+  const suffix = randomFrom(SHELTER_SUFFIXES);
+  const location = randomFrom(CITIES);
+  const streetNumber = Math.floor(Math.random() * 9000) + 1000;
+  const street = randomFrom(STREET_NAMES);
+  const slug = `${prefix}-${suffix}-${Date.now().toString(36).slice(-4)}`.toLowerCase();
+
+  return {
+    name: `${prefix} ${suffix} Shelter`,
+    description: `A welcoming rescue focused on helping local pets find safe, loving homes.`,
+    phone: `(555) ${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 9000 + 1000)}`,
+    email: `${slug}@example.org`,
+    address_line1: `${streetNumber} ${street} Street`,
+    address_line2: "",
+    city: location.city,
+    state: location.state,
+    postal_code: location.postal_code
+  };
+}
+
 function SetupShelter() {
   const navigate = useNavigate();
 
@@ -21,6 +57,10 @@ function SetupShelter() {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData({...formData, [name]: value});
+  }
+
+  function handleFillRandom() {
+    setFormData(buildRandomShelterForm());
   }
 
   async function handleSubmit(e) {
@@ -154,9 +194,14 @@ function SetupShelter() {
                 </label>
               </Flex>
 
-              <Button type="submit" size="3" style={{ marginTop: '12px' }}>
-                Create Shelter
-              </Button>
+              <Flex gap="3" mt="3">
+                <Button type="button" size="3" variant="soft" onClick={handleFillRandom}>
+                  Fill random
+                </Button>
+                <Button type="submit" size="3" style={{ flex: 1 }}>
+                  Create Shelter
+                </Button>
+              </Flex>
             </Flex>
           </form>
         </Flex>

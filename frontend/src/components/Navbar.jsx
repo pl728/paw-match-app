@@ -9,6 +9,7 @@ function Navbar() {
   const { isAuthed, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isShelterAdmin = user?.role === 'shelter_admin';
 
   const handleLogout = () => {
     logout();
@@ -47,6 +48,24 @@ function Navbar() {
         >
           <img src={pawmatchlogo} style={{ height: '36px' }} alt="PawMatch" />
           <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>PawMatch</span>
+          {isShelterAdmin && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: '#b42318',
+                color: '#fff',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase'
+              }}
+            >
+              Admin
+            </span>
+          )}
         </Link>
 
         {isAuthed && (
@@ -68,31 +87,37 @@ function Navbar() {
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
-                  <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
-                    Browse Pets
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
+                      Pets
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
 
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
-                  <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
-                    Browse Shelters
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
+                      Shelters
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
 
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
-                  <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
-                    Search
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
+                      Search
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
 
-              {user?.role === 'shelter_admin' && (
+              {isShelterAdmin && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
                     <Link to="/create-pet" style={navLinkStyle('/create-pet')}>

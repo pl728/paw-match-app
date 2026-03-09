@@ -22,3 +22,11 @@ export function getPets({ page = 1, limit = 25 } = {}) {
 export function getPetById(id) {
   return apiFetch(`/pets/${id}`);
 }
+
+export function updatePet(id, updates) {
+  return apiFetch(`/pets/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+}

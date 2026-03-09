@@ -1,6 +1,48 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPetById } from "../services/pets.js";
+import Spinner from "../components/ui/spinner.jsx";
+
+function PetPhoto({ photo, petName }) {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: 250,
+        minHeight: 180,
+        borderRadius: "8px",
+        overflow: "hidden",
+        background: "rgba(255, 255, 255, 0.06)",
+      }}
+    >
+      {loading ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(11, 12, 16, 0.55)",
+          }}
+        >
+          <Spinner size={28} label="Loading pet photo" />
+        </div>
+      ) : null}
+
+      <img
+        src={photo.url}
+        alt={petName}
+        width="250"
+        style={{ borderRadius: "8px", display: "block" }}
+        onLoad={() => setLoading(false)}
+        onError={() => setLoading(false)}
+      />
+    </div>
+  );
+}
 
 export default function PetDetails() {
   const { id } = useParams();
@@ -53,13 +95,7 @@ export default function PetDetails() {
           <h3>Photos</h3>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             {pet.photos.map((photo) => (
-              <img
-                key={photo.id}
-                src={photo.url}
-                alt={pet.name}
-                width="250"
-                style={{ borderRadius: "8px" }}
-              />
+              <PetPhoto key={photo.id} photo={photo} petName={pet.name} />
             ))}
           </div>
         </>

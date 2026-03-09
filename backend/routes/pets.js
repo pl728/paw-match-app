@@ -219,7 +219,8 @@ router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async
         }
     }
 
-    res.json(updated);
+    const refreshed = await getPetById(req.params.id);
+    res.json(withProxyPhotoUrls(req, refreshed || updated));
 }));
 
 router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {

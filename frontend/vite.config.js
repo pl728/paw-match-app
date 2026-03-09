@@ -19,6 +19,10 @@ export default defineConfig({
       '/shelters': 'http://localhost:4516',
       '/users': 'http://localhost:4516',
       '/feed_events': 'http://localhost:4516',
+      '/favorites': 'http://localhost:4516',
+      '/shelter-follows': 'http://localhost:4516',
+      '/shelter-posts': 'http://localhost:4516',
+      '/email-notifications': 'http://localhost:4516',
       '/api': 'http://localhost:4516'
     }
   }

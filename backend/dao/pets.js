@@ -111,7 +111,11 @@ export async function getPetPhotoById(petId, photoId) {
 
 export async function getPetsByShelterId(shelterId) {
     const result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, status, created_at FROM pets WHERE shelter_id = ? ORDER BY created_at DESC',
+        `SELECT p.id, p.shelter_id, p.name, p.species, p.breed, p.age_years, p.sex, p.size, p.status, p.created_at,
+                (SELECT url FROM pet_photos WHERE pet_id = p.id ORDER BY created_at DESC LIMIT 1) AS primary_photo_url
+         FROM pets p
+         WHERE p.shelter_id = ?
+         ORDER BY p.created_at DESC`,
         [shelterId]
     );
     return result.rows;

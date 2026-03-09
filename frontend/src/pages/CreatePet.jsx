@@ -16,6 +16,59 @@ const BREEDS = [
   "Birman", "Oriental Shorthair", "Devon Rex", "Burmese", "Russian Blue", "Mixed Breed"
 ].sort();
 
+const PET_NAMES = [
+  "Mochi", "Biscuit", "Noodle", "Pepper", "Maple", "Clover", "Scout", "Luna",
+  "Milo", "Poppy", "Rufus", "Olive", "Pickles", "Sunny", "Juniper", "Teddy"
+];
+const SPECIES_OPTIONS = ["Dog", "Cat", "Bird", "Rabbit", "Guinea Pig", "Hamster", "Other"];
+const SEX_OPTIONS = ["Male", "Female", "Unknown"];
+const SIZE_OPTIONS = ["small", "medium", "large"];
+const BREEDS_BY_SPECIES = {
+  Dog: [
+    "Labrador Retriever",
+    "German Shepherd",
+    "Golden Retriever",
+    "French Bulldog",
+    "Beagle",
+    "Border Collie",
+    "Mixed Breed"
+  ],
+  Cat: [
+    "Persian",
+    "Maine Coon",
+    "Ragdoll",
+    "Siamese",
+    "American Shorthair",
+    "Russian Blue",
+    "Mixed Breed"
+  ],
+  Bird: ["Mixed Breed"],
+  Rabbit: ["Mixed Breed"],
+  "Guinea Pig": ["Mixed Breed"],
+  Hamster: ["Mixed Breed"],
+  Other: ["Mixed Breed"]
+};
+
+function randomFrom(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function buildRandomPetForm() {
+  const species = randomFrom(SPECIES_OPTIONS);
+  const breed = randomFrom(BREEDS_BY_SPECIES[species] || BREEDS);
+  const name = randomFrom(PET_NAMES);
+
+  return {
+    name,
+    species,
+    breed,
+    age_years: String(Math.floor(Math.random() * 12) + 1),
+    sex: randomFrom(SEX_OPTIONS),
+    size: randomFrom(SIZE_OPTIONS),
+    description: `${name} is a friendly ${species.toLowerCase()} who enjoys attention and would love a new home.`
+  };
+}
+
 function CreatePet() {
   const navigate = useNavigate();
 
@@ -52,6 +105,13 @@ function CreatePet() {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData({...formData, [name]: value});
+  }
+
+  function handleFillRandom() {
+    const randomPet = buildRandomPetForm();
+    setFormData(randomPet);
+    setBreedSearch("");
+    setPhotoFile(null);
   }
 
   const filteredBreeds = BREEDS.filter(breed =>
@@ -229,9 +289,14 @@ function CreatePet() {
                 </Text>
               </label>
 
-              <Button type="submit" size="3" style={{ marginTop: '12px' }}>
-                Create Pet
-              </Button>
+              <Flex gap="3" mt="3">
+                <Button type="button" size="3" variant="soft" onClick={handleFillRandom}>
+                  Fill random
+                </Button>
+                <Button type="submit" size="3" style={{ flex: 1 }}>
+                  Create Pet
+                </Button>
+              </Flex>
             </Flex>
           </form>
         </Flex>

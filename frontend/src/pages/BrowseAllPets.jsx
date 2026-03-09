@@ -66,12 +66,6 @@ export default function BrowseAllPets() {
                 Grid
               </Button>
               <Button
-                variant={view === "details" ? "solid" : "soft"}
-                onClick={() => setView("details")}
-              >
-                Details
-              </Button>
-              <Button
                 variant={view === "table" ? "solid" : "soft"}
                 onClick={() => setView("table")}
               >
@@ -158,30 +152,6 @@ export default function BrowseAllPets() {
                   );
                 })}
               </div>
-            )}
-
-            {view === "details" && (
-              <Flex direction="column" gap="3">
-                {pets.map((pet) => (
-                  <Card key={pet.id} size="2">
-                    <Flex direction="column" gap="2">
-                      <Heading size="5">{pet.name}</Heading>
-                      <Text size="2" color="gray">
-                        Species: {pet.species || "Unknown"} • Breed:{" "}
-                        {pet.breed || "Unknown"}
-                      </Text>
-                      <Text size="2" color="gray">
-                        Age: {pet.age_years ?? "?"} • Sex: {pet.sex || "?"} •
-                        Size: {pet.size || "?"}
-                      </Text>
-                      <Text size="2" color="gray">
-                        Status: {pet.status || "?"}
-                      </Text>
-                      <Link to={`/pets/${pet.id}`}>View full details</Link>
-                    </Flex>
-                  </Card>
-                ))}
-              </Flex>
             )}
 
             {view === "table" && (

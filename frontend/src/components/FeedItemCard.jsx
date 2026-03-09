@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 function typeLabel(type) {
   const map = {
     new_pet: "New Pet",
@@ -16,8 +19,29 @@ function formatTime(isoString) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function FeedItemCard({ item }) {
+export default function FeedItemCard({ item, isShelterFollowed, onToggleShelterFollow }) {
+  const navigate = useNavigate();
   const time = formatTime(item?.createdAt);
+  const [following, setFollowing] = useState(false);
+  const [followState, setFollowState] = useState("");
+
+  async function handleFollowShelter() {
+    if (!item?.shelter?.id) {
+      return;
+    }
+
+    setFollowing(true);
+    setFollowState("");
+
+    try {
+      const result = await onToggleShelterFollow(item.shelter.id);
+      setFollowState(result?.message || "");
+    } catch (err) {
+      setFollowState(err?.message || "Could not follow shelter.");
+    } finally {
+      setFollowing(false);
+    }
+  }
 
   return (
     <article className="card feed-card">
@@ -57,7 +81,7 @@ export default function FeedItemCard({ item }) {
         {item?.pet?.id ? (
           <button
             className="btn btn-secondary"
-            onClick={() => alert(`Go to /pets/${item.pet.id}`)}
+            onClick={() => navigate(`/pets/${item.pet.id}`)}
           >
             View pet
           </button>
@@ -65,11 +89,14 @@ export default function FeedItemCard({ item }) {
 
         <button
           className="btn"
-          onClick={() => alert(`Follow shelter ${item?.shelter?.id || ""}`)}
+          onClick={handleFollowShelter}
+          disabled={!item?.shelter?.id || following || !onToggleShelterFollow}
         >
-          Follow shelter
+          {following ? (isShelterFollowed ? "Unfollowing..." : "Following...") : (isShelterFollowed ? "Unfollow" : "Follow")}
         </button>
       </div>
+
+      {followState ? <p className="meta muted">{followState}</p> : null}
     </article>
   );
 }
