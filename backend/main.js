@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +22,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 4516;
 
+app.set('trust proxy', true);
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 if (!process.env.DATABASE_URL) {

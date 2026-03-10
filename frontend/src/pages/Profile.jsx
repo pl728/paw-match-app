@@ -7,6 +7,14 @@ import { deleteShelter } from "../services/shelters.js";
 import { updatePet } from "../services/pets.js";
 
 const STATUS_OPTIONS = ["available", "pending", "adopted"];
+const PET_PLACEHOLDER_BY_SPECIES = {
+  Cat: "/cat.png",
+  Dog: "/dog.png",
+};
+
+function getPetPlaceholderImage(species) {
+  return PET_PLACEHOLDER_BY_SPECIES[species] || "/animal.png";
+}
 
 function prettyStatus(status) {
   if (!status) return "Unknown";
@@ -24,31 +32,15 @@ function buildPetStatusDrafts(pets) {
 }
 
 function renderPetImage(pet, size, borderRadius = 12) {
-  if (pet?.primary_photo_url) {
-    return (
-      <img
-        src={pet.primary_photo_url}
-        alt={pet.name || "Pet"}
-        style={{
-          width: size,
-          height: size,
-          borderRadius,
-          objectFit: "cover",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flexShrink: 0,
-        }}
-      />
-    );
-  }
-
   return (
-    <div
-      aria-hidden="true"
+    <img
+      src={pet?.primary_photo_url || getPetPlaceholderImage(pet?.species)}
+      alt={pet?.name || "Pet"}
       style={{
         width: size,
         height: size,
         borderRadius,
-        background: "rgba(255,255,255,0.08)",
+        objectFit: "cover",
         border: "1px solid rgba(255,255,255,0.12)",
         flexShrink: 0,
       }}

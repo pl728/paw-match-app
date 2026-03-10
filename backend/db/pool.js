@@ -13,7 +13,20 @@ export function getPool() {
         throw err;
     }
 
-    pool = mysql.createPool(process.env.DATABASE_URL);
+    if (process.env.CLOUD_SQL_CONNECTION_NAME) {
+        // Cloud Run: connect via Unix socket mounted at /cloudsql/<connection-name>
+        const url = new URL(process.env.DATABASE_URL);
+        pool = mysql.createPool({
+            user: decodeURIComponent(url.username),
+            password: decodeURIComponent(url.password),
+            database: url.pathname.slice(1),
+            socketPath: `/cloudsql/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
+        });
+    } else {
+        // Local dev: plain TCP via DATABASE_URL
+        pool = mysql.createPool(process.env.DATABASE_URL);
+    }
+
     return pool;
 }
 
