@@ -1,133 +1,148 @@
 import React, { useEffect, useState } from "react";
-import { Card, Flex, Heading, Text, Box, Button } from "@radix-ui/themes";
-import { getShelters } from "../services/shelters.js";
+import { Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
+import { useAuth } from "../auth/useAuth.js";
+import { getShelters, getFollowedShelterIds, followShelter, unfollowShelter } from "../services/shelters.js";
 
-// You should have userId from auth context or props
-function BrowseShelters({ userId }) {
+function BrowseShelters() {
+  const { user } = useAuth();
   const [shelters, setShelters] = useState([]);
-  const [followed, setFollowed] = useState([]); // IDs of followed shelters
+  const [followed, setFollowed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [busyShelterId, setBusyShelterId] = useState(null);
+  const [message, setMessage] = useState("");
 
-  // Fetch all shelters
   useEffect(() => {
     let isActive = true;
+
     async function fetchSheltersData() {
       try {
-        const data = await getShelters();
-        if (isActive) setShelters(data);
+        setLoading(true);
+        setError(null);
+        setMessage("");
+
+        const [allShelters, followedShelterIds] = await Promise.all([
+          getShelters(),
+          user?.role === "adopter" ? getFollowedShelterIds() : Promise.resolve([]),
+        ]);
+
+        if (!isActive) return;
+        setShelters(Array.isArray(allShelters) ? allShelters : []);
+        setFollowed(followedShelterIds);
       } catch (err) {
-        if (isActive) setError(err.message);
+        if (!isActive) return;
+        setError(err?.message || "Failed to load shelters.");
       } finally {
-        if (isActive) setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
+
     fetchSheltersData();
-    return () => { isActive = false; };
-  }, []);
+    return () => {
+      isActive = false;
+    };
+  }, [user?.role]);
 
-  // Fetch followed shelters for the current user
-  useEffect(() => {
-    let isActive = true;
-    async function fetchFollowed() {
-      try {
-        const res = await fetch(`/api/users/${userId}/followed-shelters`);
-        const data = await res.json(); // expects array of shelter IDs
-        if (isActive) setFollowed(data);
-      } catch (err) {
-        console.error("Failed to fetch followed shelters:", err);
-      }
+  async function toggleFollow(shelterId) {
+    if (user?.role !== "adopter") {
+      setMessage("Only adopter accounts can follow shelters.");
+      return;
     }
-    fetchFollowed();
-    return () => { isActive = false; };
-  }, [userId]);
 
-  // Toggle follow/unfollow
-  const toggleFollow = async (shelterId) => {
-    if (followed.includes(shelterId)) {
-      // Unfollow
-      try {
-        await fetch(`/api/users/${userId}/unfollow-shelter`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ shelterId }),
-        });
-        setFollowed(prev => prev.filter(id => id !== shelterId));
-      } catch (err) {
-        console.error(err);
+    setBusyShelterId(shelterId);
+    setMessage("");
+
+    try {
+      if (followed.includes(shelterId)) {
+        await unfollowShelter(shelterId);
+        setFollowed((current) => current.filter((id) => id !== shelterId));
+        setMessage("Shelter unfollowed.");
+      } else {
+        await followShelter(shelterId);
+        setFollowed((current) => [...current, shelterId]);
+        setMessage("Shelter followed.");
       }
-    } else {
-      // Follow
-      try {
-        await fetch(`/api/users/${userId}/follow-shelter`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ shelterId }),
-        });
-        setFollowed(prev => [...prev, shelterId]);
-      } catch (err) {
-        console.error(err);
-      }
+    } catch (err) {
+      setMessage(err?.message || "Could not update followed shelters.");
+    } finally {
+      setBusyShelterId(null);
     }
-  };
+  }
 
-  // Separate followed vs available shelters
-  const followedShelters = shelters.filter(s => followed.includes(s.id));
-  const availableShelters = shelters.filter(s => !followed.includes(s.id));
+  const followedShelters = shelters.filter((shelter) => followed.includes(shelter.id));
+  const availableShelters = shelters.filter((shelter) => !followed.includes(shelter.id));
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 20px' }}>
-      <Heading size="6" mb="4">Followed Shelters</Heading>
+    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
+      <Flex direction="column" gap="4">
+        <Heading size="6">Browse Shelters</Heading>
 
-      {loading && <Text size="2" color="gray">Loading shelters…</Text>}
-      {error && <Text size="2" color="red">{error}</Text>}
+        {message ? <Text size="2" color="gray">{message}</Text> : null}
+        {loading && <Text size="2" color="gray">Loading shelters…</Text>}
+        {error && <Text size="2" color="red">{error}</Text>}
 
-      {!loading && !error && (
-        <>
-          {/* Followed Shelters Section */}
-          {followedShelters.length > 0 ? (
-            <Flex direction="column" gap="3" mb="6">
-              {followedShelters.map(shelter => (
-                <Card key={shelter.id} size="3">
-                  <Flex direction="column" gap="2">
-                    <Heading size="4">{shelter.name}</Heading>
-                    {shelter.city && shelter.state && (
-                      <Text size="2" color="gray">{shelter.city}, {shelter.state}</Text>
-                    )}
-                    <Button size="2" variant="outline" onClick={() => toggleFollow(shelter.id)}>
-                      Unfollow
-                    </Button>
-                  </Flex>
-                </Card>
-              ))}
-            </Flex>
-          ) : (
-            <Text size="2" color="gray" mb="6">You are not following any shelters.</Text>
-          )}
+        {!loading && !error && (
+          <>
+            <Heading size="5">Followed Shelters</Heading>
+            {followedShelters.length > 0 ? (
+              <Flex direction="column" gap="3">
+                {followedShelters.map((shelter) => (
+                  <Card key={shelter.id} size="3">
+                    <Flex justify="between" align="center" gap="3" wrap="wrap">
+                      <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                        <Heading size="4">{shelter.name}</Heading>
+                        {shelter.city && shelter.state ? (
+                          <Text size="2" color="gray">{shelter.city}, {shelter.state}</Text>
+                        ) : null}
+                      </Flex>
+                      <Button
+                        size="2"
+                        variant="soft"
+                        onClick={() => toggleFollow(shelter.id)}
+                        disabled={busyShelterId === shelter.id}
+                      >
+                        {busyShelterId === shelter.id ? "Working..." : "Unfollow"}
+                      </Button>
+                    </Flex>
+                  </Card>
+                ))}
+              </Flex>
+            ) : (
+              <Text size="2" color="gray">You are not following any shelters.</Text>
+            )}
 
-          <Heading size="6" mb="4">All Shelters</Heading>
-          {/* All Shelters Section */}
-          <Flex direction="column" gap="3">
+            <Heading size="5" mt="4">All Shelters</Heading>
             {availableShelters.length > 0 ? (
-              availableShelters.map(shelter => (
-                <Card key={shelter.id} size="3">
-                  <Flex direction="column" gap="2">
-                    <Heading size="4">{shelter.name}</Heading>
-                    {shelter.city && shelter.state && (
-                      <Text size="2" color="gray">{shelter.city}, {shelter.state}</Text>
-                    )}
-                    <Button size="2" variant="ghost" onClick={() => toggleFollow(shelter.id)}>
-                      Follow
-                    </Button>
-                  </Flex>
-                </Card>
-              ))
+              <Flex direction="column" gap="3">
+                {availableShelters.map((shelter) => (
+                  <Card key={shelter.id} size="3">
+                    <Flex justify="between" align="center" gap="3" wrap="wrap">
+                      <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                        <Heading size="4">{shelter.name}</Heading>
+                        {shelter.city && shelter.state ? (
+                          <Text size="2" color="gray">{shelter.city}, {shelter.state}</Text>
+                        ) : null}
+                      </Flex>
+                      <Button
+                        size="2"
+                        variant="soft"
+                        onClick={() => toggleFollow(shelter.id)}
+                        disabled={busyShelterId === shelter.id}
+                      >
+                        {busyShelterId === shelter.id ? "Working..." : "Follow"}
+                      </Button>
+                    </Flex>
+                  </Card>
+                ))}
+              </Flex>
             ) : (
               <Text size="2" color="gray">No shelters available.</Text>
             )}
-          </Flex>
-        </>
-      )}
+          </>
+        )}
+      </Flex>
     </div>
   );
 }

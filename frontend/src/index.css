@@ -121,6 +121,7 @@ button:focus-visible {
 
 .controls {
   display: flex;
+  align-items: flex-end;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -249,5 +250,11 @@ select {
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+@keyframes ui-spinner-rotate {
+  to {
+    transform: rotate(360deg);
   }
 }

@@ -1,9 +1,14 @@
 import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
-import { followShelter, unfollowShelter } from '../dao/shelter_follows.js';
+import { followShelter, unfollowShelter, listFollowedShelterIds } from '../dao/shelter_follows.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
+
+router.get('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {
+    const shelterIds = await listFollowedShelterIds(req.userId);
+    res.json({ items: shelterIds });
+}));
 
 // Follow a shelter
 router.post('/', requireAuth, requireRole('adopter'), asyncHandler(async function (req, res) {

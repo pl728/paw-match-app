@@ -19,9 +19,9 @@ function BrowsePets() {
         let isActive = true;
         async function fetchPets() {
             try {
-                const data = await getPets();
+                const result = await getPets();
                 if (isActive) {
-                    setPets(data);
+                    setPets(result.data);
                 }
             } catch (err) {
                 if (isActive) {

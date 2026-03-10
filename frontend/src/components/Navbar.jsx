@@ -2,13 +2,14 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useAuth } from '../auth/AuthContext.jsx';
+import { useAuth } from '../auth/useAuth.js';
 import pawmatchlogo from '../assets/pawmatch_logo.png';
 
 function Navbar() {
   const { isAuthed, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isShelterAdmin = user?.role === 'shelter_admin';
 
   const handleLogout = () => {
     logout();
@@ -47,6 +48,24 @@ function Navbar() {
         >
           <img src={pawmatchlogo} style={{ height: '36px' }} alt="PawMatch" />
           <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>PawMatch</span>
+          {isShelterAdmin && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: '#b42318',
+                color: '#fff',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase'
+              }}
+            >
+              Admin
+            </span>
+          )}
         </Link>
 
         {isAuthed && (
@@ -62,45 +81,43 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/find-and-browse" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/find-and-browse' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/find-and-browse' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
-                    Browse Pets
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
-
-              {user?.role === 'shelter_admin' && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/view-pets" style={navLinkStyle('/view-pets')}>
-                      View Pets
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
-
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
-                  <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
-                    Browse Shelters
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
-
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
                   <Link to="/feed" style={navLinkStyle('/feed')}>
                     Feed
                   </Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
-              {user?.role === 'shelter_admin' && (
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
+                      Pets
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
+                      Shelters
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
+                      Search
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {isShelterAdmin && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
                     <Link to="/create-pet" style={navLinkStyle('/create-pet')}>

@@ -1,20 +1,20 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
-import { getPets, getPetById } from "../services/pets.js";
+import { getPets } from "../services/pets.js";
 
-const PAGE_SIZE_OPTIONS = [5, 10, 20];
+const PAGE_SIZE = 25;
 
 export default function BrowseAllPets() {
   const [pets, setPets] = useState([]);
+  const [total, setTotal] = useState(0);
   const [view, setView] = useState("grid");
-  const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
-
-  const [photoByPetId, setPhotoByPetId] = useState({});
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const showPagination = !loading && !error && total > 0;
 
   useEffect(() => {
     let active = true;
@@ -23,74 +23,25 @@ export default function BrowseAllPets() {
       try {
         setLoading(true);
         setError(null);
-        const data = await getPets();
+        const result = await getPets({ page, limit: PAGE_SIZE });
         if (!active) return;
-
-        setPets(Array.isArray(data) ? data : []);
-        setPage(1);
+        setPets(Array.isArray(result?.data) ? result.data : []);
+        setTotal(Number(result?.total) || 0);
       } catch (err) {
         if (!active) return;
         setError(err?.message || "Failed to load pets.");
-      } finally {
-        if (!active) return;
+        setPets([]);
+        setTotal(0);
+      }
+
+      if (active) {
         setLoading(false);
       }
     }
 
     fetchPets();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(pets.length / pageSize));
-  }, [pets.length, pageSize]);
-
-  const pagedPets = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return pets.slice(start, start + pageSize);
-  }, [pets, page, pageSize]);
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadPhotosForPage() {
-      const ids = pagedPets.map((p) => p.id);
-
-      const results = await Promise.all(
-        ids.map(async (id) => {
-          try {
-            const fullPet = await getPetById(id); 
-            const url = fullPet?.photos?.[0]?.url || null;
-            return [id, url];
-          } catch {
-            return [id, null];
-          }
-        })
-      );
-
-      if (!active) return;
-
-      setPhotoByPetId((prev) => {
-        const next = { ...prev };
-        for (const [id, url] of results) next[id] = url;
-        return next;
-      });
-    }
-
-    if (view === "grid" && pagedPets.length > 0) {
-      loadPhotosForPage();
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [view, pagedPets]);
+    return () => { active = false; };
+  }, [page]);
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px" }}>
@@ -115,12 +66,6 @@ export default function BrowseAllPets() {
                 Grid
               </Button>
               <Button
-                variant={view === "details" ? "solid" : "soft"}
-                onClick={() => setView("details")}
-              >
-                Details
-              </Button>
-              <Button
                 variant={view === "table" ? "solid" : "soft"}
                 onClick={() => setView("table")}
               >
@@ -129,42 +74,22 @@ export default function BrowseAllPets() {
             </Flex>
 
             <Flex gap="3" wrap="wrap" align="center" justify="end">
-              <Text size="2" color="gray">
-                Per page:
-              </Text>
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.05)",
-                  color: "inherit",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                }}
-              >
-                {PAGE_SIZE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-
+              <Text size="2" color="gray">{total} pets total</Text>
               <Flex gap="2" align="center">
                 <Button
                   variant="soft"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
                 >
                   Prev
                 </Button>
-                <Text size="2">
-                  Page {page} / {totalPages}
+                <Text size="2" weight="medium">
+                  Page {page} of {totalPages}
                 </Text>
                 <Button
                   variant="soft"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
                 >
                   Next
                 </Button>
@@ -190,8 +115,8 @@ export default function BrowseAllPets() {
                   gap: 16,
                 }}
               >
-                {pagedPets.map((pet) => {
-                  const imageUrl = photoByPetId[pet.id];
+                {pets.map((pet) => {
+                  const imageUrl = pet.primary_photo_url;
 
                   return (
                     <Card key={pet.id} size="2">
@@ -229,30 +154,6 @@ export default function BrowseAllPets() {
               </div>
             )}
 
-            {view === "details" && (
-              <Flex direction="column" gap="3">
-                {pagedPets.map((pet) => (
-                  <Card key={pet.id} size="2">
-                    <Flex direction="column" gap="2">
-                      <Heading size="5">{pet.name}</Heading>
-                      <Text size="2" color="gray">
-                        Species: {pet.species || "Unknown"} • Breed:{" "}
-                        {pet.breed || "Unknown"}
-                      </Text>
-                      <Text size="2" color="gray">
-                        Age: {pet.age_years ?? "?"} • Sex: {pet.sex || "?"} •
-                        Size: {pet.size || "?"}
-                      </Text>
-                      <Text size="2" color="gray">
-                        Status: {pet.status || "?"}
-                      </Text>
-                      <Link to={`/pets/${pet.id}`}>View full details</Link>
-                    </Flex>
-                  </Card>
-                ))}
-              </Flex>
-            )}
-
             {view === "table" && (
               <Card size="2">
                 <div style={{ overflowX: "auto" }}>
@@ -283,7 +184,7 @@ export default function BrowseAllPets() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pagedPets.map((pet) => (
+                      {pets.map((pet) => (
                         <tr key={pet.id}>
                           <td
                             style={{
@@ -357,6 +258,27 @@ export default function BrowseAllPets() {
               </Card>
             )}
           </>
+        )}
+        {showPagination && (
+          <Flex justify="center" align="center" gap="4">
+            <Button
+              size="3"
+              variant="solid"
+              disabled={page <= 1}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+            >
+              Prev
+            </Button>
+            <Text size="3" weight="bold">Page {page} of {totalPages}</Text>
+            <Button
+              size="3"
+              variant="solid"
+              disabled={page >= totalPages}
+              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
+            >
+              Next
+            </Button>
+          </Flex>
         )}
       </Flex>
     </div>

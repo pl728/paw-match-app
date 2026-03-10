@@ -1,19 +1,56 @@
 import express from 'express';
+import multer from 'multer';
 import asyncHandler from '../utils/async-handler.js';
 import {
     createPet,
     listPets,
     getPetById,
+    addPetPhoto,
     updatePet,
     deletePet
 } from '../dao/pets.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { createFeedEvent } from '../dao/feed_events.js';
+import { getDefaultPetPhotoStorageUrl, getEffectivePetPhotoStorageUrl, sendStoredPhoto, uploadPetPhoto } from '../services/pet_photos.js';
 
 const router = express.Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
 
-router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+function getBaseUrl(req) {
+    return req.protocol + '://' + req.get('host');
+}
+
+function withProxyPhotoUrls(req, pet) {
+    if (!pet) {
+        return pet;
+    }
+
+    const baseUrl = getBaseUrl(req);
+    const mapped = { ...pet };
+
+    if (getEffectivePetPhotoStorageUrl(mapped.species, mapped.primary_photo_url)) {
+        mapped.primary_photo_url = baseUrl + '/pets/' + mapped.id + '/primary-photo';
+    }
+
+    if (Array.isArray(mapped.photos)) {
+        mapped.photos = mapped.photos.map(function (photo) {
+            return {
+                ...photo,
+                url: baseUrl + '/pets/' + mapped.id + '/photos/' + photo.id
+            };
+        });
+    }
+
+    return mapped;
+}
+
+router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo'), asyncHandler(async function (req, res) {
 
     const name = req.body.name;
     const species = req.body.species || null;
@@ -45,6 +82,21 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
         status: status
     });
 
+    let photoUrl = null;
+    if (req.file) {
+        photoUrl = await uploadPetPhoto({
+            petId: created.id,
+            shelterId: shelter.id,
+            file: req.file
+        });
+    } else {
+        photoUrl = getDefaultPetPhotoStorageUrl(species);
+    }
+
+    if (photoUrl) {
+        await addPetPhoto(created.id, photoUrl);
+    }
+
     try {
         await createFeedEvent('new_pet', {
             shelter_id: shelter.id,
@@ -52,19 +104,55 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
             payload: {
                 title: `New pet: ${name}`,
                 body: description || `${name} is now available at ${shelter.name}.`,
-                primaryPhotoUrl: null,
+                primaryPhotoUrl: photoUrl ? getBaseUrl(req) + '/pets/' + created.id + '/primary-photo' : null,
             },
         });
     } catch (e) {
         console.error('Failed to create feed event for new pet:', e);
     }
 
-    res.status(201).json(created);
+    res.status(201).json(withProxyPhotoUrls(req, {
+        ...created,
+        primary_photo_url: photoUrl
+    }));
 }));
 
 router.get('/', asyncHandler(async function (req, res) {
-    const pets = await listPets();
-    res.json(pets);
+    const result = await listPets({ page: req.query.page, limit: req.query.limit });
+    res.json({
+        ...result,
+        data: result.data.map(function (pet) {
+            return withProxyPhotoUrls(req, pet);
+        })
+    });
+}));
+
+router.get('/:id/primary-photo', asyncHandler(async function (req, res) {
+    const pet = await getPetById(req.params.id);
+    if (!pet) {
+        return res.status(404).json({ error: 'Pet not found' });
+    }
+
+    const storedUrl = pet.photos?.[0]?.url || null;
+    const effectiveUrl = getEffectivePetPhotoStorageUrl(pet.species, storedUrl);
+    await sendStoredPhoto(res, effectiveUrl);
+}));
+
+router.get('/:id/photos/:photoId', asyncHandler(async function (req, res) {
+    const pet = await getPetById(req.params.id);
+    if (!pet) {
+        return res.status(404).json({ error: 'Pet not found' });
+    }
+
+    const photo = pet.photos.find(function (item) {
+        return item.id === req.params.photoId;
+    });
+    if (!photo) {
+        return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    const effectiveUrl = getEffectivePetPhotoStorageUrl(pet.species, photo.url);
+    await sendStoredPhoto(res, effectiveUrl);
 }));
 
 router.get('/:id', asyncHandler(async function (req, res) {
@@ -73,7 +161,7 @@ router.get('/:id', asyncHandler(async function (req, res) {
         return res.status(404).json({ error: 'Pet not found' });
     }
 
-    res.json(pet);
+    res.json(withProxyPhotoUrls(req, pet));
 }));
 
 router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
@@ -131,7 +219,8 @@ router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async
         }
     }
 
-    res.json(updated);
+    const refreshed = await getPetById(req.params.id);
+    res.json(withProxyPhotoUrls(req, refreshed || updated));
 }));
 
 router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
