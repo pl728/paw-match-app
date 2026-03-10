@@ -97,4 +97,30 @@ describe('pets endpoints', function () {
             .get('/pets/' + created.body.id)
             .expect(404);
     });
+
+    it('rejects creating a pet without authentication', async function () {
+        await request(app)
+            .post('/pets')
+            .send({ name: 'Unauthorized Pet', species: 'Dog' })
+            .expect(401);
+    });
+
+    it('rejects creating a pet with adopter role', async function () {
+        const unique = Date.now().toString(36);
+
+        const user = await request(app)
+            .post('/auth/register')
+            .send({
+                username: 'adopterpet_' + unique,
+                password: 'password123',
+                role: 'adopter'
+            })
+            .expect(201);
+
+        await request(app)
+            .post('/pets')
+            .set('Authorization', 'Bearer ' + user.body.token)
+            .send({ name: 'Adopter Pet', species: 'Dog' })
+            .expect(403);
+    });
 });

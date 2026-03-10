@@ -58,4 +58,62 @@ describe('shelters endpoints', function () {
             .get('/shelters/00000000-0000-0000-0000-000000000000')
             .expect(404);
     });
+
+    it('rejects creating a shelter without a token', async function () {
+    await request(app)
+        .post('/shelters')
+        .send({ name: 'Unauthorized Shelter' })
+        .expect(401);
+    });
+
+    it('rejects creating a shelter with adopter role', async function () {
+        const unique = Date.now().toString(36);
+
+        const user = await request(app)
+            .post('/auth/register')
+            .send({
+                username: 'adopter_' + unique,
+                password: 'password123',
+                role: 'adopter'
+            })
+            .expect(201);
+
+        await request(app)
+            .post('/shelters')
+            .set('Authorization', 'Bearer ' + user.body.token)
+            .send({ name: 'Adopter Shelter' })
+            .expect(403);
+    });
+
+    it('lists shelters', async function () {
+        const res = await request(app)
+            .get('/shelters')
+            .expect(200);
+
+        expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    it('deletes a shelter owned by the user', async function () {
+        const unique = Date.now().toString(36);
+
+        const user = await request(app)
+            .post('/auth/register')
+            .send({
+                username: 'deleteuser_' + unique,
+                password: 'password123',
+                role: 'shelter_admin'
+            })
+            .expect(201);
+
+        const shelter = await request(app)
+            .post('/shelters')
+            .set('Authorization', 'Bearer ' + user.body.token)
+            .send({ name: 'Delete Shelter' })
+            .expect(201);
+
+        await request(app)
+            .delete('/shelters/' + shelter.body.id)
+            .set('Authorization', 'Bearer ' + user.body.token)
+            .expect(200);
+    });
 });
