@@ -8,6 +8,7 @@ import {
 } from '../dao/shelter_posts.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { createFeedEvent } from '../dao/feed_events.js';
 
 const router = express.Router();
 
@@ -42,6 +43,19 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
         body: body,
         publishedAt: publish ? new Date() : null
     });
+
+    if (publish) {
+        try {
+            await createFeedEvent('shelter_post', {
+                shelter_id: shelter_id,
+                pet_id: pet_id,
+                post_id: created.id,
+                payload: { title, body, primaryPhotoUrl: null },
+            });
+        } catch (e) {
+            console.error('Failed to create feed event for shelter post:', e);
+        }
+    }
 
     res.status(201).json(created);
 }));
@@ -116,6 +130,18 @@ router.patch('/:id/publish', requireAuth, requireRole('shelter_admin'), asyncHan
     }
 
     const updated = await publishShelterPost(postId);
+
+    try {
+        await createFeedEvent('shelter_post', {
+            shelter_id: existing.shelter_id,
+            pet_id: existing.pet_id || null,
+            post_id: postId,
+            payload: { title: existing.title, body: existing.body, primaryPhotoUrl: null },
+        });
+    } catch (e) {
+        console.error('Failed to create feed event for published post:', e);
+    }
+
     res.json(updated);
 }));
 

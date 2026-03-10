@@ -2,17 +2,22 @@ import React, { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Button, Card, Flex, Heading, Link, Select, Text, TextField } from "@radix-ui/themes";
 import { registerUser } from "../services/auth.js";
-import { useAuth } from "../auth/AuthContext.jsx";
+import { useAuth } from "../auth/useAuth.js";
 
 function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("adopter");
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
     try {
       const data = await registerUser({ username, password, role });
       login({ user: data.user, token: data.token });
@@ -41,7 +46,7 @@ function Register() {
                 required
               />
               <Flex direction="column" gap="2">
-                <Text size="2" color="gray">Account type</Text>
+                <Text size="2" color="gray">Account Type</Text>
                 <Select.Root value={role} onValueChange={setRole}>
                   <Select.Trigger />
                   <Select.Content>
@@ -57,6 +62,18 @@ function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <TextField.Root
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              {confirmPassword && password !== confirmPassword && (
+                <Text size="2" color="red">
+                  Passwords do not match
+                </Text>
+              )}
               <Button type="submit">Create account</Button>
             </Flex>
           </form>

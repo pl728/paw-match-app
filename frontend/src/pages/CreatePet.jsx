@@ -16,6 +16,59 @@ const BREEDS = [
   "Birman", "Oriental Shorthair", "Devon Rex", "Burmese", "Russian Blue", "Mixed Breed"
 ].sort();
 
+const PET_NAMES = [
+  "Mochi", "Biscuit", "Noodle", "Pepper", "Maple", "Clover", "Scout", "Luna",
+  "Milo", "Poppy", "Rufus", "Olive", "Pickles", "Sunny", "Juniper", "Teddy"
+];
+const SPECIES_OPTIONS = ["Dog", "Cat", "Bird", "Rabbit", "Guinea Pig", "Hamster", "Other"];
+const SEX_OPTIONS = ["Male", "Female", "Unknown"];
+const SIZE_OPTIONS = ["small", "medium", "large"];
+const BREEDS_BY_SPECIES = {
+  Dog: [
+    "Labrador Retriever",
+    "German Shepherd",
+    "Golden Retriever",
+    "French Bulldog",
+    "Beagle",
+    "Border Collie",
+    "Mixed Breed"
+  ],
+  Cat: [
+    "Persian",
+    "Maine Coon",
+    "Ragdoll",
+    "Siamese",
+    "American Shorthair",
+    "Russian Blue",
+    "Mixed Breed"
+  ],
+  Bird: ["Mixed Breed"],
+  Rabbit: ["Mixed Breed"],
+  "Guinea Pig": ["Mixed Breed"],
+  Hamster: ["Mixed Breed"],
+  Other: ["Mixed Breed"]
+};
+
+function randomFrom(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function buildRandomPetForm() {
+  const species = randomFrom(SPECIES_OPTIONS);
+  const breed = randomFrom(BREEDS_BY_SPECIES[species] || BREEDS);
+  const name = randomFrom(PET_NAMES);
+
+  return {
+    name,
+    species,
+    breed,
+    age_years: String(Math.floor(Math.random() * 12) + 1),
+    sex: randomFrom(SEX_OPTIONS),
+    size: randomFrom(SIZE_OPTIONS),
+    description: `${name} is a friendly ${species.toLowerCase()} who enjoys attention and would love a new home.`
+  };
+}
+
 function CreatePet() {
   const navigate = useNavigate();
 
@@ -25,11 +78,13 @@ function CreatePet() {
     breed: "",
     age_years: "",
     sex: "",
-    size: "small"
+    size: "small",
+    description: ""
   });
 
   const [breedSearch, setBreedSearch] = useState("");
   const [checkingShelter, setCheckingShelter] = useState(true);
+  const [photoFile, setPhotoFile] = useState(null);
 
   useEffect(() => {
     async function checkShelter() {
@@ -52,6 +107,13 @@ function CreatePet() {
     setFormData({...formData, [name]: value});
   }
 
+  function handleFillRandom() {
+    const randomPet = buildRandomPetForm();
+    setFormData(randomPet);
+    setBreedSearch("");
+    setPhotoFile(null);
+  }
+
   const filteredBreeds = BREEDS.filter(breed =>
     breed.toLowerCase().includes(breedSearch.toLowerCase())
   );
@@ -60,8 +122,17 @@ function CreatePet() {
     e.preventDefault();
 
     try {
-      await createPet(formData);
-      navigate('/view-pets');
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        payload.append(key, value);
+      });
+
+      if (photoFile) {
+        payload.append("photo", photoFile);
+      }
+
+      await createPet(payload);
+      navigate('/profile');
     } catch (err) {
       alert(`Error creating pet: ${err.message}`);
     }
@@ -196,9 +267,36 @@ function CreatePet() {
                 </Select.Root>
               </label>
 
-              <Button type="submit" size="3" style={{ marginTop: '12px' }}>
-                Create Pet
-              </Button>
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Description</Text>
+                <TextField.Root
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Add a short description"
+                />
+              </label>
+
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Pet Photo (optional)</Text>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                />
+                <Text as="div" size="1" color="gray" mt="1">
+                  If you skip this, the app will use the default cat, dog, or animal image.
+                </Text>
+              </label>
+
+              <Flex gap="3" mt="3">
+                <Button type="button" size="3" variant="soft" onClick={handleFillRandom}>
+                  Fill random
+                </Button>
+                <Button type="submit" size="3" style={{ flex: 1 }}>
+                  Create Pet
+                </Button>
+              </Flex>
             </Flex>
           </form>
         </Flex>

@@ -4,8 +4,27 @@ import { createUser, getUserById } from '../dao/users.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { getPetsByShelterId } from '../dao/pets.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { getEffectivePetPhotoStorageUrl } from '../services/pet_photos.js';
 
 const router = express.Router();
+
+function getBaseUrl(req) {
+    return req.protocol + '://' + req.get('host');
+}
+
+function withProxyPhotoUrls(req, pet) {
+    if (!pet) {
+        return pet;
+    }
+
+    const mapped = { ...pet };
+
+    if (getEffectivePetPhotoStorageUrl(mapped.species, mapped.primary_photo_url)) {
+        mapped.primary_photo_url = getBaseUrl(req) + '/pets/' + mapped.id + '/primary-photo';
+    }
+
+    return mapped;
+}
 
 router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const username = req.body.username;
@@ -46,7 +65,9 @@ router.get('/me', requireAuth, asyncHandler(async function (req, res) {
         if (shelter) {
             profile.shelter = shelter;
             const pets = await getPetsByShelterId(shelter.id);
-            profile.pets = pets;
+            profile.pets = pets.map(function (pet) {
+                return withProxyPhotoUrls(req, pet);
+            });
         }
     }
 

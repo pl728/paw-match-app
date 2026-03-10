@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../auth/AuthContext.jsx";
+import { useAuth } from "../auth/useAuth.js";
 
 function AuthedHome() {
   const { user } = useAuth();
@@ -12,6 +12,7 @@ function AuthedHome() {
       textAlign: 'center'
     }}>
       <h1>Welcome back, {user?.username || "user"}</h1>
+      <p></p>
     </div>
   );
 }

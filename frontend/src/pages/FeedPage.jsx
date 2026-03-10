@@ -1,7 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import FeedList from "../components/FeedList.jsx";
+import { useAuth } from "../auth/useAuth.js";
+import { followShelter, getFollowedShelterIds, unfollowShelter } from "../services/shelters.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+function normalizeFeedText(value) {
+  if (value == null) return "";
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed === "null" || trimmed === "undefined") return "";
+  return value;
+}
 
 function mapRowToFeedItem(row) {
   return {
@@ -16,57 +28,80 @@ function mapRowToFeedItem(row) {
     pet: row.pet_id
       ? {
           id: row.pet_id,
-          name: row.pet_name ?? "",
-          primaryPhotoUrl: row.primary_photo_url ?? "",
+          name: normalizeFeedText(row.pet_name),
+          primaryPhotoUrl: normalizeFeedText(row.primary_photo_url),
         }
       : null,
-    title: row.title,
-    body: row.body,
+    title: normalizeFeedText(row.title),
+    body: normalizeFeedText(row.body),
   };
 }
 
 export default function FeedPage() {
+  const { user } = useAuth();
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [items, setItems] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
-
   const [filterType, setFilterType] = useState("all");
+  const [followedShelterIds, setFollowedShelterIds] = useState([]);
+
+  async function load() {
+    setStatus("loading");
+    setErrorMsg("");
+
+    try {
+      const [res, followedIds] = await Promise.all([
+        fetch(`${API_BASE}/feed_events?limit=50`, {
+          credentials: "include",
+        }),
+        user?.role === "adopter" ? getFollowedShelterIds() : Promise.resolve([]),
+      ]);
+
+      if (!res.ok) throw new Error(`Failed to load feed (${res.status})`);
+
+      const data = await res.json();
+
+      const rows = Array.isArray(data) ? data : (data.items ?? []);
+      const mapped = rows.map(mapRowToFeedItem);
+
+      setItems(mapped);
+      setFollowedShelterIds(followedIds);
+      setStatus("ready");
+    } catch (err) {
+      setErrorMsg(err?.message || "Unknown error");
+      setStatus("error");
+    }
+  }
 
   useEffect(() => {
-    let isAlive = true;
+    load();
+  }, [user?.role]);
 
-    async function load() {
-      setStatus("loading");
-      setErrorMsg("");
-
-      try {
-        const res = await fetch(`${API_BASE}/feed_events?limit=50`, {
-          credentials: "include",
-        });
-
-        if (!res.ok) throw new Error(`Failed to load feed (${res.status})`);
-
-        const data = await res.json();
-
-        const rows = Array.isArray(data) ? data : (data.items ?? []);
-        const mapped = rows.map(mapRowToFeedItem);
-
-        if (!isAlive) return;
-        setItems(mapped);
-        setStatus("ready");
-      } catch (err) {
-        if (!isAlive) return;
-        setErrorMsg(err?.message || "Unknown error");
-        setStatus("error");
-      }
-
+  async function handleToggleShelterFollow(shelterId) {
+    if (!shelterId) {
+      return { message: "Shelter not found." };
     }
 
-    load();
-    return () => {
-      isAlive = false;
-    };
-  }, []);
+    if (user?.role !== "adopter") {
+      return { message: "Only adopter accounts can follow shelters." };
+    }
+
+    const isFollowed = followedShelterIds.includes(shelterId);
+
+    try {
+      if (isFollowed) {
+        await unfollowShelter(shelterId);
+        setFollowedShelterIds((current) => current.filter((id) => id !== shelterId));
+        return { message: "Shelter unfollowed." };
+      }
+
+      await followShelter(shelterId);
+      setFollowedShelterIds((current) => (current.includes(shelterId) ? current : [...current, shelterId]));
+      return { message: "Shelter followed." };
+    } catch (err) {
+      return { message: err?.message || "Could not update shelter follow state." };
+    }
+  }
 
   const visibleItems = useMemo(() => {
     if (filterType === "all") return items;
@@ -94,7 +129,7 @@ export default function FeedPage() {
             </select>
           </label>
 
-          <button className="btn" onClick={() => window.location.reload()}>
+          <button className="btn" onClick={load}>
             Refresh
           </button>
         </div>
@@ -112,7 +147,7 @@ export default function FeedPage() {
         <div className="card">
           <h2>Could not load feed</h2>
           <p className="muted">{errorMsg}</p>
-          <button className="btn" onClick={() => window.location.reload()}>
+          <button className="btn" onClick={load}>
             Retry
           </button>
         </div>
@@ -125,7 +160,13 @@ export default function FeedPage() {
         </div>
       )}
 
-      {status === "ready" && visibleItems.length > 0 && <FeedList items={visibleItems} />}
+      {status === "ready" && visibleItems.length > 0 && (
+        <FeedList
+          items={visibleItems}
+          followedShelterIds={followedShelterIds}
+          onToggleShelterFollow={handleToggleShelterFollow}
+        />
+      )}
     </div>
   );
 }

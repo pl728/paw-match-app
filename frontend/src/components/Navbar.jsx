@@ -2,18 +2,27 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useAuth } from '../auth/AuthContext.jsx';
+import { useAuth } from '../auth/useAuth.js';
 import pawmatchlogo from '../assets/pawmatch_logo.png';
 
 function Navbar() {
   const { isAuthed, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isShelterAdmin = user?.role === 'shelter_admin';
 
   const handleLogout = () => {
     logout();
     navigate('/', { replace: true });
   };
+
+  const navLinkStyle = (path) => ({
+    padding: '8px 16px',
+    borderRadius: '8px',
+    textDecoration: 'none',
+    color: location.pathname === path ? '#fff' : '#cdd6e3',
+    background: location.pathname === path ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+  });
 
   return (
     <nav style={{
@@ -33,9 +42,30 @@ function Navbar() {
         justifyContent: 'space-between',
         gap: '24px'
       }}>
-        <Link to={isAuthed ? "/home" : "/"} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit' }}>
+        <Link
+          to={isAuthed ? "/home" : "/"}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit' }}
+        >
           <img src={pawmatchlogo} style={{ height: '36px' }} alt="PawMatch" />
           <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>PawMatch</span>
+          {isShelterAdmin && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: '#b42318',
+                color: '#fff',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase'
+              }}
+            >
+              Admin
+            </span>
+          )}
         </Link>
 
         {isAuthed && (
@@ -43,13 +73,7 @@ function Navbar() {
             <NavigationMenu.List style={{ display: 'flex', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/home" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/home' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/home' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
+                  <Link to="/home" style={navLinkStyle('/home')}>
                     Home
                   </Link>
                 </NavigationMenu.Link>
@@ -57,56 +81,46 @@ function Navbar() {
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/view-pets" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/view-pets' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/view-pets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
-                    Browse Pets
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
-
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
-                  <Link to="/browse-shelters" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/browse-shelters' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/browse-shelters' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
-                    Browse Shelters
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
-
-              <NavigationMenu.Item>
-                <NavigationMenu.Link asChild>
-                  <Link to="/feed" style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    color: location.pathname === '/feed' ? '#fff' : '#cdd6e3',
-                    background: location.pathname === '/feed' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }}>
+                  <Link to="/feed" style={navLinkStyle('/feed')}>
                     Feed
                   </Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
-              {user?.role === 'shelter_admin' && (
+              {!isShelterAdmin && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
-                    <Link to="/create-pet" style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      color: location.pathname === '/create-pet' ? '#fff' : '#cdd6e3',
-                      background: location.pathname === '/create-pet' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                    }}>
+                    <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
+                      Pets
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
+                      Shelters
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
+                      Search
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/create-pet" style={navLinkStyle('/create-pet')}>
                       Add Pet
                     </Link>
                   </NavigationMenu.Link>
@@ -142,22 +156,28 @@ function Navbar() {
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
                   zIndex: 9999
                 }}>
-                  <DropdownMenu.Item style={{
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    color: '#cdd6e3',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }} onSelect={() => navigate('/profile')}>
+                  <DropdownMenu.Item
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      color: '#cdd6e3',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                    onSelect={() => navigate('/profile')}
+                  >
                     Profile
                   </DropdownMenu.Item>
-                  <DropdownMenu.Item style={{
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    color: '#cdd6e3',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }} onSelect={handleLogout}>
+                  <DropdownMenu.Item
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      color: '#cdd6e3',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                    onSelect={handleLogout}
+                  >
                     Logout
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>

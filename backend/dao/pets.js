@@ -22,27 +22,100 @@ export async function createPet(options) {
     return result.rows[0];
 }
 
-export async function listPets() {
-    const result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, status FROM pets ORDER BY created_at DESC'
+export async function addPetPhoto(petId, url) {
+    const photoId = crypto.randomUUID();
+    await db.query(
+        'INSERT INTO pet_photos (id, pet_id, url) VALUES (?, ?, ?)',
+        [photoId, petId, url]
     );
-    return result.rows;
+    return { id: photoId, pet_id: petId, url: url };
+}
+
+export async function listPets({ page = 1, limit = 25 } = {}) {
+    const safeLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
+    const safePage = Math.max(Number(page) || 1, 1);
+    const offset = (safePage - 1) * safeLimit;
+
+    const countResult = await db.query('SELECT COUNT(*) AS total FROM pets');
+    const total = Number(countResult.rows[0].total);
+
+    const result = await db.query(
+        `SELECT p.id, p.shelter_id, p.name, p.species, p.breed, p.age_years, p.sex, p.size, p.status,
+                (SELECT url FROM pet_photos WHERE pet_id = p.id ORDER BY created_at DESC LIMIT 1) AS primary_photo_url
+         FROM pets p
+         ORDER BY p.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [safeLimit, offset]
+    );
+
+    return { data: result.rows, total, page: safePage, limit: safeLimit };
 }
 
 export async function getPetById(petId) {
+  const petResult = await db.query(
+    `SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status
+     FROM pets
+     WHERE id = ?`,
+    [petId]
+  );
+
+  if (petResult.rows.length === 0) return null;
+
+  const pet = petResult.rows[0];
+
+  const photosResult = await db.query(
+    `SELECT id, url
+     FROM pet_photos
+     WHERE pet_id = ?
+     ORDER BY created_at DESC`,
+    [petId]
+  );
+
+  pet.photos = photosResult.rows;
+  return pet;
+}
+
+export async function getPrimaryPetPhoto(petId) {
     const result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status FROM pets WHERE id = ?',
+        `SELECT id, url
+         FROM pet_photos
+         WHERE pet_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
         [petId]
     );
+
     if (result.rows.length === 0) {
         return null;
     }
+
     return result.rows[0];
 }
 
+export async function getPetPhotoById(petId, photoId) {
+    const result = await db.query(
+        `SELECT id, url
+         FROM pet_photos
+         WHERE pet_id = ? AND id = ?
+         LIMIT 1`,
+        [petId, photoId]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+
 export async function getPetsByShelterId(shelterId) {
     const result = await db.query(
-        'SELECT id, shelter_id, name, species, breed, age_years, sex, size, status, created_at FROM pets WHERE shelter_id = ? ORDER BY created_at DESC',
+        `SELECT p.id, p.shelter_id, p.name, p.species, p.breed, p.age_years, p.sex, p.size, p.status, p.created_at,
+                (SELECT url FROM pet_photos WHERE pet_id = p.id ORDER BY created_at DESC LIMIT 1) AS primary_photo_url
+         FROM pets p
+         WHERE p.shelter_id = ?
+         ORDER BY p.created_at DESC`,
         [shelterId]
     );
     return result.rows;
