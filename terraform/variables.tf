@@ -30,3 +30,9 @@ variable "frontend_image" {
   description = "Full Docker image URL for the frontend (e.g. us-central1-docker.pkg.dev/PROJECT/paw-match/frontend:latest)"
   type        = string
 }
+
+variable "pet_photo_bucket_name" {
+  description = "Optional GCS bucket name for pet photos. Leave null to use a project-based default."
+  type        = string
+  default     = null
+}

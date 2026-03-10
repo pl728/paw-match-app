@@ -53,7 +53,8 @@ export async function listPets({ page = 1, limit = 25 } = {}) {
 
 export async function getPetById(petId) {
   const petResult = await db.query(
-    `SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status
+    `SELECT id, shelter_id, name, species, breed, age_years, sex, size, description, status,
+            (SELECT url FROM pet_photos WHERE pet_id = pets.id ORDER BY created_at DESC LIMIT 1) AS primary_photo_url
      FROM pets
      WHERE id = ?`,
     [petId]

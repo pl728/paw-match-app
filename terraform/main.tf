@@ -18,6 +18,7 @@ resource "google_project_service" "apis" {
     "sqladmin.googleapis.com",
     "run.googleapis.com",
     "artifactregistry.googleapis.com",
+    "storage.googleapis.com",
   ])
 
   service            = each.value

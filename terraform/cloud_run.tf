@@ -10,6 +10,12 @@ resource "google_project_iam_member" "cloud_run_sql" {
   member  = "serviceAccount:${google_service_account.cloud_run.email}"
 }
 
+resource "google_storage_bucket_iam_member" "cloud_run_pet_photos" {
+  bucket = google_storage_bucket.pet_photos.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
 resource "google_cloud_run_v2_service" "backend" {
   name     = "paw-match-backend"
   location = var.region
@@ -40,6 +46,10 @@ resource "google_cloud_run_v2_service" "backend" {
         name  = "JWT_SECRET"
         value = var.jwt_secret
       }
+      env {
+        name  = "GCS_BUCKET_NAME"
+        value = google_storage_bucket.pet_photos.name
+      }
 
       volume_mounts {
         name       = "cloudsql"
@@ -48,7 +58,10 @@ resource "google_cloud_run_v2_service" "backend" {
     }
   }
 
-  depends_on = [google_project_iam_member.cloud_run_sql]
+  depends_on = [
+    google_project_iam_member.cloud_run_sql,
+    google_storage_bucket_iam_member.cloud_run_pet_photos,
+  ]
 }
 
 # Make the backend publicly reachable

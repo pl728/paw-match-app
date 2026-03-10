@@ -17,3 +17,8 @@ output "frontend_url" {
   description = "Cloud Run frontend URL"
   value       = google_cloud_run_v2_service.frontend.uri
 }
+
+output "pet_photo_bucket_name" {
+  description = "GCS bucket used for uploaded and placeholder pet photos"
+  value       = google_storage_bucket.pet_photos.name
+}

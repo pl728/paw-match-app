@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const FEED_FALLBACK_IMAGE = "/animal.png";
+
 function typeLabel(type) {
   const map = {
     new_pet: "New Pet",
@@ -64,10 +66,10 @@ export default function FeedItemCard({ item, isShelterFollowed, onToggleShelterF
           </div>
         </div>
 
-        {item?.pet?.primaryPhotoUrl ? (
+        {(item?.pet?.primaryPhotoUrl || item?.pet?.id) ? (
           <img
             className="thumb"
-            src={item.pet.primaryPhotoUrl}
+            src={item?.pet?.primaryPhotoUrl || FEED_FALLBACK_IMAGE}
             alt={item.pet.name || "Pet"}
           />
         ) : (
