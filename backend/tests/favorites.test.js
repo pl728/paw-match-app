@@ -68,4 +68,34 @@ describe('favorites engagement', function () {
     expect(afterDelete.body.some((r) => r.pet_id === petRes.body.id)).toBe(false);
 
   });
+
+  it('rejects favoriting without authentication', async function () {
+    await request(app)
+      .post('/favorites')
+      .send({ pet_id: 'some-id' })
+      .expect(401);
+  });
+
+  it('rejects shelter_admin from favoriting a pet', async function () {
+    const adminToken = await registerUser('shelter_admin');
+
+    await request(app)
+      .post('/favorites')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ pet_id: 'some-id' })
+      .expect(403);
+  });
+
+  it('rejects retrieving favorites without authentication', async function () {
+    await request(app)
+      .get('/favorites')
+      .expect(401);
+  });
+
+  it('rejects deleting a favorite without authentication', async function () {
+    await request(app)
+      .delete('/favorites')
+      .send({ pet_id: 'some-id' })
+      .expect(401);
+  });
 });
