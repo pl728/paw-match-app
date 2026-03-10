@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
 import { getPets } from "../services/pets.js";
+import { getFavorites, addFavorite, removeFavorite } from "../services/favorites.js";
 
 const PAGE_SIZE = 25;
 
@@ -12,6 +13,7 @@ export default function BrowseAllPets() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [favoritePetIds, setFavoritePetIds] = useState([]); 
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const showPagination = !loading && !error && total > 0;
@@ -42,6 +44,46 @@ export default function BrowseAllPets() {
     fetchPets();
     return () => { active = false; };
   }, [page]);
+
+    useEffect(() => {
+    let active = true;
+
+    async function fetchFavorites() {
+      try {
+        const result = await getFavorites();
+
+        if (!active) return;
+
+        const ids = Array.isArray(result)
+          ? result.map(f => Number(f.pet_id))
+          : [];
+
+        setFavoritePetIds(ids);
+      } catch (err) {
+        console.error("Failed to load favorites:", err);
+      }
+    }
+
+    fetchFavorites();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleToggleFavorite(petId) {
+    try {
+      if (favoritePetIds.includes(petId)) {
+        await removeFavorite(petId);
+        setFavoritePetIds(prev => prev.filter(id => id !== petId));
+      } else {
+        await addFavorite(petId);
+        setFavoritePetIds(prev => [...prev, petId]);
+      }
+    } catch (err) {
+      console.error("Favorite toggle failed:", err);
+    }
+  }
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px" }}>
@@ -146,6 +188,14 @@ export default function BrowseAllPets() {
                           Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
                         </Text>
 
+                        <Button
+                          size="1"
+                          variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
+                          onClick={() => handleToggleFavorite(pet.id)}
+                        >
+                          {favoritePetIds.includes(pet.id) ? "Unfavorite" : "Favorite"}
+                        </Button>
+
                         <Link to={`/pets/${pet.id}`}>View full details</Link>
                       </Flex>
                     </Card>
@@ -168,6 +218,7 @@ export default function BrowseAllPets() {
                           "Sex",
                           "Size",
                           "Status",
+                          "Favorite",
                           "",
                         ].map((h) => (
                           <th
@@ -248,6 +299,14 @@ export default function BrowseAllPets() {
                               borderBottom: "1px solid rgba(255,255,255,0.08)",
                             }}
                           >
+                            <Link to="/favorites">My Favorites</Link>
+                            <Button
+                              size="1"
+                              variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
+                              onClick={() => handleToggleFavorite(pet.id)}
+                            >
+                              {favoritePetIds.includes(pet.id) ? "Saved" : "Save"}
+                            </Button>
                             <Link to={`/pets/${pet.id}`}>View full details</Link>
                           </td>
                         </tr>
