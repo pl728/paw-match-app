@@ -1,5 +1,6 @@
 node_modules/
 backend/.env
+backend/swagger-output.json
 package-lock.json
 
 # Terraform — contains secrets, never commit
