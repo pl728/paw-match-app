@@ -5,6 +5,7 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { getMyProfile } from "../services/users.js";
 import { deleteShelter } from "../services/shelters.js";
 import { updatePet } from "../services/pets.js";
+import { createShelterPost, listShelterPosts, updateShelterPost, deleteShelterPost, publishShelterPost } from "../services/shelter_posts.js";
 
 const STATUS_OPTIONS = ["available", "pending", "adopted"];
 const PET_PLACEHOLDER_BY_SPECIES = {
@@ -61,10 +62,90 @@ function Profile() {
   const [editingPetId, setEditingPetId] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [statusError, setStatusError] = useState("");
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
+  const [editDraft, setEditDraft] = useState({ title: "", body: "" });
+  const [editSaving, setEditSaving] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState(null);
+  const [publishingPostId, setPublishingPostId] = useState(null);
+  const [creatingPost, setCreatingPost] = useState(false);
+  const [newPostDraft, setNewPostDraft] = useState({ title: "", body: "", type: "update", publish: false });
+  const [newPostSaving, setNewPostSaving] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
   }, []);
+
+  async function fetchPosts(shelterId) {
+    setPostsLoading(true);
+    try {
+      const result = await listShelterPosts({ shelterId });
+      setPosts(result.items || []);
+    } catch {
+      setPosts([]);
+    } finally {
+      setPostsLoading(false);
+    }
+  }
+
+  function openPostEditor(post) {
+    setEditingPost(post);
+    setEditDraft({ title: post.title, body: post.body });
+  }
+
+  async function handleSavePost() {
+    if (!editingPost) return;
+    setEditSaving(true);
+    try {
+      const updated = await updateShelterPost(editingPost.id, editDraft);
+      setPosts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
+      setEditingPost(null);
+    } catch (err) {
+      alert("Failed to save: " + err.message);
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function handleDeletePost(postId) {
+    setDeletingPostId(postId);
+    try {
+      await deleteShelterPost(postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (err) {
+      alert("Failed to delete: " + err.message);
+    } finally {
+      setDeletingPostId(null);
+    }
+  }
+
+  async function handlePublishPost(postId) {
+    setPublishingPostId(postId);
+    try {
+      const updated = await publishShelterPost(postId);
+      setPosts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
+    } catch (err) {
+      alert("Failed to publish: " + err.message);
+    } finally {
+      setPublishingPostId(null);
+    }
+  }
+
+  async function handleCreatePost() {
+    if (!profile?.shelter?.id) return;
+    setNewPostSaving(true);
+    try {
+      const created = await createShelterPost({ shelterId: profile.shelter.id, ...newPostDraft });
+      setPosts((prev) => [created, ...prev]);
+      setCreatingPost(false);
+      setNewPostDraft({ title: "", body: "", type: "update", publish: false });
+    } catch (err) {
+      alert("Failed to create post: " + err.message);
+    } finally {
+      setNewPostSaving(false);
+    }
+  }
 
   async function fetchProfileData() {
     setLoading(true);
@@ -73,6 +154,9 @@ function Profile() {
       const data = await getMyProfile();
       setProfile(data);
       setPetStatusDrafts(buildPetStatusDrafts(data?.pets));
+      if (data?.shelter?.id) {
+        fetchPosts(data.shelter.id);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -590,6 +674,226 @@ function Profile() {
     );
   }
 
+  function renderPostsTab() {
+    if (postsLoading) {
+      return <Text size="2" color="gray">Loading posts…</Text>;
+    }
+
+    return (
+      <Flex direction="column" gap="4">
+        <Card size="3">
+          <Flex justify="between" align="center">
+            <Heading size="5">Shelter Posts</Heading>
+            <Button onClick={() => setCreatingPost(true)}>New Post</Button>
+          </Flex>
+        </Card>
+
+        <Dialog.Root open={creatingPost} onOpenChange={(open) => { if (!open) setCreatingPost(false); }}>
+          <Dialog.Content maxWidth="520px">
+            <Dialog.Title>New Post</Dialog.Title>
+            <Flex direction="column" gap="4" mt="4">
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Type</Text>
+                <select
+                  value={newPostDraft.type}
+                  onChange={(e) => setNewPostDraft((d) => ({ ...d, type: e.target.value }))}
+                  style={{
+                    width: "100%", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)",
+                    background: "#2a2a2a", color: "#ffffff", padding: "10px 12px", font: "inherit"
+                  }}
+                >
+                  <option value="update" style={{ background: "#2a2a2a", color: "#fff" }}>Update</option>
+                  <option value="event" style={{ background: "#2a2a2a", color: "#fff" }}>Event</option>
+                  <option value="news" style={{ background: "#2a2a2a", color: "#fff" }}>News</option>
+                </select>
+              </label>
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Title</Text>
+                <input
+                  value={newPostDraft.title}
+                  onChange={(e) => setNewPostDraft((d) => ({ ...d, title: e.target.value }))}
+                  disabled={newPostSaving}
+                  style={{
+                    width: "100%", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)", color: "#e9eef5",
+                    padding: "10px 12px", font: "inherit", boxSizing: "border-box"
+                  }}
+                />
+              </label>
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Body</Text>
+                <textarea
+                  value={newPostDraft.body}
+                  onChange={(e) => setNewPostDraft((d) => ({ ...d, body: e.target.value }))}
+                  disabled={newPostSaving}
+                  rows={5}
+                  style={{
+                    width: "100%", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)", color: "#e9eef5",
+                    padding: "10px 12px", font: "inherit", resize: "vertical", boxSizing: "border-box"
+                  }}
+                />
+              </label>
+              <Flex align="center" gap="2">
+                <input
+                  type="checkbox"
+                  id="publish-now"
+                  checked={newPostDraft.publish}
+                  onChange={(e) => setNewPostDraft((d) => ({ ...d, publish: e.target.checked }))}
+                  disabled={newPostSaving}
+                />
+                <label htmlFor="publish-now">
+                  <Text size="2">Publish immediately</Text>
+                </label>
+              </Flex>
+              <Flex gap="3" justify="end">
+                <Button variant="soft" color="gray" onClick={() => setCreatingPost(false)} disabled={newPostSaving}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreatePost} disabled={newPostSaving || !newPostDraft.title || !newPostDraft.body}>
+                  {newPostSaving ? "Saving…" : "Create Post"}
+                </Button>
+              </Flex>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
+
+        {posts.length === 0 ? (
+          <Card size="3" style={{ textAlign: "center" }}>
+            <Flex direction="column" gap="3" align="center">
+              <Heading size="5">No Posts Yet</Heading>
+              <Text size="2" color="gray">Posts you create will appear here.</Text>
+            </Flex>
+          </Card>
+        ) : (
+          posts.map((post) => (
+            <Card key={post.id} size="3">
+              <Flex direction="column" gap="2">
+                <Flex justify="between" align="start" gap="3">
+                  <Box style={{ flex: 1 }}>
+                    <Heading size="4">{post.title}</Heading>
+                    <Text size="1" color="gray">
+                      {post.published_at ? "Published " + new Date(post.published_at).toLocaleDateString() : "Draft"}
+                    </Text>
+                  </Box>
+                  <Flex gap="2" shrink="0">
+                    <Button size="2" variant="soft" onClick={() => openPostEditor(post)}>
+                      Edit
+                    </Button>
+                    {!post.published_at && (
+                      <Button size="2" variant="soft" color="green" onClick={() => handlePublishPost(post.id)} disabled={publishingPostId === post.id}>
+                        {publishingPostId === post.id ? "Publishing…" : "Publish"}
+                      </Button>
+                    )}
+                    <AlertDialog.Root>
+                      <AlertDialog.Trigger asChild>
+                        <Button size="2" color="red" variant="soft" disabled={deletingPostId === post.id}>
+                          {deletingPostId === post.id ? "Deleting…" : "Delete"}
+                        </Button>
+                      </AlertDialog.Trigger>
+                      <AlertDialog.Portal>
+                        <AlertDialog.Overlay style={{
+                          position: "fixed",
+                          inset: 0,
+                          background: "rgba(0, 0, 0, 0.5)",
+                          zIndex: 9998
+                        }} />
+                        <AlertDialog.Content style={{
+                          position: "fixed",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                          width: "90%",
+                          maxWidth: "500px",
+                          background: "white",
+                          borderRadius: "12px",
+                          padding: "24px",
+                          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+                          zIndex: 9999
+                        }}>
+                          <AlertDialog.Title style={{
+                            fontSize: "1.25rem",
+                            fontWeight: 600,
+                            marginBottom: "12px",
+                            color: "#2d1810",
+                            display: "block"
+                          }}>
+                            Delete this post?
+                          </AlertDialog.Title>
+                          <AlertDialog.Description style={{
+                            fontSize: "0.95rem",
+                            color: "#5d3a2a",
+                            marginBottom: "24px",
+                            lineHeight: 1.6,
+                            display: "block"
+                          }}>
+                            This will permanently delete &ldquo;{post.title}&rdquo;. This action cannot be undone.
+                          </AlertDialog.Description>
+                          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                            <AlertDialog.Cancel asChild>
+                              <Button variant="soft" color="gray" size="2">Cancel</Button>
+                            </AlertDialog.Cancel>
+                            <AlertDialog.Action asChild>
+                              <Button color="red" size="2" onClick={() => handleDeletePost(post.id)}>Delete</Button>
+                            </AlertDialog.Action>
+                          </div>
+                        </AlertDialog.Content>
+                      </AlertDialog.Portal>
+                    </AlertDialog.Root>
+                  </Flex>
+                </Flex>
+                <Text size="2" color="gray" style={{ whiteSpace: "pre-wrap" }}>{post.body}</Text>
+              </Flex>
+            </Card>
+          ))
+        )}
+
+        <Dialog.Root open={!!editingPost} onOpenChange={(open) => { if (!open) setEditingPost(null); }}>
+          <Dialog.Content maxWidth="520px">
+            <Dialog.Title>Edit Post</Dialog.Title>
+            <Flex direction="column" gap="4" mt="4">
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Title</Text>
+                <input
+                  value={editDraft.title}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, title: e.target.value }))}
+                  disabled={editSaving}
+                  style={{
+                    width: "100%", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)", color: "#e9eef5",
+                    padding: "10px 12px", font: "inherit", boxSizing: "border-box"
+                  }}
+                />
+              </label>
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">Body</Text>
+                <textarea
+                  value={editDraft.body}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, body: e.target.value }))}
+                  disabled={editSaving}
+                  rows={6}
+                  style={{
+                    width: "100%", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)", color: "#e9eef5",
+                    padding: "10px 12px", font: "inherit", resize: "vertical", boxSizing: "border-box"
+                  }}
+                />
+              </label>
+              <Flex gap="3" justify="end">
+                <Button variant="soft" color="gray" onClick={() => setEditingPost(null)} disabled={editSaving}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSavePost} disabled={editSaving || !editDraft.title || !editDraft.body}>
+                  {editSaving ? "Saving…" : "Save"}
+                </Button>
+              </Flex>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
+      </Flex>
+    );
+  }
+
   if (loading) {
     return (
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
@@ -636,10 +940,20 @@ function Profile() {
                 Pets
               </Button>
             )}
+            {profile.role === "shelter_admin" && (
+              <Button
+                variant={activeTab === "posts" ? "solid" : "soft"}
+                onClick={() => setActiveTab("posts")}
+              >
+                Posts
+              </Button>
+            )}
           </Flex>
         </Card>
 
-        {activeTab === "profile" ? renderOverviewTab() : renderPetsTab()}
+        {activeTab === "profile" && renderOverviewTab()}
+        {activeTab === "pets" && renderPetsTab()}
+        {activeTab === "posts" && renderPostsTab()}
       </Flex>
     </div>
   );

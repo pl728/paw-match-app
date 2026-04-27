@@ -125,7 +125,7 @@ export default function FeedPage() {
               <option value="status_change">Status change</option>
               <option value="adoption_event">Adoption event</option>
               <option value="photo_added">Photo added</option>
-              <option value="update">Update</option>
+              <option value="shelter_post">Shelter post</option>
             </select>
           </label>
 
