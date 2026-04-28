@@ -96,3 +96,39 @@ export async function publishShelterPost(postId) {
 
     return getShelterPostById(postId);
 }
+
+export async function updateShelterPost(postId, updates) {
+    const fields = [];
+    const params = [];
+
+    if (updates.title !== undefined) {
+        fields.push('title = ?');
+        params.push(updates.title);
+    }
+
+    if (updates.body !== undefined) {
+        fields.push('body = ?');
+        params.push(updates.body);
+    }
+
+    if (updates.type !== undefined) {
+        fields.push('type = ?');
+        params.push(updates.type);
+    }
+
+    if (fields.length === 0) return getShelterPostById(postId);
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(postId);
+
+    await db.query(
+        `UPDATE shelter_posts SET ${fields.join(', ')} WHERE id = ?`,
+        params
+    );
+
+    return getShelterPostById(postId);
+}
+
+export async function deleteShelterPost(postId) {
+    await db.query('DELETE FROM shelter_posts WHERE id = ?', [postId]);
+}
