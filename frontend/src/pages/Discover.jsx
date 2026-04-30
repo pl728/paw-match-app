@@ -278,18 +278,29 @@ export default function Discover() {
             {!cardBusy && currentPet && (
               <Card size="3" style={{ width: "100%", maxWidth: 520 }}>
                 <Flex direction="column" gap="3">
-                  {currentPet.primary_photo_url && (
-                    <img
-                      src={currentPet.primary_photo_url}
-                      alt={currentPet.name}
-                      style={{
-                        width: "100%",
-                        aspectRatio: "4 / 3",
-                        objectFit: "cover",
-                        borderRadius: 8,
-                      }}
-                    />
-                  )}
+                  <div style={photoFrameStyle}>
+                    {acting ? (
+                      <Flex direction="column" align="center" justify="center" gap="3" style={{ minHeight: "100%" }}>
+                        <div style={spinnerStyle} />
+                        <Text size="2" color="gray">Saving your choice...</Text>
+                      </Flex>
+                    ) : currentPet.primary_photo_url ? (
+                      <img
+                        src={currentPet.primary_photo_url}
+                        alt={currentPet.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    ) : (
+                      <Flex align="center" justify="center" style={{ minHeight: "100%" }}>
+                        <Text size="2" color="gray">Photo coming soon</Text>
+                      </Flex>
+                    )}
+                  </div>
 
                   <Flex justify="between" align="start" gap="3">
                     <div>
@@ -456,6 +467,15 @@ const inputStyle = {
   color: "#fff",
   padding: "9px 10px",
   font: "inherit",
+};
+
+const photoFrameStyle = {
+  width: "100%",
+  aspectRatio: "4 / 3",
+  overflow: "hidden",
+  borderRadius: 8,
+  background: "rgba(255, 255, 255, 0.06)",
+  border: "1px solid rgba(255, 255, 255, 0.1)",
 };
 
 const spinnerStyle = {
