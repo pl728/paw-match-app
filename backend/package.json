@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "prestart": "node ./scripts/generate_swagger.js",
+    "db:schema": "node ./scripts/apply_schema.js",
     "swagger": "node ./scripts/generate_swagger.js",
     "test": "node ./scripts/run_tests.js",
     "start": "node main.js"
