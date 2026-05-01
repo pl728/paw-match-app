@@ -127,6 +127,16 @@ function Navbar() {
                 </NavigationMenu.Item>
               )}
 
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/user-faq" style={navLinkStyle('/user-faq')}>
+                      FAQ
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
               {isShelterAdmin && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
@@ -136,6 +146,17 @@ function Navbar() {
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
               )}
+
+              {isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/admin-faq" style={navLinkStyle('/admin-faq')}>
+                      FAQ
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+              
             </NavigationMenu.List>
           </NavigationMenu.Root>
         )}

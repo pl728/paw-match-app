@@ -12,6 +12,8 @@ import SetupShelter from './pages/SetupShelter.jsx'
 import Navbar from './components/Navbar.jsx'
 import BrowseAllPets from "./pages/BrowseAllPets.jsx";
 import Favorites from "./pages/Favorites.jsx";
+import UserFAQ from "./pages/UserFAQ.jsx";
+import AdminFAQ from "./pages/AdminFAQ.jsx";
 import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/useAuth.js"
@@ -148,6 +150,8 @@ function App() {
         <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
         <Route path="/pets/:id" element={<PetDetails />} />
         <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
+        <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
+        <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
       </Routes>
     </>
   );
