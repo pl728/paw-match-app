@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPetById } from "../services/pets.js";
 import Spinner from "../components/ui/spinner.jsx";
+import StartConvo from "../pages/StartConvo.jsx";
 
 const PET_PLACEHOLDER_BY_SPECIES = {
   Cat: "/cat.png",
@@ -26,7 +27,7 @@ function PetPhoto({ photo, petName }) {
         background: "rgba(255, 255, 255, 0.06)",
       }}
     >
-      {loading ? (
+      {loading && (
         <div
           style={{
             position: "absolute",
@@ -37,9 +38,9 @@ function PetPhoto({ photo, petName }) {
             background: "rgba(11, 12, 16, 0.55)",
           }}
         >
-          <Spinner size={28} label="Loading pet photo" />
+          <Spinner size={28} />
         </div>
-      ) : null}
+      )}
 
       <img
         src={photo.url}
@@ -79,7 +80,8 @@ export default function PetDetails() {
   if (error) return <p>{error}</p>;
   if (!pet) return <p>No pet found.</p>;
 
-  const fallbackPhotoUrl = pet.primary_photo_url || getPetPlaceholderImage(pet.species);
+  const fallbackPhotoUrl =
+    pet.primary_photo_url || getPetPlaceholderImage(pet.species);
 
   return (
     <div style={{ padding: "2rem", maxWidth: "800px" }}>
@@ -91,8 +93,10 @@ export default function PetDetails() {
 
       {pet.description && <p>{pet.description}</p>}
 
+      <StartConvo pet={pet} />
+
       {!pet.photos?.length && (
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
           <img
             src={fallbackPhotoUrl}
             alt={pet.name}

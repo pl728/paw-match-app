@@ -11,6 +11,8 @@ import Profile from './pages/Profile.jsx'
 import SetupShelter from './pages/SetupShelter.jsx'
 import Navbar from './components/Navbar.jsx'
 import BrowseAllPets from "./pages/BrowseAllPets.jsx";
+import Conversations from "./pages/Conversations.jsx";
+import Chat from "./pages/Chat.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
@@ -147,6 +149,8 @@ function App() {
         <Route path="/login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
         <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
         <Route path="/pets/:id" element={<PetDetails />} />
+        <Route path="/conversations" element={<RequireAuth><Conversations /></RequireAuth>} />
+        <Route path="/conversations/:id" element={<RequireAuth><Chat /></RequireAuth>} />
         <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
       </Routes>
     </>

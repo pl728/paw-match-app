@@ -131,3 +131,43 @@ CREATE TABLE IF NOT EXISTS favorites (
         REFERENCES pets (id)
         ON DELETE CASCADE
 )  ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;
+
+-- MESSAGING --
+
+CREATE TABLE IF NOT EXISTS conversations (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    adopter_user_id CHAR(36) NOT NULL,
+    shelter_id CHAR(36) NOT NULL,
+    pet_id CHAR(36) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT conversations_adopter_fk FOREIGN KEY (adopter_user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT conversations_shelter_fk FOREIGN KEY (shelter_id)
+        REFERENCES shelters(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT conversations_pet_fk FOREIGN KEY (pet_id)
+        REFERENCES pets(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS messages (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conversation_id CHAR(36) NOT NULL,
+    sender_user_id CHAR(36) NOT NULL,
+    body TEXT NOT NULL,
+    read_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT messages_conversation_fk FOREIGN KEY (conversation_id)
+        REFERENCES conversations(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT messages_sender_fk FOREIGN KEY (sender_user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -174,6 +174,19 @@ function Navbar() {
                       cursor: 'pointer',
                       outline: 'none'
                     }}
+                    onSelect={() => navigate('/conversations')}
+                  >
+                    Messages
+                  </DropdownMenu.Item>
+
+                  <DropdownMenu.Item
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      color: '#cdd6e3',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
                     onSelect={() => navigate('/profile')}
                   >
                     Profile

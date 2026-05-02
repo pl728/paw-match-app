@@ -58,3 +58,28 @@ INSERT INTO email_notifications (user_id)
 SELECT u.id
 FROM users u
 WHERE u.username = 'adopter1';
+
+-- MESSAGING --
+
+INSERT INTO conversations (adopter_user_id, shelter_id, pet_id)
+SELECT u.id, s.id, p.id
+FROM users u
+JOIN shelters s
+    ON s.name = 'Happy Tails Shelter'
+JOIN pets p
+    ON p.name = 'Milo'
+WHERE u.username = 'adopter1';
+
+INSERT INTO messages (conversation_id, sender_user_id, body)
+SELECT c.id, u.id, 'Hi! Is Milo still available?'
+FROM conversations c
+JOIN users u
+    ON u.username = 'adopter1';
+
+INSERT INTO messages (conversation_id, sender_user_id, body)
+SELECT c.id, u.id, 'Yes, Milo is still available! Would you like to schedule a visit?'
+FROM conversations c
+JOIN shelters s
+    ON s.id = c.shelter_id
+JOIN users u
+    ON u.id = s.user_id;
