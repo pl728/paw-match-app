@@ -100,6 +100,16 @@ function Navbar() {
               {!isShelterAdmin && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
+                    <Link to="/discover" style={navLinkStyle('/discover')}>
+                      Discover
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
                     <Link to="/favorites" style={navLinkStyle('/favorites')}>
                       Favorites
                     </Link>
