@@ -12,6 +12,8 @@ import SetupShelter from './pages/SetupShelter.jsx'
 import Navbar from './components/Navbar.jsx'
 import BrowseAllPets from "./pages/BrowseAllPets.jsx";
 import Favorites from "./pages/Favorites.jsx";
+import UserFAQ from "./pages/UserFAQ.jsx";
+import AdminFAQ from "./pages/AdminFAQ.jsx";
 import Discover from "./pages/Discover.jsx";
 import ViewPetsAdmin from "./pages/ViewPetsAdmin.jsx";
 import './App.css'
@@ -151,6 +153,8 @@ function App() {
         <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
         <Route path="/pets/:id" element={<PetDetails />} />
         <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
+        <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
+        <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
         <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
       </Routes>
     </>
