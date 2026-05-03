@@ -37,6 +37,16 @@
   overflow-x: hidden;
 }
 
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -215,28 +225,45 @@
 }
 
 .footer {
-  padding-top: 18px;
-  border-top: 1px solid rgba(47, 143, 168, 0.2);
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  margin-top: 48px;
+  padding: 36px 56px 24px;
+  background: #a9dc87;
+  color: #1f4f3f;
 }
 
-.footer-links {
-  display: flex;
-  gap: 12px;
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.footer h4 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  text-transform: uppercase;
 }
 
 .footer a {
-  color: #285f70;
+  display: block;
+  color: #1f4f3f;
   text-decoration: none;
-  opacity: 0.85;
+  margin-bottom: 8px;
 }
 
 .footer a:hover {
-  opacity: 1;
-  color: #2f8fa8;
+  color: #0f2f25;
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  max-width: 1100px;
+  margin: 28px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  text-align: center;
+  color: #1f4f3f;
 }
 
 .pet-image {
