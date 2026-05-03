@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Flex, Heading, Text, Box, Button, Dialog } from "@radix-ui/themes";
+import { Card, Flex, Heading, Text, Box, Button, Dialog, Switch } from "@radix-ui/themes";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { getMyProfile } from "../services/users.js";
 import { deleteShelter } from "../services/shelters.js";
 import { updatePet } from "../services/pets.js";
 import { createShelterPost, listShelterPosts, updateShelterPost, deleteShelterPost, publishShelterPost } from "../services/shelter_posts.js";
+import { getEmailNotificationPrefs, updateEmailNotificationPrefs } from "../services/email_notifications.js";
+import { AuthContext } from "../auth/context.js";
 
 const STATUS_OPTIONS = ["available", "pending", "adopted"];
 const PET_PLACEHOLDER_BY_SPECIES = {
@@ -49,8 +51,17 @@ function renderPetImage(pet, size, borderRadius = 12) {
   );
 }
 
+const DIGEST_OPTIONS = [
+  { value: "immediately", label: "Immediately" },
+  { value: "daily", label: "Daily digest" },
+  { value: "weekly", label: "Weekly digest" },
+  { value: "monthly", label: "Monthly digest" },
+  { value: "none", label: "Never" },
+];
+
 function Profile() {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -72,9 +83,16 @@ function Profile() {
   const [creatingPost, setCreatingPost] = useState(false);
   const [newPostDraft, setNewPostDraft] = useState({ title: "", body: "", type: "update", publish: false });
   const [newPostSaving, setNewPostSaving] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState(null);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifMessage, setNotifMessage] = useState("");
 
   useEffect(() => {
     fetchProfileData();
+    if (user?.id) {
+      fetchNotifPrefs();
+    }
   }, []);
 
   async function fetchPosts(shelterId) {
@@ -144,6 +162,51 @@ function Profile() {
       alert("Failed to create post: " + err.message);
     } finally {
       setNewPostSaving(false);
+    }
+  }
+
+  async function fetchNotifPrefs() {
+    setNotifLoading(true);
+    try {
+      const prefs = await getEmailNotificationPrefs(user.id);
+      setNotifPrefs(prefs);
+    } catch {
+      // silently fail — prefs not critical to page load
+    } finally {
+      setNotifLoading(false);
+    }
+  }
+
+  async function handleNotifToggle(field, value) {
+    if (!user?.id) return;
+    setNotifPrefs((prev) => ({ ...prev, [field]: value }));
+    setNotifSaving(true);
+    setNotifMessage("");
+    try {
+      const updated = await updateEmailNotificationPrefs(user.id, { [field]: value });
+      setNotifPrefs(updated);
+      setNotifMessage("Preferences saved.");
+    } catch {
+      setNotifPrefs((prev) => ({ ...prev, [field]: !value }));
+      setNotifMessage("Failed to save. Please try again.");
+    } finally {
+      setNotifSaving(false);
+    }
+  }
+
+  async function handleDigestChange(value) {
+    if (!user?.id) return;
+    setNotifPrefs((prev) => ({ ...prev, digest_frequency: value }));
+    setNotifSaving(true);
+    setNotifMessage("");
+    try {
+      const updated = await updateEmailNotificationPrefs(user.id, { digest_frequency: value });
+      setNotifPrefs(updated);
+      setNotifMessage("Preferences saved.");
+    } catch {
+      setNotifMessage("Failed to save. Please try again.");
+    } finally {
+      setNotifSaving(false);
     }
   }
 
@@ -894,6 +957,77 @@ function Profile() {
     );
   }
 
+  function renderNotificationsTab() {
+    if (notifLoading || !notifPrefs) {
+      return <Text size="2" color="gray">Loading preferences…</Text>;
+    }
+
+    const toggles = [
+      { field: "adoption_updates", label: "Adoption updates", description: "When a pet you're following is adopted" },
+      { field: "saved_animal_updates", label: "Saved animal updates", description: "When a favorited pet's status changes" },
+      { field: "new_match_alerts", label: "New match alerts", description: "When a new pet matches your preferences" },
+      { field: "reminders", label: "Reminders", description: "Periodic reminders about pets you've saved" },
+    ];
+
+    return (
+      <Flex direction="column" gap="4">
+        <Card size="3">
+          <Flex direction="column" gap="4">
+            <Heading size="5">Email Notifications</Heading>
+
+            {toggles.map(({ field, label, description }) => (
+              <Flex key={field} justify="between" align="center" gap="4">
+                <Box>
+                  <Text size="2" weight="bold" as="div">{label}</Text>
+                  <Text size="2" color="gray">{description}</Text>
+                </Box>
+                <Switch
+                  checked={!!notifPrefs[field]}
+                  onCheckedChange={(checked) => handleNotifToggle(field, checked)}
+                  disabled={notifSaving}
+                />
+              </Flex>
+            ))}
+          </Flex>
+        </Card>
+
+        <Card size="3">
+          <Flex direction="column" gap="3">
+            <Heading size="5">Digest Frequency</Heading>
+            <Text size="2" color="gray">How often would you like to receive email summaries?</Text>
+            <select
+              value={notifPrefs.digest_frequency || "none"}
+              onChange={(e) => handleDigestChange(e.target.value)}
+              disabled={notifSaving}
+              style={{
+                width: "100%",
+                maxWidth: 280,
+                borderRadius: 10,
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                background: "#2a2a2a",
+                color: "#ffffff",
+                padding: "10px 12px",
+                font: "inherit",
+              }}
+            >
+              {DIGEST_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value} style={{ background: "#2a2a2a", color: "#ffffff" }}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </Flex>
+        </Card>
+
+        {notifMessage && (
+          <Text size="2" color={notifMessage.startsWith("Failed") ? "red" : "green"}>
+            {notifMessage}
+          </Text>
+        )}
+      </Flex>
+    );
+  }
+
   if (loading) {
     return (
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
@@ -948,12 +1082,19 @@ function Profile() {
                 Posts
               </Button>
             )}
+            <Button
+              variant={activeTab === "notifications" ? "solid" : "soft"}
+              onClick={() => setActiveTab("notifications")}
+            >
+              Notifications
+            </Button>
           </Flex>
         </Card>
 
         {activeTab === "profile" && renderOverviewTab()}
         {activeTab === "pets" && renderPetsTab()}
         {activeTab === "posts" && renderPostsTab()}
+        {activeTab === "notifications" && renderNotificationsTab()}
       </Flex>
     </div>
   );

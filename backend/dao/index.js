@@ -12,3 +12,9 @@ export {
 } from './shelter_posts.js';
 export { listRecentActivity } from './feed_events.js';
 export { getEmailNotifications, updateEmailNotifications } from './email_notifications.js';
+export {
+    createPetInteraction,
+    getUserPetPreferences,
+    listRecommendedPets,
+    upsertUserPetPreferences
+} from './recommendations.js';

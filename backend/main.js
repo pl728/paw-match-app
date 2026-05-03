@@ -16,7 +16,7 @@ import shelterPostsRoutes from './routes/shelter_posts.js';
 import feedEventsRoutes from './routes/feed_events.js';
 import emailNotificationsRoutes from './routes/email_notifications.js';
 import conversationsRoutes from './routes/conversations.js';
-
+import recommendationsRoutes from './routes/recommendations.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +58,7 @@ app.use('/shelter-follows', shelterFollowsRoutes);
 app.use('/shelter-posts', shelterPostsRoutes);
 app.use('/feed_events', feedEventsRoutes);
 app.use('/api/conversations', conversationsRoutes);
+app.use('/recommendations', recommendationsRoutes);
 
 // Preferences & notifications
 app.use('/email-notifications', emailNotificationsRoutes);

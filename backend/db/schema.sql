@@ -171,3 +171,39 @@ CREATE TABLE IF NOT EXISTS messages (
         REFERENCES users(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS user_pet_preferences (
+    user_id CHAR(36) PRIMARY KEY,
+    species JSON DEFAULT NULL,
+    breeds JSON DEFAULT NULL,
+    sex JSON DEFAULT NULL,
+    sizes JSON DEFAULT NULL,
+    min_age_years INT DEFAULT NULL,
+    max_age_years INT DEFAULT NULL,
+    city VARCHAR(255) DEFAULT NULL,
+    state VARCHAR(100) DEFAULT NULL,
+    postal_code VARCHAR(20) DEFAULT NULL,
+    radius_miles INT NOT NULL DEFAULT 50,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT NULL,
+    CONSTRAINT user_pet_preferences_user_fk FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+) ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;
+
+CREATE TABLE IF NOT EXISTS pet_interactions (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    pet_id CHAR(36) NOT NULL,
+    interaction_type ENUM('shown', 'viewed', 'liked', 'passed') NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pet_interactions_user_fk FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+    CONSTRAINT pet_interactions_pet_fk FOREIGN KEY (pet_id)
+        REFERENCES pets (id)
+        ON DELETE CASCADE,
+    UNIQUE KEY pet_interactions_user_pet_type_unique (user_id, pet_id, interaction_type),
+    INDEX pet_interactions_user_pet_idx (user_id, pet_id),
+    INDEX pet_interactions_pet_type_idx (pet_id, interaction_type),
+    INDEX pet_interactions_user_type_idx (user_id, interaction_type)
+) ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;

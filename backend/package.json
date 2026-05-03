@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "prestart": "node ./scripts/generate_swagger.js",
+    "db:schema": "node ./scripts/apply_schema.js",
+    "seed:recommendations": "node ./scripts/seed_recommendations_demo.js",
     "swagger": "node ./scripts/generate_swagger.js",
     "test": "node ./scripts/run_tests.js",
     "start": "node main.js"
