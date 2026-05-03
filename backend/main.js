@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +15,7 @@ import shelterFollowsRoutes from './routes/shelter_follows.js';
 import shelterPostsRoutes from './routes/shelter_posts.js';
 import feedEventsRoutes from './routes/feed_events.js';
 import emailNotificationsRoutes from './routes/email_notifications.js';
+import recommendationsRoutes from './routes/recommendations.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +23,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 4516;
 
+app.set('trust proxy', true);
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 if (!process.env.DATABASE_URL) {
@@ -52,6 +56,7 @@ app.use('/favorites', favoritesRoutes);
 app.use('/shelter-follows', shelterFollowsRoutes);
 app.use('/shelter-posts', shelterPostsRoutes);
 app.use('/feed_events', feedEventsRoutes);
+app.use('/recommendations', recommendationsRoutes);
 
 // Preferences & notifications
 app.use('/email-notifications', emailNotificationsRoutes);

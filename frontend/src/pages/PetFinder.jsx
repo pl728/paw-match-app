@@ -46,13 +46,16 @@ function PetFinder() {
     const filtered = pets.filter(pet => {
       if (species.length && !species.includes(pet.species)) return false;
       if ((pet.species === "Dog" || pet.species === "Cat") && breed.length && !breed.includes(pet.breed)) return false;
-      if (sex.length && !sex.includes(pet.sex)) return false;
+      if (sex.length && !sex.includes(pet.sex?.toLowerCase())) return false;
 
       const age = pet.age_years || 0;
       if (ageRange.length) {
-        if (ageRange.includes("puppy") && age > 2) return false;
-        if (ageRange.includes("middle") && (age < 2 || age > 7)) return false;
-        if (ageRange.includes("senior") && age < 7) return false;
+        const matchesAge =
+          (ageRange.includes("Young") && age <= 2) ||
+          (ageRange.includes("Middle-Aged") && age >= 3 && age <= 7) ||
+          (ageRange.includes("Senior-Citizen") && age > 7);
+
+        if (!matchesAge) return false;
       }
 
       if (size.length && !size.includes(pet.size)) return false;

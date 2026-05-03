@@ -4,7 +4,9 @@ import {
     createShelterPost,
     listShelterPosts,
     getShelterPostById,
-    publishShelterPost
+    publishShelterPost,
+    updateShelterPost,
+    deleteShelterPost
 } from '../dao/shelter_posts.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
@@ -143,6 +145,64 @@ router.patch('/:id/publish', requireAuth, requireRole('shelter_admin'), asyncHan
     }
 
     res.json(updated);
+}));
+
+/**
+ * PATCH /api/shelter-posts/:id
+ * Edit a post's title, body, or type.
+ */
+router.patch('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const postId = req.params.id;
+
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    const existing = await getShelterPostById(postId);
+    if (!existing) {
+        return res.status(404).json({ error: 'Post not found' });
+    }
+
+    if (existing.shelter_id !== shelter.id) {
+        return res.status(403).json({ error: 'Not allowed to edit this post' });
+    }
+
+    const updates = {};
+    if (typeof req.body.title === 'string') updates.title = req.body.title;
+    if (typeof req.body.body === 'string') updates.body = req.body.body;
+    if (typeof req.body.type === 'string') updates.type = req.body.type;
+
+    if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'No valid fields provided to update' });
+    }
+
+    const updated = await updateShelterPost(postId, updates);
+    res.json(updated);
+}));
+
+/**
+ * DELETE /api/shelter-posts/:id
+ */
+router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const postId = req.params.id;
+
+    const shelter = await getShelterByUserId(req.userId);
+    if (!shelter) {
+        return res.status(404).json({ error: 'Shelter not found for user' });
+    }
+
+    const existing = await getShelterPostById(postId);
+    if (!existing) {
+        return res.status(404).json({ error: 'Post not found' });
+    }
+
+    if (existing.shelter_id !== shelter.id) {
+        return res.status(403).json({ error: 'Not allowed to delete this post' });
+    }
+
+    await deleteShelterPost(postId);
+    res.status(204).send();
 }));
 
 export default router;

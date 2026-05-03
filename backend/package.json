@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "prestart": "node ./scripts/generate_swagger.js",
+    "db:schema": "node ./scripts/apply_schema.js",
+    "seed:recommendations": "node ./scripts/seed_recommendations_demo.js",
     "swagger": "node ./scripts/generate_swagger.js",
     "test": "node ./scripts/run_tests.js",
     "start": "node main.js"
@@ -22,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
     "mysql2": "^3.14.0",
+    "nodemailer": "^8.0.6",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"

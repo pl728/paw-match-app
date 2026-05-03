@@ -100,6 +100,16 @@ function Navbar() {
               {!isShelterAdmin && (
                 <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
+                    <Link to="/discover" style={navLinkStyle('/discover')}>
+                      Discover
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
+
+              {!isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
                     <Link to="/favorites" style={navLinkStyle('/favorites')}>
                       Favorites
                     </Link>
@@ -152,6 +162,11 @@ function Navbar() {
                   <NavigationMenu.Link asChild>
                     <Link to="/admin-faq" style={navLinkStyle('/admin-faq')}>
                       FAQ
+              {isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/view-admin-pets" style={navLinkStyle('/view-admin-pets')}>
+                      View All Pets
                     </Link>
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>

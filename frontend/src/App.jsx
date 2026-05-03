@@ -14,6 +14,8 @@ import BrowseAllPets from "./pages/BrowseAllPets.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import UserFAQ from "./pages/UserFAQ.jsx";
 import AdminFAQ from "./pages/AdminFAQ.jsx";
+import Discover from "./pages/Discover.jsx";
+import ViewPetsAdmin from "./pages/ViewPetsAdmin.jsx";
 import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/useAuth.js"
@@ -142,6 +144,7 @@ function App() {
         <Route path="/setup-shelter" element={<RequireRole role="shelter_admin"><SetupShelter /></RequireRole>} />
         <Route path="/create-pet" element={<RequireRole role="shelter_admin"><CreatePet /></RequireRole>} />
         <Route path="/find-and-browse" element={<RequireAuth><Navigate to="/browse-pets" replace /></RequireAuth>} />
+        <Route path="/discover" element={<RequireAuth><Discover /></RequireAuth>} />
         <Route path="/pet-finder" element={<RequireAuth><PetFinder/></RequireAuth>} />
         <Route path="/browse-pets" element={<RequireAuth><BrowseAllPets /></RequireAuth>} />
         <Route path="/browse-shelters" element={<RequireAuth><BrowseShelters /></RequireAuth>} />
@@ -152,6 +155,7 @@ function App() {
         <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
         <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
         <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
+        <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
       </Routes>
     </>
   );

@@ -83,14 +83,24 @@ router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo
     });
 
     let photoUrl = null;
-    if (req.file) {
-        photoUrl = await uploadPetPhoto({
-            petId: created.id,
-            shelterId: shelter.id,
-            file: req.file
-        });
-    } else {
-        photoUrl = getDefaultPetPhotoStorageUrl(species);
+    try {
+        if (req.file) {
+            photoUrl = await uploadPetPhoto({
+                petId: created.id,
+                shelterId: shelter.id,
+                file: req.file
+            });
+        } else {
+            photoUrl = getDefaultPetPhotoStorageUrl(species);
+        }
+    } catch (err) {
+        console.error('Pet photo upload failed for pet %s', created.id, err);
+        try {
+            await deletePet(created.id);
+        } catch (cleanupErr) {
+            console.error('Failed to clean up pet %s after upload error', created.id, cleanupErr);
+        }
+        return res.status(503).json({ error: 'Pet photo upload failed. Please try again later.' });
     }
 
     if (photoUrl) {

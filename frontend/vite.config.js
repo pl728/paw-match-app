@@ -23,6 +23,7 @@ export default defineConfig({
       '/shelter-follows': 'http://localhost:4516',
       '/shelter-posts': 'http://localhost:4516',
       '/email-notifications': 'http://localhost:4516',
+      '/recommendations': 'http://localhost:4516',
       '/api': 'http://localhost:4516'
     }
   }
