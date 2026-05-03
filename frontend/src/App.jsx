@@ -58,14 +58,8 @@ function Home() {
           </div>
 
           <div className="hero-art" aria-hidden="true">
-            <div
-              className="art-card"
-              style={{ backgroundImage: `url(${comingsoon})` }}
-            />
-            <div
-              className="art-card small"
-              style={{ backgroundImage: `url(${comingsoon})` }}
-            />
+            <div className="art-card"></div>
+            <div className="art-card small"></div>
           </div>
         </main>
 

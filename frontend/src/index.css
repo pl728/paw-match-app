@@ -1,11 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Outfit', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: #1f4f3f;
+  background-color: #f7fbf2;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,20 +16,24 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: #2f8fa8;
+  text-decoration: none;
 }
+
 a:hover {
-  color: #535bf2;
+  color: #24778d;
 }
 
 body {
-  margin: 0;
-  display: block;
-  min-width: 320px;
-  min-height: 100vh;
-  background: #0b0c10;
-  color: #e9eef5;
+  background-image: url("/Paw.png") !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 h1 {
@@ -37,38 +42,36 @@ h1 {
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: 12px;
+  border: none;
   padding: 0.6em 1.2em;
   font-size: 1em;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #a9dc87;
+  color: #1f4f3f;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: 0.2s;
 }
+
 button:hover {
-  border-color: #646cff;
+  background-color: #93cf72;
 }
+
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid rgba(47, 143, 168, 0.3);
 }
 
+/* remove dark mode override completely */
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+    color: #1f4f3f;
+    background-color: #f7fbf2;
   }
 }
 
-
+/* layout */
 .topbar-inner {
   max-width: 920px;
   margin: 0 auto;
@@ -81,6 +84,7 @@ button:focus-visible {
 .brand {
   font-weight: 700;
   letter-spacing: 0.2px;
+  color: #2f8fa8;
 }
 
 .nav {
@@ -89,15 +93,15 @@ button:focus-visible {
 }
 
 .navlink {
-  color: #cdd6e3;
+  color: #285f70;
   text-decoration: none;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 999px;
 }
 
 .navlink.active {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: #a9dc87;
+  color: #1f4f3f;
 }
 
 .container {
@@ -116,7 +120,7 @@ button:focus-visible {
 }
 
 .muted {
-  color: rgba(233, 238, 245, 0.7);
+  color: #5f7f7a;
 }
 
 .controls {
@@ -133,16 +137,15 @@ button:focus-visible {
 
 .control-label {
   font-size: 12px;
-  color: rgba(233, 238, 245, 0.7);
+  color: #5f7f7a;
 }
 
 select {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e9eef5;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #ffffff;
+  color: #285f70;
+  border: 1px solid rgba(47, 143, 168, 0.2);
   border-radius: 10px;
   padding: 8px 10px;
-  outline: none;
 }
 
 .stack {
@@ -151,10 +154,11 @@ select {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(47, 143, 168, 0.15);
   border-radius: 16px;
   padding: 14px;
+  box-shadow: 0 10px 25px rgba(40,95,112,0.1);
 }
 
 .feed-card .feed-header {
@@ -164,22 +168,24 @@ select {
 }
 
 .badge {
-  display: inline-block;
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(169, 220, 135, 0.35);
+  color: #1f4f3f;
   margin-bottom: 8px;
 }
 
 .feed-title {
   margin: 0;
   font-size: 16px;
+  color: #1f4f3f;
 }
 
 .meta {
   font-size: 12px;
   margin-top: 6px;
+  color: #5f7f7a;
 }
 
 .dot {
@@ -191,16 +197,16 @@ select {
   height: 72px;
   border-radius: 14px;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(47, 143, 168, 0.2);
 }
 
 .thumb.placeholder {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(169, 220, 135, 0.2);
 }
 
 .feed-body {
-  margin: 12px 0 0;
-  color: rgba(233, 238, 245, 0.9);
+  margin-top: 10px;
+  color: #3f6868;
 }
 
 .actions {
@@ -211,22 +217,24 @@ select {
 }
 
 .btn {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.10);
-  color: #ffffff;
+  background: #a9dc87;
+  color: #1f4f3f;
   border-radius: 12px;
   padding: 10px 12px;
-  cursor: pointer;
+  border: none;
+  font-weight: 600;
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: #93cf72;
 }
 
 .btn.btn-secondary {
-  background: rgba(255, 255, 255, 0.06);
+  background: #eaf8f7;
+  color: #285f70;
 }
 
+/* loading */
 .skeleton {
   height: 110px;
   position: relative;
@@ -241,20 +249,28 @@ select {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.10),
+    rgba(47, 143, 168, 0.12),
     transparent
   );
   animation: shimmer 1.1s infinite;
 }
 
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+.spinner {
+  display: inline-block;
+  border-radius: 999px;
+  border: 2px solid rgba(47,143,168,0.2);
+  border-top-color: #a9dc87;
+  animation: ui-spinner-rotate 0.8s linear infinite;
 }
 
 @keyframes ui-spinner-rotate {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }

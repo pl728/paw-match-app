@@ -9,6 +9,7 @@ export async function getAllConversations(userId, role) {
       c.adopter_user_id,
       c.shelter_id,
       c.pet_id,
+      u.username AS adopter_username,
       s.name AS shelter_name,
       p.name AS pet_name,
       m.body AS last_message,
@@ -16,6 +17,7 @@ export async function getAllConversations(userId, role) {
       c.created_at,
       c.updated_at
     FROM conversations c
+    JOIN users u ON u.id = c.adopter_user_id
     JOIN shelters s ON s.id = c.shelter_id
     LEFT JOIN pets p ON p.id = c.pet_id
     LEFT JOIN messages m ON m.id = (
@@ -50,9 +52,12 @@ export async function createConversation({ adopter_user_id, shelter_id, pet_id }
 
   const result = await db.query(
     `
-    SELECT *
-    FROM conversations
-    WHERE id = ?
+    SELECT
+      c.*,
+      s.name AS shelter_name
+    FROM conversations c
+    JOIN shelters s ON s.id = c.shelter_id
+    WHERE c.id = ?
     `,
     [id]
   );

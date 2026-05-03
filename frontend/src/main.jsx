@@ -9,7 +9,7 @@ import { AuthProvider } from './auth/AuthContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Theme appearance="dark" accentColor="amber" grayColor="sand" radius="large">
+    <Theme appearance="light" accentColor="green" grayColor="sand" radius="large">
       <AuthProvider>
         <BrowserRouter>
           <App />

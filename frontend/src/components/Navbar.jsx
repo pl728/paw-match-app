@@ -16,257 +16,137 @@ function Navbar() {
     navigate('/', { replace: true });
   };
 
-  const navLinkStyle = (path) => ({
-    padding: '8px 16px',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    color: location.pathname === path ? '#fff' : '#cdd6e3',
-    background: location.pathname === path ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-  });
+  const navLinkClass = (path) =>
+    `nav-link ${location.pathname === path ? 'active' : ''}`;
 
   return (
-    <nav style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
-      background: 'rgba(11, 12, 16, 0.95)',
-      backdropFilter: 'blur(10px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-    }}>
-      <div style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-        padding: '12px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '24px'
-      }}>
-        <Link
-          to={isAuthed ? "/home" : "/"}
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit' }}
-        >
-          <img src={pawmatchlogo} style={{ height: '36px' }} alt="PawMatch" />
-          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>PawMatch</span>
+    <nav className="navbar">
+      <div className="navbar-inner">
+
+        <Link to={isAuthed ? "/home" : "/"} className="brand">
+          <img src={pawmatchlogo} className="logo" alt="PawMatch" />
+          <span className="brand-name">PawMatch</span>
+
           {isShelterAdmin && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 10px',
-                borderRadius: '999px',
-                background: '#b42318',
-                color: '#fff',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase'
-              }}
-            >
-              Admin
-            </span>
+            <span className="admin-badge">Admin</span>
           )}
         </Link>
 
         {isAuthed && (
-          <NavigationMenu.Root style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <NavigationMenu.List style={{ display: 'flex', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
+          <NavigationMenu.Root className="nav-menu">
+            <NavigationMenu.List className="nav-list">
+
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/home" style={navLinkStyle('/home')}>
-                    Home
-                  </Link>
+                  <Link to="/home" className={navLinkClass('/home')}>Home</Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
               <NavigationMenu.Item>
                 <NavigationMenu.Link asChild>
-                  <Link to="/feed" style={navLinkStyle('/feed')}>
-                    Feed
-                  </Link>
+                  <Link to="/feed" className={navLinkClass('/feed')}>Feed</Link>
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
               {!isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/browse-pets" style={navLinkStyle('/browse-pets')}>
-                      Pets
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
+                <>
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/browse-pets" className={navLinkClass('/browse-pets')}>Pets</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
 
-              {!isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/discover" style={navLinkStyle('/discover')}>
-                      Discover
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/discover" className={navLinkClass('/discover')}>Discover</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
 
-              {!isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/favorites" style={navLinkStyle('/favorites')}>
-                      Favorites
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/favorites" className={navLinkClass('/favorites')}>Favorites</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
 
-              {!isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/browse-shelters" style={navLinkStyle('/browse-shelters')}>
-                      Shelters
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/browse-shelters" className={navLinkClass('/browse-shelters')}>Shelters</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
 
-              {!isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/pet-finder" style={navLinkStyle('/pet-finder')}>
-                      Search
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/pet-finder" className={navLinkClass('/pet-finder')}>Search</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
 
-              {!isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/user-faq" style={navLinkStyle('/user-faq')}>
-                      FAQ
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/user-faq" className={navLinkClass('/user-faq')}>FAQ</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
+                </>
               )}
 
               {isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/create-pet" style={navLinkStyle('/create-pet')}>
-                      Add Pet
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
+                <>
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/create-pet" className={navLinkClass('/create-pet')}>Add Pet</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
+
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/admin-faq" className={navLinkClass('/admin-faq')}>FAQ</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
+
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild>
+                      <Link to="/view-admin-pets" className={navLinkClass('/view-admin-pets')}>View Pets</Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
+                </>
               )}
 
-              {isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/admin-faq" style={navLinkStyle('/admin-faq')}>
-                      FAQ
-              {isShelterAdmin && (
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link asChild>
-                    <Link to="/view-admin-pets" style={navLinkStyle('/view-admin-pets')}>
-                      View All Pets
-                    </Link>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              )}
-              
             </NavigationMenu.List>
           </NavigationMenu.Root>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="nav-actions">
           {isAuthed ? (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button style={{
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem'
-                }}>
-                  {user?.username}
-                </button>
+                <button className="user-btn">{user?.username}</button>
               </DropdownMenu.Trigger>
+
               <DropdownMenu.Portal>
-                <DropdownMenu.Content style={{
-                  minWidth: '160px',
-                  background: '#1a1a1a',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  padding: '4px',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
-                  zIndex: 9999
-                }}>
-                  <DropdownMenu.Item
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      color: '#cdd6e3',
-                      cursor: 'pointer',
-                      outline: 'none'
-                    }}
-                    onSelect={() => navigate('/conversations')}
-                  >
+                <DropdownMenu.Content className="dropdown">
+
+                  <DropdownMenu.Item className="dropdown-item" onSelect={() => navigate('/conversations')}>
                     Messages
                   </DropdownMenu.Item>
 
-                  <DropdownMenu.Item
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      color: '#cdd6e3',
-                      cursor: 'pointer',
-                      outline: 'none'
-                    }}
-                    onSelect={() => navigate('/profile')}
-                  >
+                  <DropdownMenu.Item className="dropdown-item" onSelect={() => navigate('/profile')}>
                     Profile
                   </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      color: '#cdd6e3',
-                      cursor: 'pointer',
-                      outline: 'none'
-                    }}
-                    onSelect={handleLogout}
-                  >
+
+                  <DropdownMenu.Item className="dropdown-item" onSelect={handleLogout}>
                     Logout
                   </DropdownMenu.Item>
+
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
           ) : (
             <>
-              <Link to="/login" style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                background: 'transparent',
-                color: '#fff',
-                textDecoration: 'none'
-              }}>
-                Log in
-              </Link>
-              <Link to="/register" style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#fff',
-                textDecoration: 'none'
-              }}>
-                Register
-              </Link>
+              <Link to="/login" className="nav-btn">Log in</Link>
+              <Link to="/register" className="nav-btn primary">Register</Link>
             </>
           )}
         </div>
+
       </div>
     </nav>
   );

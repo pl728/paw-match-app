@@ -8,7 +8,6 @@ function PetFinder() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Multi-select state
   const [species, setSpecies] = useState([]);
   const [breed, setBreed] = useState([]);
   const [sex, setSex] = useState([]);
@@ -33,7 +32,6 @@ function PetFinder() {
     return () => { isActive = false; };
   }, []);
 
-  // Toggle selection helper
   const toggleOption = (state, setState, option) => {
     if (state.includes(option)) {
       setState(state.filter(o => o !== option));
@@ -66,7 +64,6 @@ function PetFinder() {
     setResults(filtered);
   };
 
-  // Options
   const speciesOptions = ["Dog", "Cat", "Rabbit", "Other"];
   const allBreedOptions = {
     Dog: ["Labrador", "Golden Retriever", "Other"],
@@ -75,16 +72,14 @@ function PetFinder() {
   const ageOptions = ["Young", "Middle-Aged", "Senior-Citizen"];
   const sizeOptions = ["XS", "Small", "Medium", "Large", "XL"];
 
-  // Breed options dynamically based on selected species
   const breedOptions = species.flatMap(s => allBreedOptions[s] || []);
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Heading size="6" mb="6">Find My Furrever Pet</Heading>
 
       <Card size="3" variant="ghost" mb="6">
         <Flex direction="column" gap="4">
-          {/* Species Question */}
           <Text weight="bold">Which pet species are you interested in?</Text>
           <Flex gap="2" wrap="wrap">
             {speciesOptions.map(opt => (
@@ -98,7 +93,6 @@ function PetFinder() {
             ))}
           </Flex>
 
-          {/* Breed Question (specific to chosen species) */}
           {breedOptions.length > 0 && (
             <>
               <Text weight="bold">Which breed are you interested in?</Text>
@@ -116,7 +110,6 @@ function PetFinder() {
             </>
           )}
 
-          {/* Sex Question */}
           <Text weight="bold">Do you prefer a boy pet, girl pet, or any?</Text>
           <Flex gap="2" wrap="wrap">
             {["Male", "Female", "Any"].map(opt => (
@@ -130,7 +123,6 @@ function PetFinder() {
             ))}
           </Flex>
 
-          {/* Age Range Question */}
           <Text weight="bold">Which age range are you looking for?</Text>
           <Flex gap="2" wrap="wrap">
             {ageOptions.map(opt => (
@@ -139,12 +131,11 @@ function PetFinder() {
                 variant={ageRange.includes(opt) ? "primary" : "outline"}
                 onClick={() => toggleOption(ageRange, setAgeRange, opt)}
               >
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                {opt}
               </Button>
             ))}
           </Flex>
 
-          {/* Size Question */}
           <Text weight="bold">What size pet are you looking for?</Text>
           <Flex gap="2" wrap="wrap">
             {sizeOptions.map(opt => (
@@ -158,13 +149,12 @@ function PetFinder() {
             ))}
           </Flex>
 
-          <Button size="3" onClick={handleSubmit} style={{ marginTop: "16px" }}>
+          <Button size="3" onClick={handleSubmit} className="mt-16">
             Find Pets
           </Button>
         </Flex>
       </Card>
 
-      {/* Results */}
       {loading && <Text size="2" color="gray">Loading pets…</Text>}
       {error && <Text size="2" color="red">{error}</Text>}
 
@@ -176,16 +166,22 @@ function PetFinder() {
                 <img
                   src={pet.primary_photo_url || photo}
                   alt={pet.name}
-                  width={"150px"}
-                  height={"150px"}
-                  style={{ borderRadius: "8px", objectFit: "cover" }}
+                  className="pet-result-image"
                 />
                 <Flex direction="column">
                   <Text weight="bold">{pet.name}</Text>
-                  <Text size="2" color="white">{pet.species} • {pet.breed || "Unknown"} • {pet.age_years || "Unknown"} yrs</Text>
-                  <Text size="2" color="white">Gender: {pet.sex || "Unknown"}</Text>
-                  <Text size="2" color="white">Size: {pet.size || "Unknown"}</Text>
-                  <Text size="2" color="white">{pet.shelter_name}</Text>
+                  <Text size="2" className="theme-text">
+                    {pet.species} • {pet.breed || "Unknown"} • {pet.age_years || "Unknown"} yrs
+                  </Text>
+                  <Text size="2" className="theme-muted">
+                    Gender: {pet.sex || "Unknown"}
+                  </Text>
+                  <Text size="2" className="theme-muted">
+                    Size: {pet.size || "Unknown"}
+                  </Text>
+                  <Text size="2" className="theme-muted">
+                    {pet.shelter_name}
+                  </Text>
                 </Flex>
               </Flex>
             </Card>

@@ -17,27 +17,9 @@ function PetPhoto({ photo, petName }) {
   const [loading, setLoading] = useState(true);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: 250,
-        minHeight: 180,
-        borderRadius: "8px",
-        overflow: "hidden",
-        background: "rgba(255, 255, 255, 0.06)",
-      }}
-    >
+    <div className="pet-photo-frame">
       {loading && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(11, 12, 16, 0.55)",
-          }}
-        >
+        <div className="pet-photo-loading">
           <Spinner size={28} />
         </div>
       )}
@@ -45,8 +27,7 @@ function PetPhoto({ photo, petName }) {
       <img
         src={photo.url}
         alt={petName}
-        width="250"
-        style={{ borderRadius: "8px", display: "block" }}
+        className="pet-detail-photo"
         onLoad={() => setLoading(false)}
         onError={() => setLoading(false)}
       />
@@ -84,10 +65,10 @@ export default function PetDetails() {
     pet.primary_photo_url || getPetPlaceholderImage(pet.species);
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px" }}>
+    <div className="page">
       <h1>{pet.name}</h1>
 
-      <p>
+      <p className="muted">
         {pet.species} • {pet.age_years} years old
       </p>
 
@@ -96,17 +77,11 @@ export default function PetDetails() {
       <StartConvo pet={pet} />
 
       {!pet.photos?.length && (
-        <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
+        <div className="pet-detail-image-wrap">
           <img
             src={fallbackPhotoUrl}
             alt={pet.name}
-            style={{
-              width: "100%",
-              maxWidth: 420,
-              borderRadius: "12px",
-              display: "block",
-              objectFit: "cover",
-            }}
+            className="pet-detail-main-image"
           />
         </div>
       )}
@@ -124,7 +99,7 @@ export default function PetDetails() {
       {pet.photos?.length > 0 && (
         <>
           <h3>Photos</h3>
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <div className="pet-photo-list">
             {pet.photos.map((photo) => (
               <PetPhoto key={photo.id} photo={photo} petName={pet.name} />
             ))}
@@ -132,7 +107,7 @@ export default function PetDetails() {
         </>
       )}
 
-      <p style={{ marginTop: "2rem" }}>
+      <p className="mt-32">
         <Link to="/">← Back to Home</Link>
       </p>
     </div>

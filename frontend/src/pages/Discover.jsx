@@ -193,7 +193,7 @@ export default function Discover() {
   const cardBusy = loading || queueLoading || saving;
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 20px" }}>
+    <div className="page">
       <Flex direction="column" gap="4">
         <Flex direction={{ initial: "column", sm: "row" }} justify="between" align={{ initial: "start", sm: "center" }} gap="3">
           <div>
@@ -256,9 +256,9 @@ export default function Discover() {
             </Text>
 
             {cardBusy && (
-              <Card size="3" style={{ width: "100%", maxWidth: 520, minHeight: 420 }}>
-                <Flex direction="column" justify="center" align="center" gap="3" style={{ minHeight: 380 }}>
-                  <div style={spinnerStyle} />
+              <Card size="3" className="discover-card">
+                <Flex direction="column" justify="center" align="center" gap="3" className="discover-loading">
+                  <div className="spinner" />
                   <Heading size="5">Building your queue</Heading>
                   <Text size="2" color="gray">Finding the best pets for your filters.</Text>
                 </Flex>
@@ -266,7 +266,7 @@ export default function Discover() {
             )}
 
             {!cardBusy && !currentPet && (
-              <Card size="3" style={{ width: "100%", maxWidth: 520, textAlign: "center" }}>
+              <Card size="3" className="discover-card">
                 <Flex direction="column" gap="3" align="center">
                   <Heading size="5">No Matches Right Now</Heading>
                   <Text size="2" color="gray">Try widening your filters or checking back after shelters add more pets.</Text>
@@ -276,27 +276,22 @@ export default function Discover() {
             )}
 
             {!cardBusy && currentPet && (
-              <Card size="3" style={{ width: "100%", maxWidth: 520 }}>
+              <Card size="3" className="discover-card">
                 <Flex direction="column" gap="3">
-                  <div style={photoFrameStyle}>
+                  <div className="photo-frame">
                     {acting ? (
-                      <Flex direction="column" align="center" justify="center" gap="3" style={{ minHeight: "100%" }}>
-                        <div style={spinnerStyle} />
+                      <Flex direction="column" align="center" justify="center" gap="3" className="full-height">
+                        <div className="spinner" />
                         <Text size="2" color="gray">Saving your choice...</Text>
                       </Flex>
                     ) : currentPet.primary_photo_url ? (
-                      <img
-                        src={currentPet.primary_photo_url}
-                        alt={currentPet.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                      />
+                    <img
+                      src={currentPet.primary_photo_url}
+                      alt={currentPet.name}
+                      className="discover-photo"
+                    />
                     ) : (
-                      <Flex align="center" justify="center" style={{ minHeight: "100%" }}>
+                      <Flex align="center" justify="center" className="full-height">
                         <Text size="2" color="gray">Photo coming soon</Text>
                       </Flex>
                     )}
@@ -321,7 +316,7 @@ export default function Discover() {
                     {currentPet.shelter_name} {currentPet.shelter_city ? `- ${currentPet.shelter_city}, ${currentPet.shelter_state || ""}` : ""}
                   </Text>
                   {currentPet.description && (
-                    <Text size="2" style={{ lineHeight: 1.6 }}>{currentPet.description}</Text>
+                    <Text size="2" className="description-text">{currentPet.description}</Text>
                   )}
 
                   <Flex gap="3" justify="center" wrap="wrap">
@@ -399,7 +394,7 @@ function renderFilterControls({ preferences, setPreferences, setArrayPreference,
       </Flex>
 
       <Flex gap="2">
-        <label style={{ flex: 1 }}>
+        <label className="flex-grow">
           <Text as="div" size="2" mb="1" weight="bold">Min age</Text>
           <input
             type="number"
@@ -407,10 +402,10 @@ function renderFilterControls({ preferences, setPreferences, setArrayPreference,
             value={preferences.min_age_years}
             onChange={(e) => setPreferences((current) => ({ ...current, min_age_years: e.target.value }))}
             disabled={saving}
-            style={inputStyle}
+            className="form-input"
           />
         </label>
-        <label style={{ flex: 1 }}>
+        <label className="flex-grow">
           <Text as="div" size="2" mb="1" weight="bold">Max age</Text>
           <input
             type="number"
@@ -418,29 +413,29 @@ function renderFilterControls({ preferences, setPreferences, setArrayPreference,
             value={preferences.max_age_years}
             onChange={(e) => setPreferences((current) => ({ ...current, max_age_years: e.target.value }))}
             disabled={saving}
-            style={inputStyle}
+            className="form-input"
           />
         </label>
       </Flex>
 
       <Flex gap="2">
-        <label style={{ flex: 1 }}>
+        <label className="flex-grow">
           <Text as="div" size="2" mb="1" weight="bold">City</Text>
           <input
             value={preferences.city}
             onChange={(e) => setPreferences((current) => ({ ...current, city: e.target.value }))}
             disabled={saving}
-            style={inputStyle}
+            className="form-input"
           />
         </label>
-        <label style={{ width: 88 }}>
+        <label className="state-filter-field">
           <Text as="div" size="2" mb="1" weight="bold">State</Text>
           <input
             value={preferences.state}
             onChange={(e) => setPreferences((current) => ({ ...current, state: e.target.value.toUpperCase() }))}
             maxLength={2}
             disabled={saving}
-            style={inputStyle}
+            className="form-input"
           />
         </label>
       </Flex>
@@ -451,38 +446,9 @@ function renderFilterControls({ preferences, setPreferences, setArrayPreference,
           value={preferences.postal_code}
           onChange={(e) => setPreferences((current) => ({ ...current, postal_code: e.target.value }))}
           disabled={saving}
-          style={inputStyle}
+          className="form-input"
         />
       </label>
     </>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  borderRadius: 8,
-  border: "1px solid rgba(255, 255, 255, 0.18)",
-  background: "rgba(255, 255, 255, 0.06)",
-  color: "#fff",
-  padding: "9px 10px",
-  font: "inherit",
-};
-
-const photoFrameStyle = {
-  width: "100%",
-  aspectRatio: "4 / 3",
-  overflow: "hidden",
-  borderRadius: 8,
-  background: "rgba(255, 255, 255, 0.06)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-};
-
-const spinnerStyle = {
-  width: 34,
-  height: 34,
-  borderRadius: "50%",
-  border: "3px solid rgba(255, 255, 255, 0.18)",
-  borderTopColor: "#ffffff",
-  animation: "ui-spinner-rotate 0.8s linear infinite",
-};

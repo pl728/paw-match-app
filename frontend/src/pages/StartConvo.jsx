@@ -1,7 +1,10 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import Chat from "./Chat.jsx";
 
 function StartConvo({ pet }) {
-  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const [shelterName, setShelterName] = useState("");
 
   const startConvo = async () => {
     const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
@@ -26,26 +29,56 @@ function StartConvo({ pet }) {
       return;
     }
 
-    navigate(`/conversations/${convo.id}`);
+    // 🔍 DEBUG (you can remove later)
+    console.log("pet:", pet);
+    console.log("convo:", convo);
+
+    setConversationId(convo.id);
+
+    // ✅ safer fallback for different field names
+    const name =
+      pet.shelter_name ||
+      pet.shelterName ||
+      pet.shelter?.name ||
+      pet.shelter?.shelter_name ||
+      convo.shelter_name ||
+      "Shelter";
+
+    setShelterName(name);
+    setOpen(true);
   };
 
   return (
-    <button
-      onClick={startConvo}
-      style={{
-        marginTop: "12px",
-        padding: "12px 18px",
-        borderRadius: "10px",
-        border: "none",
-        background: "#6FCF97",
-        color: "#0b0c10",
-        fontWeight: "700",
-        fontSize: "1rem",
-        cursor: "pointer",
-      }}
-    >
-      🐾 Let&apos;s Match!
-    </button>
+    <>
+      <button className="match-btn" onClick={startConvo}>
+        🐾 Let&apos;s Match!
+      </button>
+
+      {open && (
+        <>
+          <div
+            className="dialog-overlay"
+            onClick={() => setOpen(false)}
+          />
+
+          <div
+            className="dialog-content"
+            onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+          >
+            <Chat
+              conversationId={conversationId}
+              shelterName={shelterName}
+            />
+
+            <div className="dialog-actions">
+              <button type="button" onClick={() => setOpen(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
 

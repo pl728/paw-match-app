@@ -75,7 +75,7 @@ function BrowseShelters() {
   const availableShelters = shelters.filter((shelter) => !followed.includes(shelter.id));
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Flex direction="column" gap="4">
         <Heading size="6">Browse Shelters</Heading>
 
@@ -91,7 +91,7 @@ function BrowseShelters() {
                 {followedShelters.map((shelter) => (
                   <Card key={shelter.id} size="3">
                     <Flex justify="between" align="center" gap="3" wrap="wrap">
-                      <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                      <Flex direction="column" gap="2" className="flex-grow">
                         <Heading size="4">{shelter.name}</Heading>
                         {shelter.city && shelter.state ? (
                           <Text size="2" color="gray">{shelter.city}, {shelter.state}</Text>
@@ -119,7 +119,7 @@ function BrowseShelters() {
                 {availableShelters.map((shelter) => (
                   <Card key={shelter.id} size="3">
                     <Flex justify="between" align="center" gap="3" wrap="wrap">
-                      <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                      <Flex direction="column" gap="2" className="flex-grow">
                         <Heading size="4">{shelter.name}</Heading>
                         {shelter.city && shelter.state ? (
                           <Text size="2" color="gray">{shelter.city}, {shelter.state}</Text>

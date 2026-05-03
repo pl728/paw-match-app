@@ -13,7 +13,7 @@ export default function BrowseAllPets() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [favoritePetIds, setFavoritePetIds] = useState([]); 
+  const [favoritePetIds, setFavoritePetIds] = useState([]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const showPagination = !loading && !error && total > 0;
@@ -26,7 +26,9 @@ export default function BrowseAllPets() {
         setLoading(true);
         setError(null);
         const result = await getPets({ page, limit: PAGE_SIZE });
+
         if (!active) return;
+
         setPets(Array.isArray(result?.data) ? result.data : []);
         setTotal(Number(result?.total) || 0);
       } catch (err) {
@@ -36,16 +38,14 @@ export default function BrowseAllPets() {
         setTotal(0);
       }
 
-      if (active) {
-        setLoading(false);
-      }
+      if (active) setLoading(false);
     }
 
     fetchPets();
     return () => { active = false; };
   }, [page]);
 
-    useEffect(() => {
+  useEffect(() => {
     let active = true;
 
     async function fetchFavorites() {
@@ -65,10 +65,7 @@ export default function BrowseAllPets() {
     }
 
     fetchFavorites();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   async function handleToggleFavorite(petId) {
@@ -86,27 +83,23 @@ export default function BrowseAllPets() {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Flex direction="column" gap="4">
         <Heading size="7">Browse All Pets</Heading>
 
         <Card size="2">
-          <Flex
-            direction={{ initial: "column", sm: "row" }}
-            gap="3"
-            justify="between"
-            align="center"
-          >
+          <Flex direction={{ initial: "column", sm: "row" }} gap="3" justify="between" align="center">
+
             <Flex gap="2" wrap="wrap" align="center">
-              <Text size="2" color="gray">
-                View:
-              </Text>
+              <Text size="2" color="gray">View:</Text>
+
               <Button
                 variant={view === "grid" ? "solid" : "soft"}
                 onClick={() => setView("grid")}
               >
                 Grid
               </Button>
+
               <Button
                 variant={view === "table" ? "solid" : "soft"}
                 onClick={() => setView("table")}
@@ -115,23 +108,26 @@ export default function BrowseAllPets() {
               </Button>
             </Flex>
 
-            <Flex gap="3" wrap="wrap" align="center" justify="end">
+            <Flex gap="3" wrap="wrap" align="center">
               <Text size="2" color="gray">{total} pets total</Text>
+
               <Flex gap="2" align="center">
                 <Button
                   variant="soft"
                   disabled={page <= 1}
-                  onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
                 >
                   Prev
                 </Button>
+
                 <Text size="2" weight="medium">
                   Page {page} of {totalPages}
                 </Text>
+
                 <Button
                   variant="soft"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 >
                   Next
                 </Button>
@@ -150,156 +146,68 @@ export default function BrowseAllPets() {
         {!loading && !error && pets.length > 0 && (
           <>
             {view === "grid" && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                {pets.map((pet) => {
-                  const imageUrl = pet.primary_photo_url;
+              <div className="pets-grid">
+                {pets.map((pet) => (
+                  <Card key={pet.id} size="2">
+                    <Flex direction="column" gap="2">
 
-                  return (
-                    <Card key={pet.id} size="2">
-                      <Flex direction="column" gap="2">
-                        {imageUrl && (
-                          <img
-                            src={imageUrl}
-                            alt={pet.name}
-                            style={{
-                              width: "100%",
-                              height: 180,
-                              objectFit: "cover",
-                              borderRadius: "8px",
-                            }}
-                            loading="lazy"
-                          />
-                        )}
+                      {pet.primary_photo_url && (
+                        <img
+                          src={pet.primary_photo_url}
+                          alt={pet.name}
+                          className="pet-card-image"
+                          loading="lazy"
+                        />
+                      )}
 
-                        <Heading size="4">{pet.name}</Heading>
+                      <Heading size="4">{pet.name}</Heading>
 
-                        <Text size="2" color="gray">
-                          {pet.species || "Unknown"} •{" "}
-                          {pet.breed || "Unknown breed"}
-                        </Text>
+                      <Text size="2" color="gray">
+                        {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
+                      </Text>
 
-                        <Text size="2" color="gray">
-                          Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
-                        </Text>
+                      <Text size="2" color="gray">
+                        Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
+                      </Text>
 
-                        <Button
-                          size="1"
-                          variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
-                          onClick={() => handleToggleFavorite(pet.id)}
-                        >
-                          {favoritePetIds.includes(pet.id) ? "Unfavorite" : "Favorite"}
-                        </Button>
+                      <Button
+                        size="1"
+                        variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
+                        onClick={() => handleToggleFavorite(pet.id)}
+                      >
+                        {favoritePetIds.includes(pet.id) ? "Unfavorite" : "Favorite"}
+                      </Button>
 
-                        <Link to={`/pets/${pet.id}`}>View full details</Link>
-                      </Flex>
-                    </Card>
-                  );
-                })}
+                      <Link to={`/pets/${pet.id}`}>View full details</Link>
+                    </Flex>
+                  </Card>
+                ))}
               </div>
             )}
 
             {view === "table" && (
               <Card size="2">
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-container">
+                  <table className="pets-table">
                     <thead>
-                      <tr style={{ textAlign: "left" }}>
-                        {[
-                          "Name",
-                          "Species",
-                          "Breed",
-                          "Age",
-                          "Sex",
-                          "Size",
-                          "Status",
-                          "Favorite",
-                          "",
-                        ].map((h) => (
-                          <th
-                            key={h}
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.12)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {h}
-                          </th>
-                        ))}
+                      <tr>
+                        {["Name", "Species", "Breed", "Age", "Sex", "Size", "Status", "Favorite", ""]
+                          .map(h => <th key={h} className="pets-th">{h}</th>)}
                       </tr>
                     </thead>
+
                     <tbody>
                       {pets.map((pet) => (
                         <tr key={pet.id}>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.name}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.species || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.breed || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.age_years ?? "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.sex || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.size || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.status || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            <Link to="/favorites">My Favorites</Link>
+                          <td className="pets-td">{pet.name}</td>
+                          <td className="pets-td">{pet.species || "—"}</td>
+                          <td className="pets-td">{pet.breed || "—"}</td>
+                          <td className="pets-td">{pet.age_years ?? "—"}</td>
+                          <td className="pets-td">{pet.sex || "—"}</td>
+                          <td className="pets-td">{pet.size || "—"}</td>
+                          <td className="pets-td">{pet.status || "—"}</td>
+                          <td className="pets-td">
+
                             <Button
                               size="1"
                               variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
@@ -307,7 +215,8 @@ export default function BrowseAllPets() {
                             >
                               {favoritePetIds.includes(pet.id) ? "Saved" : "Save"}
                             </Button>
-                            <Link to={`/pets/${pet.id}`}>View full details</Link>
+
+                            <Link to={`/pets/${pet.id}`}>View</Link>
                           </td>
                         </tr>
                       ))}
@@ -318,23 +227,18 @@ export default function BrowseAllPets() {
             )}
           </>
         )}
+
         {showPagination && (
           <Flex justify="center" align="center" gap="4">
-            <Button
-              size="3"
-              variant="solid"
-              disabled={page <= 1}
-              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
-            >
+            <Button size="3" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
               Prev
             </Button>
-            <Text size="3" weight="bold">Page {page} of {totalPages}</Text>
-            <Button
-              size="3"
-              variant="solid"
-              disabled={page >= totalPages}
-              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
-            >
+
+            <Text size="3" weight="bold">
+              Page {page} of {totalPages}
+            </Text>
+
+            <Button size="3" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
               Next
             </Button>
           </Flex>
