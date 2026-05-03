@@ -146,6 +146,15 @@ function Navbar() {
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
               )}
+              {isShelterAdmin && (
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link to="/view-admin-pets" style={navLinkStyle('/view-admin-pets')}>
+                      View All Pets
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              )}
             </NavigationMenu.List>
           </NavigationMenu.Root>
         )}
