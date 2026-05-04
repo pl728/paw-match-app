@@ -86,13 +86,13 @@ function Navbar() {
                 <>
                   <NavigationMenu.Item>
                     <NavigationMenu.Link asChild>
-                      <Link to="/browse-pets" className={navLinkClass('/browse-pets')}>Pets</Link>
+                      <Link to="/browse-pets" className={navLinkClass('/browse-pets')}>Browse All</Link>
                     </NavigationMenu.Link>
                   </NavigationMenu.Item>
 
                   <NavigationMenu.Item>
                     <NavigationMenu.Link asChild>
-                      <Link to="/discover" className={navLinkClass('/discover')}>Discover</Link>
+                      <Link to="/discover" className={navLinkClass('/discover')}>Find Your Match</Link>
                     </NavigationMenu.Link>
                   </NavigationMenu.Item>
 
@@ -108,17 +108,6 @@ function Navbar() {
                     </NavigationMenu.Link>
                   </NavigationMenu.Item>
 
-                  <NavigationMenu.Item>
-                    <NavigationMenu.Link asChild>
-                      <Link to="/pet-finder" className={navLinkClass('/pet-finder')}>Search</Link>
-                    </NavigationMenu.Link>
-                  </NavigationMenu.Item>
-
-                  <NavigationMenu.Item>
-                    <NavigationMenu.Link asChild>
-                      <Link to="/user-faq" className={navLinkClass('/user-faq')}>FAQ</Link>
-                    </NavigationMenu.Link>
-                  </NavigationMenu.Item>
                 </>
               )}
 
