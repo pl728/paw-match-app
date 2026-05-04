@@ -266,6 +266,51 @@
   color: #1f4f3f;
 }
 
+.user-btn {
+  position: relative;
+}
+
+.message-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #b42318;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-message-count {
+  background: #b42318;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.conversation-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 8px;
+  background: #b42318;
+  border-radius: 50%;
+}
+
+.conversation-unread {
+  border-color: #b42318;
+  font-weight: 700;
+}
+
 .pet-image {
   width: 88px;
   height: 88px;

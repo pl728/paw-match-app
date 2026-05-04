@@ -60,12 +60,18 @@ function Conversations() {
             <div
               key={conversation.id}
               onClick={() => navigate(`/conversations/${conversation.id}`)}
-              className="conversation-card"
+              className={`conversation-card ${
+                Number(conversation.unread_count) > 0 ? "conversation-unread" : ""
+              }`}
             >
               <h3>
                 {isShelterAdmin
                   ? conversation.adopter_username || conversation.username || "Adopter"
                   : conversation.shelter_name || "Conversation"}
+
+                {Number(conversation.unread_count) > 0 && (
+                  <span className="conversation-dot"></span>
+                )}
               </h3>
 
               <p className="conversation-preview">

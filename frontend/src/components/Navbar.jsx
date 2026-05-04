@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -9,7 +9,41 @@ function Navbar() {
   const { isAuthed, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
   const isShelterAdmin = user?.role === 'shelter_admin';
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthed) return;
+
+  const fetchUnread = async () => {
+    try {
+      const savedAuth = JSON.parse(localStorage.getItem('pawmatch_auth'));
+      const token = savedAuth?.token;
+
+      const res = await fetch('/api/conversations/unread-count', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error(`Unread count failed: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setUnreadCount(data.count);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+    fetchUnread();
+
+    const interval = setInterval(fetchUnread, 5000);
+
+    return () => clearInterval(interval);
+  }, [isAuthed]);
 
   const handleLogout = () => {
     logout();
@@ -118,14 +152,30 @@ function Navbar() {
           {isAuthed ? (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="user-btn">{user?.username}</button>
+                <button className="user-btn">
+                  {user?.username}
+
+                  {unreadCount > 0 && (
+                    <span className="message-badge">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Portal>
                 <DropdownMenu.Content className="dropdown">
 
-                  <DropdownMenu.Item className="dropdown-item" onSelect={() => navigate('/conversations')}>
+                  <DropdownMenu.Item
+                    className="dropdown-item"
+                    onSelect={() => navigate('/conversations')}
+                  >
                     Messages
+                    {unreadCount > 0 && (
+                      <span className="dropdown-message-count">
+                        {unreadCount}
+                      </span>
+                    )}
                   </DropdownMenu.Item>
 
                   <DropdownMenu.Item className="dropdown-item" onSelect={() => navigate('/profile')}>

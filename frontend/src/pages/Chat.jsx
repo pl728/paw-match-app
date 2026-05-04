@@ -18,21 +18,35 @@ function Chat({ conversationId, shelterName = "Shelter" }) {
     const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
     const token = storedAuth?.token;
 
-    fetch(`/api/conversations/${id}/messages`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const loadMessagesAndMarkRead = async () => {
+      try {
+        const res = await fetch(`/api/conversations/${id}/messages`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
         if (Array.isArray(data)) {
           setMessages(data);
+
+          await fetch(`/api/conversations/${id}/mark-read`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
         } else {
           console.error("Error loading messages:", data);
           setMessages([]);
         }
-      })
-      .catch((err) => console.error("Error loading messages:", err));
+      } catch (err) {
+        console.error("Error loading messages:", err);
+      }
+    };
+
+    loadMessagesAndMarkRead();
   }, [id]);
 
   const sendMessage = async (e) => {

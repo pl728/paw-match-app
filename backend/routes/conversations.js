@@ -4,7 +4,9 @@ import {
   getAllConversations,
   createConversation,
   getMessagesByConversationId,
-  createMessage
+  createMessage,
+  getUnreadCount,
+  markMessagesAsRead
 } from '../dao/conversations.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -13,6 +15,11 @@ const router = express.Router();
 router.get('/', requireAuth, asyncHandler(async function (req, res) {
   const conversations = await getAllConversations(req.userId, req.userRole);
   res.json(conversations);
+}));
+
+router.get('/unread-count', requireAuth, asyncHandler(async function (req, res) {
+  const count = await getUnreadCount(req.userId);
+  res.json({ count });
 }));
 
 router.post('/', requireAuth, asyncHandler(async function (req, res) {
@@ -52,6 +59,11 @@ router.post('/:id/messages', requireAuth, asyncHandler(async function (req, res)
   });
 
   res.status(201).json(message);
+}));
+
+router.post('/:id/mark-read', requireAuth, asyncHandler(async function (req, res) {
+  await markMessagesAsRead(req.userId, req.params.id);
+  res.json({ success: true });
 }));
 
 export default router;

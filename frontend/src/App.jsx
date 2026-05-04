@@ -20,6 +20,15 @@ import AdminFAQ from "./pages/Footer/AdminFAQ.jsx";
 import Discover from "./pages/Discover.jsx";
 import ViewPetsAdmin from "./pages/ViewPetsAdmin.jsx";
 import PetFinder from './pages/PetFinder.jsx'
+import About from "./pages/Footer/About.jsx";
+import Team from "./pages/Footer/Team.jsx";
+import Privacy from "./pages/Footer/Privacy.jsx";
+import Contact from "./pages/Footer/Contact.jsx";
+import Verify from "./pages/Footer/Verify.jsx";
+import PetCare from "./pages/Footer/PetCare.jsx";
+import Guidelines from "./pages/Footer/Guidelines.jsx";
+import Shelters from "./pages/Footer/Shelters.jsx";
+import Partner from "./pages/Footer/Partner.jsx";
 
 import './App.css'
 
@@ -151,6 +160,15 @@ function App() {
           <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
           <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
           <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
+          <Route path="/about" element={<About />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/verify" element={<Verify />} />
+          <Route path="/pet-care" element={<PetCare />} />
+          <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/shelters" element={<Shelters />} />
+          <Route path="/partner" element={<Partner />} />
         </Routes>
       </div>
 
