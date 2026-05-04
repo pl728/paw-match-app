@@ -58,7 +58,7 @@ function ViewPetsAdmin() {
   const [editingPetId, setEditingPetId] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [statusError, setStatusError] = useState("");
-
+  
   useEffect(() => {
     fetchProfileData();
   }, []);
@@ -190,8 +190,8 @@ function ViewPetsAdmin() {
 
                 <Flex gap="2" wrap="wrap">
                     <Button onClick={() => openPetEditor(pet)}>Edit</Button>
-                    <Button variant="soft" onClick={() => navigate(`/pets/${pet.id}`)}>
-                        View Pet
+                    <Button variant="soft" onClick={() => navigate(`/api/admin/pets/${pet.id}`)}>
+                        View Pet Details
                     </Button>
                 </Flex>
             </Flex>

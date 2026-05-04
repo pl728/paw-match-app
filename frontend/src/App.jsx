@@ -17,6 +17,7 @@ import './App.css'
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/useAuth.js"
 import PetFinder from './pages/PetFinder.jsx'
+import PetDetailsAdmin from './pages/PetDetailsAdmin.jsx'
 
 // References: 
 // https://www.geeksforgeeks.org/reactjs/reactjs-components
@@ -150,6 +151,8 @@ function App() {
         <Route path="/pets/:id" element={<PetDetails />} />
         <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
         <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
+        <Route path="/api/admin/pets/:id" element={<PetDetailsAdmin />} />
+
       </Routes>
     </>
   );
