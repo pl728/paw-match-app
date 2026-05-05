@@ -24,11 +24,6 @@ function prettyStatus(status) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function getStatusBadgeColor(status) {
-  if (status === "available") return "#52b788";
-  if (status === "adopted") return "#6c757d";
-  return "#d97706";
-}
 
 function buildPetStatusDrafts(pets) {
   return Object.fromEntries((pets || []).map((pet) => [pet.id, pet.status || "available"]));
@@ -39,14 +34,8 @@ function renderPetImage(pet, size, borderRadius = 12) {
     <img
       src={pet?.primary_photo_url || getPetPlaceholderImage(pet?.species)}
       alt={pet?.name || "Pet"}
-      style={{
-        width: size,
-        height: size,
-        borderRadius,
-        objectFit: "cover",
-        border: "1px solid rgba(255,255,255,0.12)",
-        flexShrink: 0,
-      }}
+      className="pet-image"
+      style={{ width: size, height: size, borderRadius }}
     />
   );
 }
@@ -338,7 +327,7 @@ function Profile() {
         </Card>
 
         {profile.role === "shelter_admin" && !profile.shelter && (
-          <Card size="3" style={{ textAlign: "center" }}>
+          <Card size="3" className="center-card">
             <Flex direction="column" gap="3" align="center">
               <Heading size="5">Set Up Your Shelter</Heading>
               <Text size="2" color="gray">
@@ -363,44 +352,15 @@ function Profile() {
                     </Button>
                   </AlertDialog.Trigger>
                   <AlertDialog.Portal>
-                    <AlertDialog.Overlay style={{
-                      position: "fixed",
-                      inset: 0,
-                      background: "rgba(0, 0, 0, 0.5)",
-                      zIndex: 9998
-                    }} />
-                    <AlertDialog.Content style={{
-                      position: "fixed",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: "90%",
-                      maxWidth: "500px",
-                      background: "white",
-                      borderRadius: "12px",
-                      padding: "24px",
-                      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-                      zIndex: 9999
-                    }}>
-                      <AlertDialog.Title style={{
-                        fontSize: "1.25rem",
-                        fontWeight: 600,
-                        marginBottom: "12px",
-                        color: "#2d1810",
-                        display: "block"
-                      }}>
+                      <AlertDialog.Overlay className="dialog-overlay" />
+                      <AlertDialog.Content className="dialog-content">
+                      <AlertDialog.Title className="dialog-title">
                         Delete Shelter?
                       </AlertDialog.Title>
-                      <AlertDialog.Description style={{
-                        fontSize: "0.95rem",
-                        color: "#5d3a2a",
-                        marginBottom: "24px",
-                        lineHeight: 1.6,
-                        display: "block"
-                      }}>
+                      <AlertDialog.Description className="dialog-description">
                         This will permanently delete your shelter and <strong>all {profile.pets?.length || 0} pets</strong> associated with it. This action cannot be undone.
                       </AlertDialog.Description>
-                      <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                      <div className="dialog-actions">
                         <AlertDialog.Cancel asChild>
                           <Button variant="soft" color="gray" size="2">
                             Cancel
@@ -464,39 +424,24 @@ function Profile() {
 
   function renderPetsGrid() {
     return (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: 16,
-        }}
-      >
+      <div className="pets-grid">
         {profile.pets.map((pet) => (
           <Card key={pet.id} size="3">
             <Flex direction="column" gap="3">
               <Flex justify="between" align="start" gap="3">
-                <Flex align="start" gap="3" style={{ flex: 1 }}>
+                <Flex align="start" gap="3" className="flex-grow">
                   {renderPetImage(pet, 88, 14)}
-                  <Box style={{ flex: 1 }}>
+                  <Box className="flex-grow">
                     <Heading size="4">{pet.name}</Heading>
                     <Text size="2" color="gray">
                       {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
                     </Text>
-                    <Text size="2" color="gray" style={{ display: "block", marginTop: 6 }}>
+                    <Text size="2" color="gray" className="pet-meta">
                       Age: {pet.age_years ?? "?"} • Sex: {pet.sex || "?"} • Size: {pet.size || "?"}
                     </Text>
                   </Box>
                 </Flex>
-                <Text
-                  size="1"
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "999px",
-                    background: getStatusBadgeColor(pet.status),
-                    color: "white",
-                    whiteSpace: "nowrap"
-                  }}
-                >
+                <Text size="1" className={`status-badge ${pet.status}`}>
                   {prettyStatus(pet.status)}
                 </Text>
               </Flex>
@@ -519,21 +464,14 @@ function Profile() {
   function renderPetsTable() {
     return (
       <Card size="3">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="table-container">
+          <table className="pets-table">
             <thead>
-              <tr style={{ textAlign: "left" }}>
+              <tr className="table-row">
                 {["Name", "Species", "Breed", "Age", "Sex", "Size", "Status", "Actions"].map((heading) => (
-                  <th
-                    key={heading}
-                    style={{
-                      padding: "10px 8px",
-                      borderBottom: "1px solid rgba(255,255,255,0.12)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {heading}
-                  </th>
+                <th key={heading} className="pets-th">
+                  {heading}
+                </th>
                 ))}
               </tr>
             </thead>
@@ -541,32 +479,23 @@ function Profile() {
               {profile.pets.map((pet) => {
                 return (
                   <tr key={pet.id}>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                    <td className="pets-td">
                       <Flex align="center" gap="3">
                         {renderPetImage(pet, 48, 10)}
                         <Text size="2">{pet.name}</Text>
                       </Flex>
                     </td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{pet.species || "—"}</td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{pet.breed || "—"}</td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{pet.age_years ?? "—"}</td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{pet.sex || "—"}</td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{pet.size || "—"}</td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)", minWidth: 120 }}>
-                      <Text
-                        size="1"
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "999px",
-                          background: getStatusBadgeColor(pet.status),
-                          color: "white",
-                          whiteSpace: "nowrap"
-                        }}
-                      >
+                    <td className="pets-td">{pet.species || "—"}</td>
+                    <td className="pets-td">{pet.breed || "—"}</td>
+                    <td className="pets-td">{pet.age_years ?? "—"}</td>
+                    <td className="pets-td">{pet.sex || "—"}</td>
+                    <td className="pets-td">{pet.size || "—"}</td>
+                    <td className="pets-td status-cell">
+                      <Text size="1" className={`status-badge ${pet.status}`}>
                         {prettyStatus(pet.status)}
                       </Text>
                     </td>
-                    <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                    <td className="pets-td">
                       <Flex gap="2" wrap="wrap">
                         <Button size="2" onClick={() => openPetEditor(pet)}>
                           Edit
@@ -625,21 +554,13 @@ function Profile() {
             <label>
               <Text as="div" size="2" mb="1" weight="bold">Adoption Status</Text>
               <select
+                className="form-input"
                 value={draftStatus}
-                onChange={(event) => handlePetStatusChange(pet.id, event.target.value)}
+                onChange={(e) => handlePetStatusChange(pet.id, e.target.value)}
                 disabled={isSaving}
-                style={{
-                  width: "100%",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  background: "rgba(255, 255, 255, 0.06)",
-                  color: "#e9eef5",
-                  padding: "10px 12px",
-                  font: "inherit"
-                }}
               >
                 {STATUS_OPTIONS.map((status) => (
-                  <option key={status} value={status} style={{ color: "#111" }}>
+                  <option key={status} value={status}>
                     {prettyStatus(status)}
                   </option>
                 ))}
@@ -663,7 +584,7 @@ function Profile() {
   function renderPetsTab() {
     if (!profile.shelter) {
       return (
-        <Card size="3" style={{ textAlign: "center" }}>
+        <Card size="3" className="center-card">
           <Flex direction="column" gap="3" align="center">
             <Heading size="5">No Shelter Yet</Heading>
             <Text size="2" color="gray">
@@ -709,7 +630,7 @@ function Profile() {
         </Card>
 
         {(statusMessage || statusError) && (
-          <Card size="2" style={{ borderColor: statusError ? "rgba(255, 99, 99, 0.4)" : "rgba(82, 183, 136, 0.45)" }}>
+          <Card size="2" className={statusError ? "status-message error" : "status-message success"}>
             <Text size="2" color={statusError ? "red" : "green"}>
               {statusError || statusMessage}
             </Text>
@@ -719,7 +640,7 @@ function Profile() {
         {profile.pets?.length > 0 ? (
           petView === "grid" ? renderPetsGrid() : renderPetsTable()
         ) : (
-          <Card size="3" style={{ textAlign: "center" }}>
+          <Card size="3" className="center-card">
             <Flex direction="column" gap="3" align="center">
               <Heading size="5">No Pets Added Yet</Heading>
               <Text size="2" color="gray">
@@ -757,18 +678,15 @@ function Profile() {
             <Flex direction="column" gap="4" mt="4">
               <label>
                 <Text as="div" size="2" mb="1" weight="bold">Type</Text>
-                <select
-                  value={newPostDraft.type}
-                  onChange={(e) => setNewPostDraft((d) => ({ ...d, type: e.target.value }))}
-                  style={{
-                    width: "100%", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)",
-                    background: "#2a2a2a", color: "#ffffff", padding: "10px 12px", font: "inherit"
-                  }}
-                >
-                  <option value="update" style={{ background: "#2a2a2a", color: "#fff" }}>Update</option>
-                  <option value="event" style={{ background: "#2a2a2a", color: "#fff" }}>Event</option>
-                  <option value="news" style={{ background: "#2a2a2a", color: "#fff" }}>News</option>
-                </select>
+              <select
+                className="form-input"
+                value={newPostDraft.type}
+                onChange={(e) => setNewPostDraft((d) => ({ ...d, type: e.target.value }))}
+              >
+                <option value="update">Update</option>
+                <option value="event">Event</option>
+                <option value="news">News</option>
+              </select>
               </label>
               <label>
                 <Text as="div" size="2" mb="1" weight="bold">Title</Text>
@@ -822,7 +740,7 @@ function Profile() {
         </Dialog.Root>
 
         {posts.length === 0 ? (
-          <Card size="3" style={{ textAlign: "center" }}>
+          <Card size="3" className="center-card">
             <Flex direction="column" gap="3" align="center">
               <Heading size="5">No Posts Yet</Heading>
               <Text size="2" color="gray">Posts you create will appear here.</Text>
@@ -833,7 +751,7 @@ function Profile() {
             <Card key={post.id} size="3">
               <Flex direction="column" gap="2">
                 <Flex justify="between" align="start" gap="3">
-                  <Box style={{ flex: 1 }}>
+                  <Box className="flex-grow">
                     <Heading size="4">{post.title}</Heading>
                     <Text size="1" color="gray">
                       {post.published_at ? "Published " + new Date(post.published_at).toLocaleDateString() : "Draft"}
@@ -855,44 +773,15 @@ function Profile() {
                         </Button>
                       </AlertDialog.Trigger>
                       <AlertDialog.Portal>
-                        <AlertDialog.Overlay style={{
-                          position: "fixed",
-                          inset: 0,
-                          background: "rgba(0, 0, 0, 0.5)",
-                          zIndex: 9998
-                        }} />
-                        <AlertDialog.Content style={{
-                          position: "fixed",
-                          top: "50%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                          width: "90%",
-                          maxWidth: "500px",
-                          background: "white",
-                          borderRadius: "12px",
-                          padding: "24px",
-                          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-                          zIndex: 9999
-                        }}>
-                          <AlertDialog.Title style={{
-                            fontSize: "1.25rem",
-                            fontWeight: 600,
-                            marginBottom: "12px",
-                            color: "#2d1810",
-                            display: "block"
-                          }}>
+                          <AlertDialog.Overlay className="dialog-overlay" />
+                          <AlertDialog.Content className="dialog-content">
+                          <AlertDialog.Title className="dialog-title">
                             Delete this post?
                           </AlertDialog.Title>
-                          <AlertDialog.Description style={{
-                            fontSize: "0.95rem",
-                            color: "#5d3a2a",
-                            marginBottom: "24px",
-                            lineHeight: 1.6,
-                            display: "block"
-                          }}>
+                          <AlertDialog.Description className="dialog-description">
                             This will permanently delete &ldquo;{post.title}&rdquo;. This action cannot be undone.
                           </AlertDialog.Description>
-                          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                          <div className="dialog-actions">
                             <AlertDialog.Cancel asChild>
                               <Button variant="soft" color="gray" size="2">Cancel</Button>
                             </AlertDialog.Cancel>
@@ -905,7 +794,7 @@ function Profile() {
                     </AlertDialog.Root>
                   </Flex>
                 </Flex>
-                <Text size="2" color="gray" style={{ whiteSpace: "pre-wrap" }}>{post.body}</Text>
+                <Text size="2" color="gray" className="pre-wrap">{post.body}</Text>
               </Flex>
             </Card>
           ))
@@ -996,22 +885,13 @@ function Profile() {
             <Heading size="5">Digest Frequency</Heading>
             <Text size="2" color="gray">How often would you like to receive email summaries?</Text>
             <select
+              className="form-input digest-select"
               value={notifPrefs.digest_frequency || "none"}
               onChange={(e) => handleDigestChange(e.target.value)}
               disabled={notifSaving}
-              style={{
-                width: "100%",
-                maxWidth: 280,
-                borderRadius: 10,
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                background: "#2a2a2a",
-                color: "#ffffff",
-                padding: "10px 12px",
-                font: "inherit",
-              }}
             >
               {DIGEST_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value} style={{ background: "#2a2a2a", color: "#ffffff" }}>
+                <option key={value} value={value} >
                   {label}
                 </option>
               ))}
@@ -1030,7 +910,7 @@ function Profile() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
+      <div className="page">
         <Text size="2" color="gray">Loading profile…</Text>
       </div>
     );
@@ -1038,7 +918,7 @@ function Profile() {
 
   if (error) {
     return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
+      <div className="page">
         <Text size="2" color="red">{error}</Text>
       </div>
     );
@@ -1049,7 +929,7 @@ function Profile() {
   }
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Flex direction="column" gap="4">
         <Box>
           <Heading size="7">Account</Heading>

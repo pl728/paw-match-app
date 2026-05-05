@@ -171,6 +171,7 @@ CREATE TABLE IF NOT EXISTS messages (
         REFERENCES users(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS user_pet_preferences (
     user_id CHAR(36) PRIMARY KEY,
     species JSON DEFAULT NULL,

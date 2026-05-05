@@ -17,17 +17,14 @@ export default function Favorites() {
         setLoading(true);
         setError(null);
 
-        // get favorite ids
         const favoritesResult = await getFavorites();
         const favoriteIds = Array.isArray(favoritesResult)
           ? favoritesResult.map((f) => f.pet_id)
           : [];
 
-        // get pets
         const petsResult = await getPets({ page: 1, limit: 1000 });
         const allPets = Array.isArray(petsResult?.data) ? petsResult.data : [];
 
-        // keep only favorite pets
         const filteredPets = allPets.filter((pet) => favoriteIds.includes(pet.id));
 
         if (!active) return;
@@ -36,9 +33,7 @@ export default function Favorites() {
         if (!active) return;
         setError(err?.message || "Failed to load favorites.");
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
@@ -59,7 +54,7 @@ export default function Favorites() {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Flex direction="column" gap="4">
         <Heading size="7">My Favorites</Heading>
 
@@ -71,59 +66,44 @@ export default function Favorites() {
         )}
 
         {!loading && !error && favoritePets.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: 16,
-            }}
-          >
-            {favoritePets.map((pet) => {
-              const imageUrl = pet.primary_photo_url;
+          <div className="pets-grid">
+            {favoritePets.map((pet) => (
+              <Card key={pet.id} size="2">
+                <Flex direction="column" gap="2">
+                  {pet.primary_photo_url && (
+                    <img
+                      src={pet.primary_photo_url}
+                      alt={pet.name}
+                      className="favorite-pet-image"
+                      loading="lazy"
+                    />
+                  )}
 
-              return (
-                <Card key={pet.id} size="2">
-                  <Flex direction="column" gap="2">
-                    {imageUrl && (
-                      <img
-                        src={imageUrl}
-                        alt={pet.name}
-                        style={{
-                          width: "100%",
-                          height: 180,
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                        }}
-                        loading="lazy"
-                      />
-                    )}
+                  <Heading size="4">{pet.name}</Heading>
 
-                    <Heading size="4">{pet.name}</Heading>
+                  <Text size="2" color="gray">
+                    {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
+                  </Text>
 
-                    <Text size="2" color="gray">
-                      {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
-                    </Text>
+                  <Text size="2" color="gray">
+                    Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
+                  </Text>
 
-                    <Text size="2" color="gray">
-                      Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
-                    </Text>
+                  <Flex gap="2" direction="column" align="start">
+                    <Button
+                      size="1"
+                      variant="soft"
+                      color="red"
+                      onClick={() => handleRemoveFavorite(pet.id)}
+                    >
+                      Unfavorite
+                    </Button>
 
-                    <Flex gap="2" direction="column" align="start">
-                      <Button
-                        size="1"
-                        variant="soft"
-                        color="red"
-                        onClick={() => handleRemoveFavorite(pet.id)}
-                      >
-                        Unfavorite
-                      </Button>
-
-                      <Link to={`/pets/${pet.id}`}>View full details</Link>
-                    </Flex>
+                    <Link to={`/pets/${pet.id}`}>View full details</Link>
                   </Flex>
-                </Card>
-              );
-            })}
+                </Flex>
+              </Card>
+            ))}
           </div>
         )}
       </Flex>

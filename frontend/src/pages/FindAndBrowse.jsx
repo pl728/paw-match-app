@@ -10,20 +10,14 @@ export default function FindAndBrowse() {
       direction="column"
       align="center"
       justify="center"
-      style={{
-        maxWidth: "800px",
-        margin: "0 auto",
-        padding: "48px 20px",
-        textAlign: "center",
-        gap: "24px"
-      }}
+      className="page center-text find-section"
     >
       <Box>
         <Text size="6" weight="bold">
           Looking for your fur-ever friend?
         </Text>
-        <p></p>
-        <Text size="3" color="gray" style={{ marginTop: "12px" }}>
+
+        <Text size="3" color="gray" className="mt-12">
           We’ll help match you with a pet that fits your lifestyle.
         </Text>
       </Box>
@@ -33,7 +27,7 @@ export default function FindAndBrowse() {
       </Button>
 
       <Text size="2" color="gray">
-        <Link to="/browse-pets" style={{ textDecoration: "underline" }}>
+        <Link to="/browse-pets" className="link-underline">
           view all pets
         </Link>
       </Text>

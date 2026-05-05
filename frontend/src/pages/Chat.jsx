@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth.js";
 
-function Chat() {
-  const { id } = useParams();
+function Chat({ conversationId, shelterName = "Shelter" }) {
+  const params = useParams();
+  const id = conversationId || params.id;
   const { user } = useAuth();
 
   const [messages, setMessages] = useState([]);
@@ -11,32 +12,47 @@ function Chat() {
 
   const currentUserId = user?.id;
 
-useEffect(() => {
-  const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
-  const token = storedAuth?.token;
+  useEffect(() => {
+    if (!id) return;
 
-  fetch(`/api/conversations/${id}/messages`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (Array.isArray(data)) {
-        setMessages(data);
-      } else {
-        console.error("Error loading messages:", data);
-        setMessages([]);
+    const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
+    const token = storedAuth?.token;
+
+    const loadMessagesAndMarkRead = async () => {
+      try {
+        const res = await fetch(`/api/conversations/${id}/messages`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          setMessages(data);
+
+          await fetch(`/api/conversations/${id}/mark-read`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        } else {
+          console.error("Error loading messages:", data);
+          setMessages([]);
+        }
+      } catch (err) {
+        console.error("Error loading messages:", err);
       }
-    })
-    .catch((err) => console.error("Error loading messages:", err));
-}, [id]);
+    };
 
+    loadMessagesAndMarkRead();
+  }, [id]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
 
-    if (!body.trim()) return;
+    if (!body.trim() || !id) return;
 
     const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
     const token = storedAuth?.token;
@@ -59,36 +75,24 @@ useEffect(() => {
       return;
     }
 
-    setMessages([...messages, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setBody("");
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px" }}>
-      <h1>Chat</h1>
+    <div className="chat-page">
+      <h1>Chat with {shelterName}</h1>
 
-      <div>
+      <div className="chat-messages">
         {messages.map((message) => {
           const isMine = message.sender_user_id === currentUserId;
 
           return (
             <div
               key={message.id}
-              style={{
-                textAlign: isMine ? "right" : "left",
-                marginBottom: "10px",
-              }}
+              className={`chat-row ${isMine ? "mine" : "theirs"}`}
             >
-              <div
-                style={{
-                  display: "inline-block",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  backgroundColor: isMine ? "#d1f5d3" : "#eee",
-                  color: "#0b0c10",
-                  maxWidth: "70%",
-                }}
-              >
+              <div className={`chat-bubble ${isMine ? "mine" : "theirs"}`}>
                 {message.body}
               </div>
             </div>
@@ -96,19 +100,16 @@ useEffect(() => {
         })}
       </div>
 
-      <form onSubmit={sendMessage}>
+      <form onSubmit={sendMessage} className="chat-form">
         <input
           type="text"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Type a message..."
-          style={{
-            width: "75%",
-            padding: "10px",
-          }}
+          className="chat-input"
         />
 
-        <button type="submit" style={{ padding: "10px" }}>
+        <button type="submit" className="chat-send-btn">
           Send
         </button>
       </form>

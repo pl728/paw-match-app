@@ -5,14 +5,9 @@ function AuthedHome() {
   const { user } = useAuth();
 
   return (
-    <div style={{
-      maxWidth: '1100px',
-      margin: '0 auto',
-      padding: '48px 20px',
-      textAlign: 'center'
-    }}>
+    <div className="page center">
       <h1>Welcome back, {user?.username || "user"}</h1>
-      <p></p>
+      <p className="muted">Glad to see you again 🐾</p>
     </div>
   );
 }

@@ -57,7 +57,7 @@ function BrowsePets() {
 
         
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Card size="3" variant="ghost">
         <Flex direction="column" gap="3">
           <Heading size="6">Browse Pets</Heading>

@@ -4,58 +4,53 @@ import { Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
 import { getPets } from "../services/pets.js";
 import { getFavorites, addFavorite, removeFavorite } from "../services/favorites.js";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 60;
 
 export default function BrowseAllPets() {
+  const [allPets, setAllPets] = useState([]);
   const [pets, setPets] = useState([]);
-  const [total, setTotal] = useState(0);
   const [view, setView] = useState("grid");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [favoritePetIds, setFavoritePetIds] = useState([]); 
+  const [error, setError] = useState("");
+  const [favoritePetIds, setFavoritePetIds] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const [species, setSpecies] = useState([]);
+  const [breed, setBreed] = useState([]);
+  const [sex, setSex] = useState([]);
+  const [ageRange, setAgeRange] = useState([]);
+  const [size, setSize] = useState([]);
+
+  const total = pets.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const showPagination = !loading && !error && total > 0;
+  const pagedPets = pets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
-    let active = true;
-
     async function fetchPets() {
       try {
         setLoading(true);
-        setError(null);
-        const result = await getPets({ page, limit: PAGE_SIZE });
-        if (!active) return;
-        setPets(Array.isArray(result?.data) ? result.data : []);
-        setTotal(Number(result?.total) || 0);
+        const result = await getPets();
+        const petData = Array.isArray(result?.data) ? result.data : [];
+        setAllPets(petData);
+        setPets(petData);
       } catch (err) {
-        if (!active) return;
         setError(err?.message || "Failed to load pets.");
-        setPets([]);
-        setTotal(0);
-      }
-
-      if (active) {
+      } finally {
         setLoading(false);
       }
     }
 
     fetchPets();
-    return () => { active = false; };
-  }, [page]);
+  }, []);
 
-    useEffect(() => {
-    let active = true;
-
+  useEffect(() => {
     async function fetchFavorites() {
       try {
         const result = await getFavorites();
-
-        if (!active) return;
-
         const ids = Array.isArray(result)
-          ? result.map(f => Number(f.pet_id))
+          ? result.map((f) => Number(f.pet_id))
           : [];
 
         setFavoritePetIds(ids);
@@ -65,48 +60,216 @@ export default function BrowseAllPets() {
     }
 
     fetchFavorites();
-
-    return () => {
-      active = false;
-    };
   }, []);
+
+  const toggleOption = (state, setState, option) => {
+    if (state.includes(option)) {
+      setState(state.filter((item) => item !== option));
+    } else {
+      setState([...state, option]);
+    }
+  };
+
+  const applyFilters = (searchValue = searchTerm) => {
+  const filtered = allPets.filter((pet) => {
+    const search = searchValue.toLowerCase();
+
+    const matchesSearch =
+      !search ||
+      pet.name?.toLowerCase().includes(search) ||
+      pet.breed?.toLowerCase().includes(search) ||
+      pet.species?.toLowerCase().includes(search);
+
+    if (!matchesSearch) return false;
+
+    if (species.length && !species.includes(pet.species)) return false;
+    if (breed.length && !breed.includes(pet.breed)) return false;
+
+    if (
+      sex.length &&
+      !sex.includes("any") &&
+      !sex.includes(pet.sex?.toLowerCase())
+    ) {
+      return false;
+    }
+
+    const age = Number(pet.age_years) || 0;
+
+    if (ageRange.length) {
+      const matchesAge =
+        (ageRange.includes("Young") && age <= 2) ||
+        (ageRange.includes("Middle-Aged") && age >= 3 && age <= 7) ||
+        (ageRange.includes("Senior-Citizen") && age > 7);
+
+      if (!matchesAge) return false;
+    }
+
+    if (size.length && !size.includes(pet.size?.toLowerCase())) return false;
+
+    return true;
+  });
+
+  setPets(filtered);
+  setPage(1);
+};
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setSpecies([]);
+    setBreed([]);
+    setSex([]);
+    setAgeRange([]);
+    setSize([]);
+    setPets(allPets);
+    setPage(1);
+  };
 
   async function handleToggleFavorite(petId) {
     try {
       if (favoritePetIds.includes(petId)) {
         await removeFavorite(petId);
-        setFavoritePetIds(prev => prev.filter(id => id !== petId));
+        setFavoritePetIds((prev) => prev.filter((id) => id !== petId));
       } else {
         await addFavorite(petId);
-        setFavoritePetIds(prev => [...prev, petId]);
+        setFavoritePetIds((prev) => [...prev, petId]);
       }
     } catch (err) {
       console.error("Favorite toggle failed:", err);
     }
   }
 
+  const speciesOptions = ["Dog", "Cat", "Rabbit", "Other"];
+
+  const allBreedOptions = {
+    Dog: ["Labrador", "Golden Retriever", "Other"],
+    Cat: ["Siamese", "Persian", "Other"],
+  };
+
+  const breedOptions = species.flatMap((s) => allBreedOptions[s] || []);
+  const ageOptions = ["Young", "Middle-Aged", "Senior-Citizen"];
+  const sizeOptions = ["XS", "Small", "Medium", "Large", "XL"];
+
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px" }}>
+    <div className="page">
       <Flex direction="column" gap="4">
-        <Heading size="7">Browse All Pets</Heading>
+        <Heading size="7">Browse Pets</Heading>
 
         <Card size="2">
-          <Flex
-            direction={{ initial: "column", sm: "row" }}
-            gap="3"
-            justify="between"
-            align="center"
-          >
-            <Flex gap="2" wrap="wrap" align="center">
-              <Text size="2" color="gray">
-                View:
-              </Text>
+          <Flex direction="column" gap="4">
+            <Flex justify="between" align="center" gap="3">
+              <input
+                type="text"
+                placeholder="Search pets..."
+                className="form-input"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  applyFilters(e.target.value);
+                }}
+              />
+
+              <Button
+                variant="soft"
+                onClick={() => setShowFilters((prev) => !prev)}
+              >
+                {showFilters ? "Hide Filters" : "Filter"}
+              </Button>
+            </Flex>
+
+            {showFilters && (
+              <Flex direction="column" gap="4">
+                <Text weight="bold">Species</Text>
+                <Flex gap="2" wrap="wrap">
+                  {speciesOptions.map((opt) => (
+                    <Button
+                      key={opt}
+                      variant={species.includes(opt) ? "solid" : "soft"}
+                      onClick={() => toggleOption(species, setSpecies, opt)}
+                    >
+                      {opt}
+                    </Button>
+                  ))}
+                </Flex>
+
+                {breedOptions.length > 0 && (
+                  <>
+                    <Text weight="bold">Breed</Text>
+                    <Flex gap="2" wrap="wrap">
+                      {breedOptions.map((opt) => (
+                        <Button
+                          key={opt}
+                          variant={breed.includes(opt) ? "solid" : "soft"}
+                          onClick={() => toggleOption(breed, setBreed, opt)}
+                        >
+                          {opt}
+                        </Button>
+                      ))}
+                    </Flex>
+                  </>
+                )}
+
+                <Text weight="bold">Sex</Text>
+                <Flex gap="2" wrap="wrap">
+                  {["Male", "Female", "Any"].map((opt) => (
+                    <Button
+                      key={opt}
+                      variant={sex.includes(opt.toLowerCase()) ? "solid" : "soft"}
+                      onClick={() => toggleOption(sex, setSex, opt.toLowerCase())}
+                    >
+                      {opt}
+                    </Button>
+                  ))}
+                </Flex>
+
+                <Text weight="bold">Age Range</Text>
+                <Flex gap="2" wrap="wrap">
+                  {ageOptions.map((opt) => (
+                    <Button
+                      key={opt}
+                      variant={ageRange.includes(opt) ? "solid" : "soft"}
+                      onClick={() => toggleOption(ageRange, setAgeRange, opt)}
+                    >
+                      {opt}
+                    </Button>
+                  ))}
+                </Flex>
+
+                <Text weight="bold">Size</Text>
+                <Flex gap="2" wrap="wrap">
+                  {sizeOptions.map((opt) => (
+                    <Button
+                      key={opt}
+                      variant={size.includes(opt.toLowerCase()) ? "solid" : "soft"}
+                      onClick={() => toggleOption(size, setSize, opt.toLowerCase())}
+                    >
+                      {opt}
+                    </Button>
+                  ))}
+                </Flex>
+
+                <Flex gap="2">
+                  <Button onClick={() => applyFilters()}>Apply Filters</Button>
+                  <Button variant="soft" onClick={clearSearch}>
+                    Clear
+                  </Button>
+                </Flex>
+              </Flex>
+            )}
+          </Flex>
+        </Card>
+
+        <Card size="2">
+          <Flex justify="between" align="center">
+            <Flex gap="2" align="center">
+              <Text size="2" color="gray">View:</Text>
+
               <Button
                 variant={view === "grid" ? "solid" : "soft"}
                 onClick={() => setView("grid")}
               >
                 Grid
               </Button>
+
               <Button
                 variant={view === "table" ? "solid" : "soft"}
                 onClick={() => setView("table")}
@@ -115,28 +278,9 @@ export default function BrowseAllPets() {
               </Button>
             </Flex>
 
-            <Flex gap="3" wrap="wrap" align="center" justify="end">
-              <Text size="2" color="gray">{total} pets total</Text>
-              <Flex gap="2" align="center">
-                <Button
-                  variant="soft"
-                  disabled={page <= 1}
-                  onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
-                >
-                  Prev
-                </Button>
-                <Text size="2" weight="medium">
-                  Page {page} of {totalPages}
-                </Text>
-                <Button
-                  variant="soft"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
-                >
-                  Next
-                </Button>
-              </Flex>
-            </Flex>
+            <Text size="2" color="gray">
+              {total} pets found
+            </Text>
           </Flex>
         </Card>
 
@@ -144,162 +288,73 @@ export default function BrowseAllPets() {
         {error && <Text size="2" color="red">{error}</Text>}
 
         {!loading && !error && pets.length === 0 && (
-          <Text size="2" color="gray">No pets found.</Text>
+          <Text size="2" color="gray">No pets match your search.</Text>
         )}
 
-        {!loading && !error && pets.length > 0 && (
+        {!loading && !error && pagedPets.length > 0 && (
           <>
             {view === "grid" && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                {pets.map((pet) => {
-                  const imageUrl = pet.primary_photo_url;
+              <div className="pets-grid">
+                {pagedPets.map((pet) => (
+                  <Card key={pet.id} size="2">
+                    <Flex direction="column" gap="2">
+                      {pet.primary_photo_url && (
+                        <img
+                          src={pet.primary_photo_url}
+                          alt={pet.name}
+                          className="pet-card-image"
+                          loading="lazy"
+                        />
+                      )}
 
-                  return (
-                    <Card key={pet.id} size="2">
-                      <Flex direction="column" gap="2">
-                        {imageUrl && (
-                          <img
-                            src={imageUrl}
-                            alt={pet.name}
-                            style={{
-                              width: "100%",
-                              height: 180,
-                              objectFit: "cover",
-                              borderRadius: "8px",
-                            }}
-                            loading="lazy"
-                          />
-                        )}
+                      <Heading size="4">{pet.name}</Heading>
 
-                        <Heading size="4">{pet.name}</Heading>
+                      <Text size="2" color="gray">
+                        {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
+                      </Text>
 
-                        <Text size="2" color="gray">
-                          {pet.species || "Unknown"} •{" "}
-                          {pet.breed || "Unknown breed"}
-                        </Text>
+                      <Text size="2" color="gray">
+                        Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
+                      </Text>
 
-                        <Text size="2" color="gray">
-                          Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
-                        </Text>
+                      <Button
+                        size="1"
+                        variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
+                        onClick={() => handleToggleFavorite(pet.id)}
+                      >
+                        {favoritePetIds.includes(pet.id) ? "Unfavorite" : "Favorite"}
+                      </Button>
 
-                        <Button
-                          size="1"
-                          variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
-                          onClick={() => handleToggleFavorite(pet.id)}
-                        >
-                          {favoritePetIds.includes(pet.id) ? "Unfavorite" : "Favorite"}
-                        </Button>
-
-                        <Link to={`/pets/${pet.id}`}>View full details</Link>
-                      </Flex>
-                    </Card>
-                  );
-                })}
+                      <Link to={`/pets/${pet.id}`}>View full details</Link>
+                    </Flex>
+                  </Card>
+                ))}
               </div>
             )}
 
             {view === "table" && (
               <Card size="2">
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-container">
+                  <table className="pets-table">
                     <thead>
-                      <tr style={{ textAlign: "left" }}>
-                        {[
-                          "Name",
-                          "Species",
-                          "Breed",
-                          "Age",
-                          "Sex",
-                          "Size",
-                          "Status",
-                          "Favorite",
-                          "",
-                        ].map((h) => (
-                          <th
-                            key={h}
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.12)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {h}
-                          </th>
+                      <tr>
+                        {["Name", "Species", "Breed", "Age", "Sex", "Size", "Status", "Favorite", ""].map((h) => (
+                          <th key={h} className="pets-th">{h}</th>
                         ))}
                       </tr>
                     </thead>
+
                     <tbody>
-                      {pets.map((pet) => (
+                      {pagedPets.map((pet) => (
                         <tr key={pet.id}>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.name}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.species || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.breed || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.age_years ?? "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.sex || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.size || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            {pet.status || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "10px 8px",
-                              borderBottom: "1px solid rgba(255,255,255,0.08)",
-                            }}
-                          >
-                            <Link to="/favorites">My Favorites</Link>
+                          <td className="pets-td">{pet.name}</td>
+                          <td className="pets-td">{pet.species || "—"}</td>
+                          <td className="pets-td">{pet.breed || "—"}</td>
+                          <td className="pets-td">{pet.age_years ?? "—"}</td>
+                          <td className="pets-td">{pet.sex || "—"}</td>
+                          <td className="pets-td">{pet.size || "—"}</td>
+                          <td className="pets-td">{pet.status || "—"}</td>
+                          <td className="pets-td">
                             <Button
                               size="1"
                               variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
@@ -307,7 +362,9 @@ export default function BrowseAllPets() {
                             >
                               {favoritePetIds.includes(pet.id) ? "Saved" : "Save"}
                             </Button>
-                            <Link to={`/pets/${pet.id}`}>View full details</Link>
+                          </td>
+                          <td className="pets-td">
+                            <Link to={`/pets/${pet.id}`}>View</Link>
                           </td>
                         </tr>
                       ))}
@@ -318,25 +375,27 @@ export default function BrowseAllPets() {
             )}
           </>
         )}
-        {showPagination && (
-          <Flex justify="center" align="center" gap="4">
-            <Button
-              size="3"
-              variant="solid"
-              disabled={page <= 1}
-              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
-            >
-              Prev
-            </Button>
-            <Text size="3" weight="bold">Page {page} of {totalPages}</Text>
-            <Button
-              size="3"
-              variant="solid"
-              disabled={page >= totalPages}
-              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
-            >
-              Next
-            </Button>
+
+        {!loading && !error && total > 0 && (
+          <Flex direction="column" justify="center" align="center" gap="2">
+            <Text size="2" color="gray">
+              Showing {(page - 1) * PAGE_SIZE + 1}-
+              {Math.min(page * PAGE_SIZE, total)} of {total}
+            </Text>
+
+            <Flex justify="center" align="center" gap="4">
+              <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Prev
+              </Button>
+
+              <Text size="3" weight="bold">
+                Page {page} of {totalPages}
+              </Text>
+
+              <Button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                Next
+              </Button>
+            </Flex>
           </Flex>
         )}
       </Flex>

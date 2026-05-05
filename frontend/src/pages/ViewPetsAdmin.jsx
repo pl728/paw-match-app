@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Flex, Heading, Text, Box, Button, Dialog } from "@radix-ui/themes";
-import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import { Card, Flex, Heading, Text, Box, Button } from "@radix-ui/themes";
 import { getMyProfile } from "../services/users.js";
-import { deleteShelter } from "../services/shelters.js";
 import { updatePet } from "../services/pets.js";
 
 const STATUS_OPTIONS = ["available", "pending", "adopted"];
+
 const PET_PLACEHOLDER_BY_SPECIES = {
   Cat: "/cat.png",
   Dog: "/dog.png",
@@ -21,29 +20,18 @@ function prettyStatus(status) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function getStatusBadgeColor(status) {
-  if (status === "available") return "#52b788";
-  if (status === "adopted") return "#6c757d";
-  return "#d97706";
-}
-
 function buildPetStatusDrafts(pets) {
-  return Object.fromEntries((pets || []).map((pet) => [pet.id, pet.status || "available"]));
+  return Object.fromEntries(
+    (pets || []).map((pet) => [pet.id, pet.status || "available"])
+  );
 }
 
-function renderPetImage(pet, size, borderRadius = 12) {
+function renderPetImage(pet) {
   return (
     <img
       src={pet?.primary_photo_url || getPetPlaceholderImage(pet?.species)}
       alt={pet?.name || "Pet"}
-      style={{
-        width: size,
-        height: size,
-        borderRadius,
-        objectFit: "cover",
-        border: "1px solid rgba(255,255,255,0.12)",
-        flexShrink: 0,
-      }}
+      className="pet-image"
     />
   );
 }
@@ -138,6 +126,7 @@ function ViewPetsAdmin() {
           updatedPet.status || nextStatus
         )}.`
       );
+
       setEditingPetId(null);
     } catch (err) {
       setStatusError(err.message || "Could not update pet status.");
@@ -145,65 +134,61 @@ function ViewPetsAdmin() {
       setSavingPetId(null);
     }
   }
-  // Function to render the grid of pets with edit options for shelter admins
+
   function renderPetsGrid() {
-  if (!profile?.pets) return null;
+    if (!profile?.pets) return null;
 
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: 16,
-      }}
-    >
-      {profile.pets.map((pet) => (
-        <Card key={pet.id} size="3">
+    return (
+      <div className="pets-grid">
+        {profile.pets.map((pet) => (
+          <Card key={pet.id} size="3">
             <Flex direction="column" gap="3">
-                <Flex justify="between" align="start" gap="3">
-                    <Flex align="start" gap="3" style={{ flex: 1 }}>
-                        {renderPetImage(pet, 88, 14)}
-                        <Box style={{ flex: 1 }}>
-                            <Heading size="4">{pet.name}</Heading>
-                            <Text size="2" color="gray">
-                                {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
-                            </Text>
-                            <Text size="2" color="gray" style={{ display: "block", marginTop: 6 }}>
-                                Age: {pet.age_years ?? "?"} • Sex: {pet.sex || "?"} • Size: {pet.size || "?"}
-                            </Text>
-                        </Box>
-                    </Flex>
+              <Flex justify="between" align="start" gap="3">
+                <Flex align="start" gap="3" className="flex-grow">
+                  {renderPetImage(pet)}
 
-                    <Text
-                        size="1"
-                        style={{
-                        padding: "4px 8px",
-                        borderRadius: "999px",
-                        background: getStatusBadgeColor(pet.status),
-                        color: "white",
-                        whiteSpace: "nowrap",
-                        }}
-                    >
-                        {prettyStatus(pet.status)}
+                  <Box className="flex-grow">
+                    <Heading size="4">{pet.name}</Heading>
+
+                    <Text size="2" color="gray">
+                      {pet.species || "Unknown"} •{" "}
+                      {pet.breed || "Unknown breed"}
                     </Text>
+
+                    <Text size="2" color="gray" className="pet-meta">
+                      Age: {pet.age_years ?? "?"} • Sex:{" "}
+                      {pet.sex || "?"} • Size: {pet.size || "?"}
+                    </Text>
+                  </Box>
                 </Flex>
 
-                <Flex gap="2" wrap="wrap">
-                    <Button onClick={() => openPetEditor(pet)}>Edit</Button>
-                    <Button variant="soft" onClick={() => navigate(`/pets/${pet.id}`)}>
-                        View Pet
-                    </Button>
-                </Flex>
+                <Text
+                  size="1"
+                  className={`status-badge ${pet.status}`}
+                >
+                  {prettyStatus(pet.status)}
+                </Text>
+              </Flex>
+
+              <Flex gap="2" wrap="wrap">
+                <Button onClick={() => openPetEditor(pet)}>
+                  Edit
+                </Button>
+
+                <Button
+                  variant="soft"
+                  onClick={() => navigate(`/pets/${pet.id}`)}
+                >
+                  View Pet
+                </Button>
+              </Flex>
             </Flex>
-</Card>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
-      ))}
-    </div>
-  );
-}
-
-
-  // Return all pets
   return (
     <Flex direction="column" gap="4">
       {loading && <Text>Loading...</Text>}
@@ -217,4 +202,5 @@ function ViewPetsAdmin() {
     </Flex>
   );
 }
+
 export default ViewPetsAdmin;

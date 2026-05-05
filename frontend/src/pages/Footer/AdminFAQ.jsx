@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../auth/useAuth.js";
+import { useState } from "react";
 
 const adminFaqs = [
   {
@@ -47,34 +46,25 @@ export default function AdminFAQ() {
   }
 
   return (
-    <div className="container">
-      <div className="page-header">
-        <div>
-          <h1>Admin FAQ</h1>
-          <p className="muted">
-            Learn how to use the website.
-          </p>
-        </div>
+    <div className="page">
+      <div>
+        <h1>Admin FAQ</h1>
+        <p className="muted">Learn how to use the website.</p>
       </div>
 
       <div className="stack">
         {adminFaqs.map((faq, index) => (
           <div className="card" key={faq.question}>
             <button
-              className="btn"
+              className="faq-button"
               onClick={() => toggleFAQ(index)}
-              style={{
-                width: "100%",
-                justifyContent: "space-between",
-                textAlign: "left",
-              }}
             >
               <span>{faq.question}</span>
               <span>{openIndex === index ? "−" : "+"}</span>
             </button>
 
             {openIndex === index && (
-              <p className="muted" style={{ marginTop: "1rem" }}>
+              <p className="muted faq-answer">
                 {faq.answer}
               </p>
             )}

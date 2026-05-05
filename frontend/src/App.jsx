@@ -10,24 +10,32 @@ import AuthedHome from './pages/AuthedHome.jsx'
 import Profile from './pages/Profile.jsx'
 import SetupShelter from './pages/SetupShelter.jsx'
 import Navbar from './components/Navbar.jsx'
+import Footer from './components/Footer.jsx'
 import BrowseAllPets from "./pages/BrowseAllPets.jsx";
 import Conversations from "./pages/Conversations.jsx";
 import Chat from "./pages/Chat.jsx";
 import Favorites from "./pages/Favorites.jsx";
-import UserFAQ from "./pages/UserFAQ.jsx";
-import AdminFAQ from "./pages/AdminFAQ.jsx";
+import UserFAQ from "./pages/Footer/UserFAQ.jsx";
+import AdminFAQ from "./pages/Footer/AdminFAQ.jsx";
 import Discover from "./pages/Discover.jsx";
 import ViewPetsAdmin from "./pages/ViewPetsAdmin.jsx";
+import PetFinder from './pages/PetFinder.jsx'
+import About from "./pages/Footer/About.jsx";
+import Team from "./pages/Footer/Team.jsx";
+import Privacy from "./pages/Footer/Privacy.jsx";
+import Contact from "./pages/Footer/Contact.jsx";
+import Verify from "./pages/Footer/Verify.jsx";
+import PetCare from "./pages/Footer/PetCare.jsx";
+import Guidelines from "./pages/Footer/Guidelines.jsx";
+import Shelters from "./pages/Footer/Shelters.jsx";
+import Partner from "./pages/Footer/Partner.jsx";
+
 import './App.css'
+
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "./auth/useAuth.js"
-import PetFinder from './pages/PetFinder.jsx'
 
-// References: 
-// https://www.geeksforgeeks.org/reactjs/reactjs-components
-// https://dev.to/techcheck/creating-a-react-node-and-express-app-1ieg
 
-// Home page component
 function Home() {
   return (
     <div className="page">
@@ -51,21 +59,15 @@ function Home() {
             </div>
 
             <div className="stats">
-              <div className="stat"><strong>Verified<br></br>Shelters</strong></div>
-              <div className="stat"><strong>Keep your<br></br>Favorites</strong></div>
-              <div className="stat"><strong>Easy<br></br>Applications</strong></div>
+              <div className="stat"><strong>Verified<br />Shelters</strong></div>
+              <div className="stat"><strong>Keep your<br />Favorites</strong></div>
+              <div className="stat"><strong>Easy<br />Applications</strong></div>
             </div>
           </div>
 
           <div className="hero-art" aria-hidden="true">
-            <div
-              className="art-card"
-              style={{ backgroundImage: `url(${comingsoon})` }}
-            />
-            <div
-              className="art-card small"
-              style={{ backgroundImage: `url(${comingsoon})` }}
-            />
+            <div className="art-card"></div>
+            <div className="art-card small"></div>
           </div>
         </main>
 
@@ -77,10 +79,6 @@ function Home() {
             <div className="card"><h3>Meet & adopt</h3><p className="muted">Contact shelters easily.</p></div>
           </div>
         </section>
-
-        <footer className="footer">
-          <span className="muted">© {new Date().getFullYear()} Paw Match</span>
-        </footer>
       </div>
     </div>
   );
@@ -112,7 +110,7 @@ function RequireRole({ role, children }) {
       <div className="auth-gate">
         <h1>Access restricted</h1>
         <p className="muted">
-          This area is for shelter accounts only.
+          You must be logged in as a shelter admin account to access this page.
         </p>
         <div className="cta-row">
           <Link to="/home" className="cta">Back to Home</Link>
@@ -134,34 +132,49 @@ function RedirectIfAuthed({ children }) {
   return children;
 }
 
-// Main App component with routing
+
 function App() {
   return (
-    <>
+    <div className="app-layout">
       <Navbar />
-      <Routes>
-        <Route path="/" element={<RedirectIfAuthed><Home /></RedirectIfAuthed>} />
-        <Route path="/home" element={<RequireAuth><AuthedHome /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-        <Route path="/setup-shelter" element={<RequireRole role="shelter_admin"><SetupShelter /></RequireRole>} />
-        <Route path="/create-pet" element={<RequireRole role="shelter_admin"><CreatePet /></RequireRole>} />
-        <Route path="/find-and-browse" element={<RequireAuth><Navigate to="/browse-pets" replace /></RequireAuth>} />
-        <Route path="/discover" element={<RequireAuth><Discover /></RequireAuth>} />
-        <Route path="/pet-finder" element={<RequireAuth><PetFinder/></RequireAuth>} />
-        <Route path="/browse-pets" element={<RequireAuth><BrowseAllPets /></RequireAuth>} />
-        <Route path="/browse-shelters" element={<RequireAuth><BrowseShelters /></RequireAuth>} />
-        <Route path="/feed" element={<RequireAuth><FeedPage /></RequireAuth>} />
-        <Route path="/login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
-        <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
-        <Route path="/pets/:id" element={<PetDetails />} />
-        <Route path="/conversations" element={<RequireAuth><Conversations /></RequireAuth>} />
-        <Route path="/conversations/:id" element={<RequireAuth><Chat /></RequireAuth>} />
-        <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
-        <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
-        <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
-        <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
-      </Routes>
-    </>
+
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<RedirectIfAuthed><Home /></RedirectIfAuthed>} />
+          <Route path="/home" element={<RequireAuth><AuthedHome /></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+          <Route path="/setup-shelter" element={<RequireRole role="shelter_admin"><SetupShelter /></RequireRole>} />
+          <Route path="/create-pet" element={<RequireRole role="shelter_admin"><CreatePet /></RequireRole>} />
+          <Route path="/find-and-browse" element={<RequireAuth><Navigate to="/browse-pets" replace /></RequireAuth>} />
+          <Route path="/discover" element={<RequireAuth><Discover /></RequireAuth>} />
+          <Route path="/pet-finder" element={<RequireAuth><PetFinder /></RequireAuth>} />
+          <Route path="/browse-pets" element={<RequireAuth><BrowseAllPets /></RequireAuth>} />
+          <Route path="/browse-shelters" element={<RequireAuth><BrowseShelters /></RequireAuth>} />
+          <Route path="/feed" element={<RequireAuth><FeedPage /></RequireAuth>} />
+          <Route path="/login" element={<RedirectIfAuthed><UserLogin /></RedirectIfAuthed>} />
+          <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
+          <Route path="/pets/:id" element={<PetDetails />} />
+          <Route path="/conversations" element={<RequireAuth><Conversations /></RequireAuth>} />
+          <Route path="/conversations/:id" element={<RequireAuth><Chat /></RequireAuth>} />
+          <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
+          <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
+          <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
+          <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
+          <Route path="/about" element={<About />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/verify" element={<Verify />} />
+          <Route path="/pet-care" element={<PetCare />} />
+          <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/shelters" element={<Shelters />} />
+          <Route path="/partner" element={<Partner />} />
+        </Routes>
+      </div>
+
+      <Footer />
+    </div>
   );
 }
-export default App
+
+export default App;

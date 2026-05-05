@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth.js";
 
-
 function Conversations() {
   const [conversations, setConversations] = useState([]);
   const { user } = useAuth();
@@ -10,34 +9,33 @@ function Conversations() {
 
   const isShelterAdmin = user?.role === "shelter_admin";
 
-useEffect(() => {
-  const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
-  const token = storedAuth?.token;
+  useEffect(() => {
+    const storedAuth = JSON.parse(localStorage.getItem("pawmatch_auth"));
+    const token = storedAuth?.token;
 
-  fetch("/api/conversations", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (Array.isArray(data)) {
-        setConversations(data);
-      } else {
-        console.error("Error loading conversations:", data);
-        setConversations([]);
-      }
+    fetch("/api/conversations", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .catch((err) => console.error("Error loading conversations:", err));
-}, []);
-
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setConversations(data);
+        } else {
+          console.error("Error loading conversations:", data);
+          setConversations([]);
+        }
+      })
+      .catch((err) => console.error("Error loading conversations:", err));
+  }, []);
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px" }}>
+    <div className="page">
       <h1>Messages</h1>
 
       {conversations.length === 0 ? (
-        <div style={{ marginTop: "20px" }}>
+        <div className="empty-state">
           {isShelterAdmin ? (
             <>
               <h3>No adopter messages yet.</h3>
@@ -57,22 +55,31 @@ useEffect(() => {
           )}
         </div>
       ) : (
-        conversations.map((conversation) => (
-          <div
-            key={conversation.id}
-            onClick={() => navigate(`/conversations/${conversation.id}`)}
-            style={{
-              border: "1px solid #ccc",
-              padding: "12px",
-              marginBottom: "10px",
-              cursor: "pointer",
-              borderRadius: "8px",
-            }}
-          >
-            <h3>{conversation.shelter_name || "Conversation"}</h3>
-            <p>{conversation.last_message || "No messages yet"}</p>
-          </div>
-        ))
+        <div className="conversation-list">
+          {conversations.map((conversation) => (
+            <div
+              key={conversation.id}
+              onClick={() => navigate(`/conversations/${conversation.id}`)}
+              className={`conversation-card ${
+                Number(conversation.unread_count) > 0 ? "conversation-unread" : ""
+              }`}
+            >
+              <h3>
+                {isShelterAdmin
+                  ? conversation.adopter_username || conversation.username || "Adopter"
+                  : conversation.shelter_name || "Conversation"}
+
+                {Number(conversation.unread_count) > 0 && (
+                  <span className="conversation-dot"></span>
+                )}
+              </h3>
+
+              <p className="conversation-preview">
+                {conversation.last_message || "No messages yet"}
+              </p>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

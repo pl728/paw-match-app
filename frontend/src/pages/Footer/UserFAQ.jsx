@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../auth/useAuth.js";
+import { useState } from "react";
 
 const faqs = [
   {
@@ -66,20 +65,15 @@ export default function UserFAQ() {
         {faqs.map((faq, index) => (
           <div className="card" key={faq.question}>
             <button
-              className="btn"
+              className="btn faq-button"
               onClick={() => toggleFAQ(index)}
-              style={{
-                width: "100%",
-                justifyContent: "space-between",
-                textAlign: "left",
-              }}
             >
               <span>{faq.question}</span>
               <span>{openIndex === index ? "−" : "+"}</span>
             </button>
 
             {openIndex === index && (
-              <p className="muted" style={{ marginTop: "1rem" }}>
+              <p className="muted faq-answer">
                 {faq.answer}
               </p>
             )}
