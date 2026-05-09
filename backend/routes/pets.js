@@ -13,6 +13,8 @@ import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { createFeedEvent } from '../dao/feed_events.js';
 import { getDefaultPetPhotoStorageUrl, getEffectivePetPhotoStorageUrl, sendStoredPhoto, uploadPetPhoto } from '../services/pet_photos.js';
+import { getUsersByFavoritedPet } from '../dao/users.js';
+import { sendEmail } from '../services/email.js';
 
 const router = express.Router();
 const upload = multer({
@@ -226,6 +228,19 @@ router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async
             });
         } catch (e) {
             console.error('Failed to create feed event for pet status change:', e);
+        }
+
+        try {
+            const favoriters = await getUsersByFavoritedPet(pet.id);
+            await Promise.allSettled(favoriters.map(function (u) {
+                return sendEmail({
+                    to: u.email,
+                    subject: title,
+                    body: `<p>An update on a pet you saved: <strong>${pet.name}</strong> is now <strong>${fields.status}</strong>.</p>`
+                });
+            }));
+        } catch (e) {
+            console.error('Failed to send pet status change emails:', e);
         }
     }
 
