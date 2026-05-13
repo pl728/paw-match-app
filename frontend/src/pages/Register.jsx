@@ -6,6 +6,7 @@ import { useAuth } from "../auth/useAuth.js";
 
 function Register() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("adopter");
@@ -19,7 +20,7 @@ function Register() {
       return;
     }
     try {
-      const data = await registerUser({ username, password, role });
+      const data = await registerUser({ username, email, password, role });
       login({ user: data.user, token: data.token });
       navigate("/home", { replace: true });
     } catch (err) {
@@ -44,6 +45,12 @@ function Register() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+              />
+              <TextField.Root
+                type="email"
+                placeholder="Email address (for notifications)"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
               <Flex direction="column" gap="2">
                 <Text size="2" color="gray">Account Type</Text>

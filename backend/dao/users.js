@@ -5,18 +5,19 @@ export async function createUser(options) {
     const username = options.username;
     const passwordHash = options.passwordHash;
     const role = options.role || 'adopter';
+    const email = options.email || null;
 
     const userId = crypto.randomUUID();
 
     await db.query(
-        'INSERT INTO users (id, username, password_hash, role) VALUES (?, ?, ?, ?)',
-        [userId, username, passwordHash, role]
+        'INSERT INTO users (id, username, password_hash, role, email) VALUES (?, ?, ?, ?, ?)',
+        [userId, username, passwordHash, role, email]
     );
 
     await db.query('INSERT INTO email_notifications (user_id) VALUES (?)', [userId]);
 
     const result = await db.query(
-        'SELECT id, username, role, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, role, email, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -25,7 +26,7 @@ export async function createUser(options) {
 
 export async function getUserById(userId) {
     const result = await db.query(
-        'SELECT id, username, role, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, role, email, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -38,7 +39,7 @@ export async function getUserById(userId) {
 
 export async function getUserByUsername(username) {
     const result = await db.query(
-        'SELECT id, username, role, created_at, updated_at FROM users WHERE username = ?',
+        'SELECT id, username, role, email, created_at, updated_at FROM users WHERE username = ?',
         [username]
     );
 
@@ -60,4 +61,32 @@ export async function getUserAuthByUsername(username) {
     }
 
     return result.rows[0];
+}
+
+export async function getUsersByFavoritedPet(petId) {
+    const result = await db.query(
+        `SELECT u.id, u.email FROM users u
+         INNER JOIN favorites f ON f.user_id = u.id
+         LEFT JOIN email_notifications en ON en.user_id = u.id
+         WHERE f.pet_id = ?
+           AND u.email IS NOT NULL
+           AND (en.saved_animal_updates IS NULL OR en.saved_animal_updates = TRUE)
+           AND en.digest_frequency = 'immediately'`,
+        [petId]
+    );
+    return result.rows;
+}
+
+export async function getUsersByFollowedShelter(shelterId) {
+    const result = await db.query(
+        `SELECT u.id, u.email FROM users u
+         INNER JOIN shelter_follows sf ON sf.user_id = u.id
+         LEFT JOIN email_notifications en ON en.user_id = u.id
+         WHERE sf.shelter_id = ?
+           AND u.email IS NOT NULL
+           AND (en.adoption_updates IS NULL OR en.adoption_updates = TRUE)
+           AND en.digest_frequency = 'immediately'`,
+        [shelterId]
+    );
+    return result.rows;
 }

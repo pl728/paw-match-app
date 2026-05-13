@@ -311,6 +311,11 @@ function Profile() {
             </Box>
 
             <Box>
+              <Text size="2" weight="bold" as="div">Email</Text>
+              <Text size="2" color="gray">{profile.email || "Not set"}</Text>
+            </Box>
+
+            <Box>
               <Text size="2" weight="bold" as="div">Role</Text>
               <Text size="2" color="gray">
                 {profile.role === "shelter_admin" ? "Shelter Admin" : "Adopter"}
@@ -884,6 +889,7 @@ function Profile() {
           <Flex direction="column" gap="3">
             <Heading size="5">Digest Frequency</Heading>
             <Text size="2" color="gray">How often would you like to receive email summaries?</Text>
+            <Text size="2" color="amber">Note: only "Immediately" is active. Scheduled digests are not yet available.</Text>
             <select
               className="form-input digest-select"
               value={notifPrefs.digest_frequency || "none"}

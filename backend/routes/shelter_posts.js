@@ -9,10 +9,27 @@ import {
     deleteShelterPost
 } from '../dao/shelter_posts.js';
 import { getShelterByUserId } from '../dao/shelters.js';
+import { getUsersByFollowedShelter } from '../dao/users.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { sendEmail } from '../services/email.js';
 import { createFeedEvent } from '../dao/feed_events.js';
 
 const router = express.Router();
+
+async function notifyShelterFollowers(shelterId, shelterName, title, body) {
+    try {
+        const followers = await getUsersByFollowedShelter(shelterId);
+        await Promise.allSettled(followers.map(function (u) {
+            return sendEmail({
+                to: u.email,
+                subject: `New post from ${shelterName}: ${title}`,
+                body: `<p><strong>${shelterName}</strong> published a new post.</p><h3>${title}</h3><p>${body}</p>`
+            });
+        }));
+    } catch (e) {
+        console.error('Failed to send shelter post emails:', e);
+    }
+}
 
 // Create a new Post
 // If publish === true, published_at is set to NOW(). Otherwise it stays NULL.
@@ -57,6 +74,8 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
         } catch (e) {
             console.error('Failed to create feed event for shelter post:', e);
         }
+
+        await notifyShelterFollowers(shelter_id, shelter.name, title, body);
     }
 
     res.status(201).json(created);
@@ -143,6 +162,8 @@ router.patch('/:id/publish', requireAuth, requireRole('shelter_admin'), asyncHan
     } catch (e) {
         console.error('Failed to create feed event for published post:', e);
     }
+
+    await notifyShelterFollowers(existing.shelter_id, shelter.name, existing.title, existing.body);
 
     res.json(updated);
 }));
