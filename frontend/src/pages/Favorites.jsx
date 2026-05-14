@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
+import { useNavigate } from "react-router-dom";
+import { HeartFilledIcon } from "@radix-ui/react-icons";
+import { Card, Flex, Heading, Text, IconButton } from "@radix-ui/themes";
 import { getFavorites, removeFavorite } from "../services/favorites.js";
 import { getPets } from "../services/pets.js";
 
 export default function Favorites() {
+  const navigate = useNavigate();
   const [favoritePets, setFavoritePets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,6 +55,17 @@ export default function Favorites() {
     }
   }
 
+  function openPetDetails(petId) {
+    navigate(`/pets/${petId}`);
+  }
+
+  function handlePetCardKeyDown(event, petId) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPetDetails(petId);
+    }
+  }
+
   return (
     <div className="page">
       <Flex direction="column" gap="4">
@@ -68,16 +81,26 @@ export default function Favorites() {
         {!loading && !error && favoritePets.length > 0 && (
           <div className="pets-grid">
             {favoritePets.map((pet) => (
-              <Card key={pet.id} size="2">
+              <Card
+                key={pet.id}
+                size="2"
+                className="pet-card-clickable"
+                role="link"
+                tabIndex={0}
+                onClick={() => openPetDetails(pet.id)}
+                onKeyDown={(event) => handlePetCardKeyDown(event, pet.id)}
+              >
                 <Flex direction="column" gap="2">
-                  {pet.primary_photo_url && (
-                    <img
-                      src={pet.primary_photo_url}
-                      alt={pet.name}
-                      className="favorite-pet-image"
-                      loading="lazy"
-                    />
-                  )}
+                  <div className="pet-card-image-wrap">
+                    {pet.primary_photo_url && (
+                      <img
+                        src={pet.primary_photo_url}
+                        alt={pet.name}
+                        className="pet-card-image"
+                        loading="lazy"
+                      />
+                    )}
+                  </div>
 
                   <Heading size="4">{pet.name}</Heading>
 
@@ -89,18 +112,22 @@ export default function Favorites() {
                     Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
                   </Text>
 
-                  <Flex gap="2" direction="column" align="start">
-                    <Button
-                      size="1"
-                      variant="soft"
-                      color="red"
-                      onClick={() => handleRemoveFavorite(pet.id)}
-                    >
-                      Unfavorite
-                    </Button>
-
-                    <Link to={`/pets/${pet.id}`}>View full details</Link>
-                  </Flex>
+                  <IconButton
+                    type="button"
+                    size="3"
+                    radius="full"
+                    variant="soft"
+                    color="red"
+                    className="pet-card-favorite-button is-favorited"
+                    aria-label={`Remove ${pet.name} from favorites`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleRemoveFavorite(pet.id);
+                    }}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    <HeartFilledIcon />
+                  </IconButton>
                 </Flex>
               </Card>
             ))}
