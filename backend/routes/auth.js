@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
 import {
     createUser,
+    deleteExpiredUnverifiedRegistrationConflicts,
+    deleteExpiredUnverifiedUser,
     getUserAuthByUsername,
     getUserByUsernameOrEmail,
     getUserRegistrationConflicts,
@@ -33,6 +35,12 @@ function buildUserResponse(user) {
         role: user.role,
         email_verified: Boolean(user.email_verified_at)
     };
+}
+
+function getExpiredUnverifiedCutoff() {
+    const hours = Number(process.env.EMAIL_VERIFICATION_EXPIRES_HOURS || 24);
+    const safeHours = Number.isFinite(hours) && hours > 0 ? hours : 24;
+    return new Date(Date.now() - safeHours * 60 * 60 * 1000);
 }
 
 function sendRegistrationConflict(res, conflicts) {
@@ -72,6 +80,9 @@ router.post('/register', asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'role must be adopter or shelter_admin' });
     }
 
+    const expiredCutoff = getExpiredUnverifiedCutoff();
+    await deleteExpiredUnverifiedRegistrationConflicts({ username, email, cutoff: expiredCutoff });
+
     const conflicts = await getUserRegistrationConflicts({ username, email });
     if (sendRegistrationConflict(res, conflicts)) {
         return;
@@ -101,6 +112,7 @@ router.post('/register', asyncHandler(async function (req, res) {
         await sendVerificationEmail(created);
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
+            await deleteExpiredUnverifiedRegistrationConflicts({ username, email, cutoff: expiredCutoff });
             const currentConflicts = await getUserRegistrationConflicts({ username, email });
             if (sendRegistrationConflict(res, currentConflicts)) {
                 return;
@@ -129,6 +141,11 @@ router.post('/send-verification-email', asyncHandler(async function (req, res) {
 
     const user = await getUserByUsernameOrEmail(identifier);
     if (user && !user.email_verified_at) {
+        const deleted = await deleteExpiredUnverifiedUser(user.id, getExpiredUnverifiedCutoff());
+        if (deleted) {
+            return res.json({ message: neutralMessage });
+        }
+
         try {
             await sendVerificationEmail(user);
         } catch (err) {

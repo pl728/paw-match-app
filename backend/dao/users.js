@@ -81,6 +81,30 @@ export async function getUserRegistrationConflicts({ username, email }) {
     };
 }
 
+export async function deleteExpiredUnverifiedRegistrationConflicts({ username, email, cutoff }) {
+    const result = await db.query(
+        `DELETE FROM users
+         WHERE email_verified_at IS NULL
+           AND created_at < ?
+           AND (username = ? OR email = ?)`,
+        [cutoff, username, email]
+    );
+
+    return result.rows.affectedRows || 0;
+}
+
+export async function deleteExpiredUnverifiedUser(userId, cutoff) {
+    const result = await db.query(
+        `DELETE FROM users
+         WHERE id = ?
+           AND email_verified_at IS NULL
+           AND created_at < ?`,
+        [userId, cutoff]
+    );
+
+    return result.rows.affectedRows || 0;
+}
+
 export async function getUserByUsernameOrEmail(identifier) {
     const result = await db.query(
         'SELECT id, username, role, email, email_verified_at, created_at, updated_at FROM users WHERE username = ? OR email = ? LIMIT 1',

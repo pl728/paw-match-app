@@ -5,6 +5,7 @@ import { createEmailVerificationToken } from '../dao/email_verification_tokens.j
 import { getUserByUsername, markUserEmailVerified } from '../dao/users.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+process.env.EMAIL_VERIFICATION_EXPIRES_HOURS = '24';
 
 afterAll(async function () {
     await db.end();
@@ -163,6 +164,54 @@ describe('auth endpoints', function () {
         expect(res.body.error).toBe('Email address already exists');
         expect(res.body.code).toBe('EMAIL_EXISTS');
         expect(res.body.fields).toEqual(['email']);
+    });
+
+    it('clears expired unverified registrations before checking duplicate email', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const oldUsername = 'authstale_' + unique;
+        const newUsername = oldUsername + '_new';
+        const email = oldUsername + '@example.test';
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: oldUsername, email: email, password: 'password123' })
+            .expect(201);
+
+        await db.query(
+            'UPDATE users SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 25 HOUR) WHERE username = ?',
+            [oldUsername]
+        );
+
+        const res = await request(app)
+            .post('/auth/register')
+            .send({ username: newUsername, email: email, password: 'password123' })
+            .expect(201);
+
+        expect(res.body.user.username).toBe(newUsername);
+        await expect(getUserByUsername(oldUsername)).resolves.toBeNull();
+    });
+
+    it('clears expired unverified accounts instead of resending verification', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const username = 'authstaleresend_' + unique;
+        const email = username + '@example.test';
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: email, password: 'password123' })
+            .expect(201);
+
+        await db.query(
+            'UPDATE users SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 25 HOUR) WHERE username = ?',
+            [username]
+        );
+
+        await request(app)
+            .post('/auth/send-verification-email')
+            .send({ email: email })
+            .expect(200);
+
+        await expect(getUserByUsername(username)).resolves.toBeNull();
     });
 
     it('rejects invalid login', async function () {
