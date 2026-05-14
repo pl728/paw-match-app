@@ -2,7 +2,13 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
-import { createUser, getUserAuthByUsername, getUserByUsernameOrEmail, markUserEmailVerified } from '../dao/users.js';
+import {
+    createUser,
+    getUserAuthByUsername,
+    getUserByUsernameOrEmail,
+    getUserRegistrationConflicts,
+    markUserEmailVerified
+} from '../dao/users.js';
 import { getActiveEmailVerificationToken, markEmailVerificationTokenUsed } from '../dao/email_verification_tokens.js';
 import { updateRecommendationPreferences } from '../services/recommendations.js';
 import { reverseGeocodeLocation } from '../services/geocoding.js';
@@ -29,6 +35,29 @@ function buildUserResponse(user) {
     };
 }
 
+function sendRegistrationConflict(res, conflicts) {
+    const fields = [];
+    if (conflicts.username) fields.push('username');
+    if (conflicts.email) fields.push('email');
+
+    if (fields.length === 0) {
+        return false;
+    }
+
+    let error = 'Username and email already exist';
+    let code = 'USERNAME_EMAIL_EXISTS';
+    if (conflicts.username && !conflicts.email) {
+        error = 'Username already exists';
+        code = 'USERNAME_EXISTS';
+    } else if (conflicts.email && !conflicts.username) {
+        error = 'Email address already exists';
+        code = 'EMAIL_EXISTS';
+    }
+
+    res.status(409).json({ error, code, fields });
+    return true;
+}
+
 router.post('/register', asyncHandler(async function (req, res) {
     const username = req.body.username;
     const password = req.body.password;
@@ -41,6 +70,11 @@ router.post('/register', asyncHandler(async function (req, res) {
 
     if (role !== 'adopter' && role !== 'shelter_admin') {
         return res.status(400).json({ error: 'role must be adopter or shelter_admin' });
+    }
+
+    const conflicts = await getUserRegistrationConflicts({ username, email });
+    if (sendRegistrationConflict(res, conflicts)) {
+        return;
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -67,7 +101,11 @@ router.post('/register', asyncHandler(async function (req, res) {
         await sendVerificationEmail(created);
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: 'username or email already exists' });
+            const currentConflicts = await getUserRegistrationConflicts({ username, email });
+            if (sendRegistrationConflict(res, currentConflicts)) {
+                return;
+            }
+            return res.status(409).json({ error: 'Account already exists', code: 'ACCOUNT_EXISTS', fields: [] });
         }
         if (err.status) {
             return res.status(err.status).json({ error: err.message });

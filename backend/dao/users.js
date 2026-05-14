@@ -64,6 +64,23 @@ export async function getUserAuthByUsername(username) {
     return result.rows[0];
 }
 
+export async function getUserRegistrationConflicts({ username, email }) {
+    const result = await db.query(
+        `SELECT
+            MAX(CASE WHEN username = ? THEN 1 ELSE 0 END) AS username_exists,
+            MAX(CASE WHEN email = ? THEN 1 ELSE 0 END) AS email_exists
+         FROM users
+         WHERE username = ? OR email = ?`,
+        [username, email, username, email]
+    );
+
+    const row = result.rows[0] || {};
+    return {
+        username: Boolean(row.username_exists),
+        email: Boolean(row.email_exists)
+    };
+}
+
 export async function getUserByUsernameOrEmail(identifier) {
     const result = await db.query(
         'SELECT id, username, role, email, email_verified_at, created_at, updated_at FROM users WHERE username = ? OR email = ? LIMIT 1',

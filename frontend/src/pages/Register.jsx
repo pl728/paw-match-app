@@ -18,10 +18,24 @@ function Register() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [resendMessage, setResendMessage] = useState("");
   const [resending, setResending] = useState(false);
+  const [registerError, setRegisterError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ username: "", email: "" });
   const autoLocationAttempted = useRef(false);
+  const usernameInputRef = useRef(null);
+  const emailInputRef = useRef(null);
+
+  function clearFieldError(field) {
+    setFieldErrors((previous) => {
+      if (!previous[field]) return previous;
+      return { ...previous, [field]: "" };
+    });
+    setRegisterError("");
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setRegisterError("");
+    setFieldErrors({ username: "", email: "" });
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
@@ -41,6 +55,27 @@ function Register() {
       setPendingEmail(email);
       setResendMessage("");
     } catch (err) {
+      const fields = err.payload?.fields || [];
+      const usernameExists = err.code === "USERNAME_EXISTS" || err.code === "USERNAME_EMAIL_EXISTS" || fields.includes("username");
+      const emailExists = err.code === "EMAIL_EXISTS" || err.code === "USERNAME_EMAIL_EXISTS" || fields.includes("email");
+
+      if (usernameExists || emailExists) {
+        setRegisterError(err.message);
+        setFieldErrors({
+          username: usernameExists ? "Username already exists." : "",
+          email: emailExists ? "Email address already exists." : "",
+        });
+
+        setTimeout(() => {
+          if (usernameExists) {
+            usernameInputRef.current?.focus();
+          } else if (emailExists) {
+            emailInputRef.current?.focus();
+          }
+        }, 0);
+        return;
+      }
+
       alert(err.message);
     }
   };
@@ -151,20 +186,49 @@ function Register() {
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <Flex direction="column" gap="3">
+              {registerError && (
+                <Text size="2" color="red">
+                  {registerError}
+                </Text>
+              )}
               <TextField.Root
+                ref={usernameInputRef}
                 type="text"
                 placeholder="Username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  clearFieldError("username");
+                }}
+                color={fieldErrors.username ? "red" : undefined}
+                aria-invalid={fieldErrors.username ? "true" : undefined}
+                aria-describedby={fieldErrors.username ? "register-username-error" : undefined}
                 required
               />
+              {fieldErrors.username && (
+                <Text id="register-username-error" size="2" color="red">
+                  {fieldErrors.username}
+                </Text>
+              )}
               <TextField.Root
+                ref={emailInputRef}
                 type="email"
                 placeholder="Email address"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError("email");
+                }}
+                color={fieldErrors.email ? "red" : undefined}
+                aria-invalid={fieldErrors.email ? "true" : undefined}
+                aria-describedby={fieldErrors.email ? "register-email-error" : undefined}
                 required
               />
+              {fieldErrors.email && (
+                <Text id="register-email-error" size="2" color="red">
+                  {fieldErrors.email}
+                </Text>
+              )}
               <TextField.Root
                 type="password"
                 placeholder="Password"

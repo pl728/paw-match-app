@@ -117,10 +117,52 @@ describe('auth endpoints', function () {
             .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
 
-        await request(app)
+        const res = await request(app)
             .post('/auth/register')
             .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(409);
+
+        expect(res.body.error).toBe('Username and email already exist');
+        expect(res.body.code).toBe('USERNAME_EMAIL_EXISTS');
+        expect(res.body.fields).toEqual(expect.arrayContaining(['username', 'email']));
+    });
+
+    it('reports duplicate username separately from email', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const username = 'authusername_' + unique;
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
+            .expect(201);
+
+        const res = await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: username + '_new@example.test', password: 'password123' })
+            .expect(409);
+
+        expect(res.body.error).toBe('Username already exists');
+        expect(res.body.code).toBe('USERNAME_EXISTS');
+        expect(res.body.fields).toEqual(['username']);
+    });
+
+    it('reports duplicate email separately from username', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const username = 'authemail_' + unique;
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
+            .expect(201);
+
+        const res = await request(app)
+            .post('/auth/register')
+            .send({ username: username + '_new', email: username + '@example.test', password: 'password123' })
+            .expect(409);
+
+        expect(res.body.error).toBe('Email address already exists');
+        expect(res.body.code).toBe('EMAIL_EXISTS');
+        expect(res.body.fields).toEqual(['email']);
     });
 
     it('rejects invalid login', async function () {
