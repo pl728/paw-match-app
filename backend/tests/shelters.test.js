@@ -13,7 +13,7 @@ describe('shelters endpoints', function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const user = await request(app)
             .post('/auth/register')
-            .send({ username: 'shelteruser_' + unique, password: 'password123', role: 'shelter_admin' })
+            .send({ username: 'shelteruser_' + unique, email: 'shelteruser_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)
@@ -34,7 +34,7 @@ describe('shelters endpoints', function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const user = await request(app)
             .post('/auth/register')
-            .send({ username: 'shelteruser2_' + unique, password: 'password123', role: 'shelter_admin' })
+            .send({ username: 'shelteruser2_' + unique, email: 'shelteruser2_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
             .expect(201);
 
         const shelter = await request(app)
@@ -73,6 +73,7 @@ describe('shelters endpoints', function () {
             .post('/auth/register')
             .send({
                 username: 'adopter_' + unique,
+                email: 'adopter_' + unique + '@example.test',
                 password: 'password123',
                 role: 'adopter'
             })
@@ -100,6 +101,7 @@ describe('shelters endpoints', function () {
             .post('/auth/register')
             .send({
                 username: 'deleteuser_' + unique,
+                email: 'deleteuser_' + unique + '@example.test',
                 password: 'password123',
                 role: 'shelter_admin'
             })

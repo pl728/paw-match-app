@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
 import { createUser, getUserAuthByUsername } from '../dao/users.js';
+import { updateRecommendationPreferences } from '../services/recommendations.js';
+import { reverseGeocodeLocation } from '../services/geocoding.js';
 
 const router = express.Router();
 
@@ -19,6 +21,7 @@ function buildUserResponse(user) {
     return {
         id: user.id,
         username: user.username,
+        email: user.email,
         role: user.role
     };
 }
@@ -27,11 +30,10 @@ router.post('/register', asyncHandler(async function (req, res) {
     const username = req.body.username;
     const password = req.body.password;
     const role = req.body.role || 'adopter';
-    const shelterName = req.body.shelter_name;
     const email = req.body.email || null;
 
-    if (!username || !password) {
-        return res.status(400).json({ error: 'username and password are required' });
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: 'username, email, and password are required' });
     }
 
     if (role !== 'adopter' && role !== 'shelter_admin') {
@@ -48,9 +50,28 @@ router.post('/register', asyncHandler(async function (req, res) {
     let created;
     try {
         created = await createUser({ username: username, passwordHash: passwordHash, role: role, email: email });
+        if (role === 'adopter') {
+            const preferenceFields = {
+                city: req.body.city,
+                state: req.body.state,
+                postal_code: req.body.postal_code,
+                latitude: req.body.latitude,
+                longitude: req.body.longitude,
+                radius_miles: req.body.radius_miles
+            };
+            const hasPreferenceFields = Object.values(preferenceFields).some(function (value) {
+                return value !== undefined && value !== null && value !== '';
+            });
+            if (hasPreferenceFields) {
+                await updateRecommendationPreferences(created.id, preferenceFields);
+            }
+        }
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: 'username already exists' });
+            return res.status(409).json({ error: 'username or email already exists' });
+        }
+        if (err.status) {
+            return res.status(err.status).json({ error: err.message });
         }
         throw err;
     }
@@ -94,6 +115,21 @@ router.post('/login', asyncHandler(async function (req, res) {
     );
 
     res.json({ user: buildUserResponse(user), token: token });
+}));
+
+router.get('/reverse-geocode', asyncHandler(async function (req, res) {
+    try {
+        const result = await reverseGeocodeLocation({
+            latitude: req.query.latitude,
+            longitude: req.query.longitude
+        });
+        res.json(result);
+    } catch (err) {
+        if (err.status) {
+            return res.status(err.status).json({ error: err.message });
+        }
+        throw err;
+    }
 }));
 
 export default router;

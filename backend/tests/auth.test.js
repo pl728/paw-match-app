@@ -15,7 +15,7 @@ describe('auth endpoints', function () {
 
         const res = await request(app)
             .post('/auth/register')
-            .send({ username: username, password: 'password123' })
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
 
         expect(res.body).toHaveProperty('token');
@@ -30,7 +30,7 @@ describe('auth endpoints', function () {
 
         await request(app)
             .post('/auth/register')
-            .send({ username: username, password: 'password123' })
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
 
         const res = await request(app)
@@ -49,12 +49,12 @@ describe('auth endpoints', function () {
 
         await request(app)
             .post('/auth/register')
-            .send({ username: username, password: 'password123' })
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
 
         await request(app)
             .post('/auth/register')
-            .send({ username: username, password: 'password123' })
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(409);
     });
 
@@ -64,7 +64,7 @@ describe('auth endpoints', function () {
 
         await request(app)
             .post('/auth/register')
-            .send({ username: username, password: 'password123' })
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
 
         await request(app)

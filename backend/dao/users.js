@@ -5,7 +5,7 @@ export async function createUser(options) {
     const username = options.username;
     const passwordHash = options.passwordHash;
     const role = options.role || 'adopter';
-    const email = options.email || null;
+    const email = options.email;
 
     const userId = crypto.randomUUID();
 
@@ -52,7 +52,7 @@ export async function getUserByUsername(username) {
 
 export async function getUserAuthByUsername(username) {
     const result = await db.query(
-        'SELECT id, username, role, password_hash FROM users WHERE username = ?',
+        'SELECT id, username, role, email, password_hash FROM users WHERE username = ?',
         [username]
     );
 

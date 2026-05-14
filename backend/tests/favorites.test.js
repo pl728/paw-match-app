@@ -11,9 +11,10 @@ afterAll(async function () {
 describe('favorites engagement', function () {
   async function registerUser(role) {
     const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const username = `${role}_${unique}`;
     const res = await request(app)
       .post('/auth/register')
-      .send({ username: `${role}_${unique}`, password: 'password123', role })
+      .send({ username, email: username + '@example.test', password: 'password123', role })
       .expect(201);
     return res.body.token;
   }

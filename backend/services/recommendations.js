@@ -5,6 +5,7 @@ import {
     upsertUserPetPreferences
 } from '../dao/recommendations.js';
 import { addFavorite } from '../dao/favorites.js';
+import { geocodeLocation, normalizeCoordinates } from './geocoding.js';
 
 export const ALLOWED_INTERACTION_TYPES = ['shown', 'viewed', 'liked', 'passed'];
 
@@ -18,6 +19,9 @@ const DEFAULT_PREFERENCES = {
     city: null,
     state: null,
     postal_code: null,
+    latitude: null,
+    longitude: null,
+    geocoded_at: null,
     radius_miles: 50
 };
 
@@ -46,6 +50,15 @@ function cleanInteger(value) {
 
     const parsed = Number(value);
     if (!Number.isInteger(parsed) || parsed < 0) return undefined;
+    return parsed;
+}
+
+function cleanCoordinate(value, min, max) {
+    if (value === null) return null;
+    if (value === undefined || value === '') return undefined;
+
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < min || parsed > max) return undefined;
     return parsed;
 }
 
@@ -78,6 +91,20 @@ export async function updateRecommendationPreferences(userId, body) {
         }
     });
 
+    const latitude = cleanCoordinate(body.latitude, -90, 90);
+    const longitude = cleanCoordinate(body.longitude, -180, 180);
+    if (latitude !== undefined || longitude !== undefined) {
+        const coordinates = normalizeCoordinates({ latitude, longitude });
+        if (!coordinates) {
+            const err = new Error('latitude and longitude must both be valid coordinates');
+            err.status = 400;
+            throw err;
+        }
+        next.latitude = coordinates.latitude;
+        next.longitude = coordinates.longitude;
+        changed = true;
+    }
+
     ['min_age_years', 'max_age_years', 'radius_miles'].forEach(function (field) {
         const cleaned = cleanInteger(body[field]);
         if (cleaned !== undefined) {
@@ -96,6 +123,22 @@ export async function updateRecommendationPreferences(userId, body) {
         const err = new Error('No valid preference fields provided');
         err.status = 400;
         throw err;
+    }
+
+    const locationChanged = ['city', 'state', 'postal_code'].some(function (field) {
+        return Object.prototype.hasOwnProperty.call(body, field);
+    });
+    const coordinatesProvided = latitude !== undefined || longitude !== undefined;
+    const hasGeocodableLocation = Boolean(next.postal_code || (next.city && next.state));
+    if (locationChanged && !coordinatesProvided && hasGeocodableLocation) {
+        try {
+            const coordinates = await geocodeLocation(next);
+            next.latitude = coordinates?.latitude ?? null;
+            next.longitude = coordinates?.longitude ?? null;
+        } catch (err) {
+            err.status = 400;
+            throw err;
+        }
     }
 
     return upsertUserPetPreferences(userId, next);

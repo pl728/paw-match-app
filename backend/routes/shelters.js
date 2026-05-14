@@ -2,6 +2,7 @@ import express from 'express';
 import asyncHandler from '../utils/async-handler.js';
 import { createShelter, getShelterById, updateShelter, listShelters, deleteShelter, getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { geocodeLocation } from '../services/geocoding.js';
 
 const router = express.Router();
 
@@ -26,6 +27,21 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
         return res.status(400).json({ error: 'user_id and name are required' });
     }
 
+    let coordinates = null;
+    try {
+        coordinates = await geocodeLocation({
+            addressLine1,
+            addressLine2,
+            city,
+            state,
+            postalCode,
+            latitude: req.body.latitude,
+            longitude: req.body.longitude
+        });
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
     let created;
     try {
         created = await createShelter({
@@ -38,7 +54,9 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
             addressLine2: addressLine2,
             city: city,
             state: state,
-            postalCode: postalCode
+            postalCode: postalCode,
+            latitude: coordinates?.latitude,
+            longitude: coordinates?.longitude
         });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
@@ -59,6 +77,15 @@ router.get('/:id', asyncHandler(async function (req, res) {
 }));
 
 router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+    const existing = await getShelterById(req.params.id);
+    if (!existing) {
+        return res.status(404).json({ error: 'Shelter not found' });
+    }
+
+    if (existing.user_id !== req.userId) {
+        return res.status(403).json({ error: 'Not allowed to update this shelter' });
+    }
+
     const fields = {
         name: req.body.name,
         description: req.body.description,
@@ -71,21 +98,39 @@ router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async
         postal_code: req.body.postal_code
     };
 
+    if (
+        req.body.address_line1 !== undefined ||
+        req.body.address_line2 !== undefined ||
+        req.body.city !== undefined ||
+        req.body.state !== undefined ||
+        req.body.postal_code !== undefined ||
+        req.body.latitude !== undefined ||
+        req.body.longitude !== undefined
+    ) {
+        try {
+            const coordinates = await geocodeLocation({
+                addressLine1: req.body.address_line1 ?? existing?.address_line1,
+                addressLine2: req.body.address_line2 ?? existing?.address_line2,
+                city: req.body.city ?? existing?.city,
+                state: req.body.state ?? existing?.state,
+                postalCode: req.body.postal_code ?? existing?.postal_code,
+                latitude: req.body.latitude,
+                longitude: req.body.longitude
+            });
+            fields.latitude = coordinates?.latitude ?? null;
+            fields.longitude = coordinates?.longitude ?? null;
+            fields.geocoded_at = coordinates ? new Date() : null;
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
     const hasUpdates = Object.keys(fields).some(function (key) {
         return fields[key] !== undefined;
     });
 
     if (!hasUpdates) {
         return res.status(400).json({ error: 'No valid fields provided' });
-    }
-
-    const existing = await getShelterById(req.params.id);
-    if (!existing) {
-        return res.status(404).json({ error: 'Shelter not found' });
-    }
-
-    if (existing.user_id !== req.userId) {
-        return res.status(403).json({ error: 'Not allowed to update this shelter' });
     }
 
     const updated = await updateShelter(req.params.id, fields);

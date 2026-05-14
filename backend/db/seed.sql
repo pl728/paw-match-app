@@ -1,13 +1,13 @@
 -- CORE --
 
-INSERT INTO users (username, password_hash, role)
+INSERT INTO users (username, password_hash, role, email)
 VALUES
-    ('shelter1', 'dev_hash_1', 'shelter_admin'),
-    ('adopter1', 'dev_hash_2', 'adopter')
+    ('shelter1', 'dev_hash_1', 'shelter_admin', 'shelter1@example.test'),
+    ('adopter1', 'dev_hash_2', 'adopter', 'adopter1@example.test')
 ON DUPLICATE KEY UPDATE username = username;
 
-INSERT INTO shelters (user_id, name, description, phone, email, city, state, postal_code)
-SELECT u.id, 'Happy Tails Shelter', 'Rescue and adoption center.', '555-0101', 'hello@happytails.test', 'Corvallis', 'OR', '97330'
+INSERT INTO shelters (user_id, name, description, phone, email, city, state, postal_code, latitude, longitude, geocoded_at)
+SELECT u.id, 'Happy Tails Shelter', 'Rescue and adoption center.', '555-0101', 'hello@happytails.test', 'Corvallis', 'OR', '97330', 44.5646000, -123.2620000, CURRENT_TIMESTAMP
 FROM users u
 WHERE u.username = 'shelter1'
 ON DUPLICATE KEY UPDATE name = name;
@@ -58,6 +58,12 @@ INSERT INTO email_notifications (user_id)
 SELECT u.id
 FROM users u
 WHERE u.username = 'adopter1';
+
+INSERT INTO user_pet_preferences (user_id, city, state, postal_code, latitude, longitude, geocoded_at, radius_miles)
+SELECT u.id, 'Corvallis', 'OR', '97330', 44.5646000, -123.2620000, CURRENT_TIMESTAMP, 50
+FROM users u
+WHERE u.username = 'adopter1'
+ON DUPLICATE KEY UPDATE user_id = user_id;
 
 -- MESSAGING --
 

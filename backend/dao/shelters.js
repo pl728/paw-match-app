@@ -12,11 +12,14 @@ export async function createShelter(options) {
     const city = options.city || null;
     const state = options.state || null;
     const postalCode = options.postalCode || null;
+    const latitude = options.latitude ?? null;
+    const longitude = options.longitude ?? null;
+    const geocodedAt = latitude !== null && longitude !== null ? new Date() : null;
 
     const shelterId = crypto.randomUUID();
     await db.query(
-        'INSERT INTO shelters (id, user_id, name, description, phone, email, address_line1, address_line2, city, state, postal_code) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-        [shelterId, userId, name, description, phone, email, addressLine1, addressLine2, city, state, postalCode]
+        'INSERT INTO shelters (id, user_id, name, description, phone, email, address_line1, address_line2, city, state, postal_code, latitude, longitude, geocoded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [shelterId, userId, name, description, phone, email, addressLine1, addressLine2, city, state, postalCode, latitude, longitude, geocodedAt]
     );
 
     const result = await db.query('SELECT * FROM shelters WHERE id = ?', [shelterId]);
@@ -25,7 +28,7 @@ export async function createShelter(options) {
 
 export async function listShelters() {
     const result = await db.query(
-        'SELECT id, name, description, phone, email, city, state, created_at FROM shelters ORDER BY name ASC'
+        'SELECT id, name, description, phone, email, city, state, postal_code, latitude, longitude, created_at FROM shelters ORDER BY name ASC'
     );
     return result.rows;
 }

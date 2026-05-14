@@ -14,7 +14,7 @@ describe('feed_events endpoints', function () {
 
     const register = await request(app)
       .post('/auth/register')
-      .send({ username: 'feedadmin_' + unique, password: 'password123', role: 'shelter_admin' })
+      .send({ username: 'feedadmin_' + unique, email: 'feedadmin_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
       .expect(201);
 
     const shelter = await request(app)

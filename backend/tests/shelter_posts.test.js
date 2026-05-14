@@ -12,7 +12,7 @@ async function createShelterAdmin() {
     const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const register = await request(app)
         .post('/auth/register')
-        .send({ username: 'postadmin_' + unique, password: 'password123', role: 'shelter_admin' })
+        .send({ username: 'postadmin_' + unique, email: 'postadmin_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
         .expect(201);
 
     const shelter = await request(app)
