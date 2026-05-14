@@ -12,17 +12,33 @@ import {
 import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { createFeedEvent } from '../dao/feed_events.js';
-import { getDefaultPetPhotoStorageUrl, getEffectivePetPhotoStorageUrl, sendStoredPhoto, uploadPetPhoto } from '../services/pet_photos.js';
+import { getEffectivePetPhotoStorageUrl, sendStoredPhoto, uploadPetPhoto } from '../services/pet_photos.js';
 import { getUsersByFavoritedPet } from '../dao/users.js';
 import { sendEmail } from '../services/email.js';
 
 const router = express.Router();
+const MIN_PET_PHOTOS = 3;
+const MAX_PET_PHOTOS = 6;
+const ALLOWED_PHOTO_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 5 * 1024 * 1024
+        fileSize: 5 * 1024 * 1024,
+        files: MAX_PET_PHOTOS
+    },
+    fileFilter: function (req, file, cb) {
+        if (!ALLOWED_PHOTO_MIME_TYPES.has(file.mimetype)) {
+            const err = new Error('Only JPG, PNG, and WEBP pet images are supported');
+            err.code = 'UNSUPPORTED_PET_PHOTO_TYPE';
+            cb(err);
+            return;
+        }
+
+        cb(null, true);
     }
 });
+const uploadPetPhotos = upload.array('photos', MAX_PET_PHOTOS);
 
 function getBaseUrl(req) {
     return req.protocol + '://' + req.get('host');
@@ -52,7 +68,33 @@ function withProxyPhotoUrls(req, pet) {
     return mapped;
 }
 
-router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo'), asyncHandler(async function (req, res) {
+function handlePetPhotoUpload(req, res, next) {
+    uploadPetPhotos(req, res, function (err) {
+        if (!err) {
+            next();
+            return;
+        }
+
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            res.status(400).json({ error: 'Each pet photo must be 5 MB or smaller.' });
+            return;
+        }
+
+        if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
+            res.status(400).json({ error: `Upload between ${MIN_PET_PHOTOS} and ${MAX_PET_PHOTOS} pet photos using the photos field.` });
+            return;
+        }
+
+        if (err.code === 'UNSUPPORTED_PET_PHOTO_TYPE') {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        next(err);
+    });
+}
+
+router.post('/', requireAuth, requireRole('shelter_admin'), handlePetPhotoUpload, asyncHandler(async function (req, res) {
 
     const name = req.body.name;
     const species = req.body.species || null;
@@ -65,6 +107,11 @@ router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo
 
     if (!name) {
         return res.status(400).json({ error: 'name is required' });
+    }
+
+    const photoFiles = Array.isArray(req.files) ? req.files : [];
+    if (photoFiles.length < MIN_PET_PHOTOS) {
+        return res.status(400).json({ error: `At least ${MIN_PET_PHOTOS} pet photos are required.` });
     }
 
     const shelter = await getShelterByUserId(req.userId);
@@ -84,17 +131,15 @@ router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo
         status: status
     });
 
-    let photoUrl = null;
+    let photoUrls = [];
     try {
-        if (req.file) {
-            photoUrl = await uploadPetPhoto({
+        photoUrls = await Promise.all(photoFiles.map(function (file) {
+            return uploadPetPhoto({
                 petId: created.id,
                 shelterId: shelter.id,
-                file: req.file
+                file: file
             });
-        } else {
-            photoUrl = getDefaultPetPhotoStorageUrl(species);
-        }
+        }));
     } catch (err) {
         console.error('Pet photo upload failed for pet %s', created.id, err);
         try {
@@ -105,9 +150,11 @@ router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo
         return res.status(503).json({ error: 'Pet photo upload failed. Please try again later.' });
     }
 
-    if (photoUrl) {
+    for (const photoUrl of photoUrls) {
         await addPetPhoto(created.id, photoUrl);
     }
+
+    const primaryPhotoUrl = photoUrls[photoUrls.length - 1] || null;
 
     try {
         await createFeedEvent('new_pet', {
@@ -116,7 +163,7 @@ router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo
             payload: {
                 title: `New pet: ${name}`,
                 body: description || `${name} is now available at ${shelter.name}.`,
-                primaryPhotoUrl: photoUrl ? getBaseUrl(req) + '/pets/' + created.id + '/primary-photo' : null,
+                primaryPhotoUrl: primaryPhotoUrl ? getBaseUrl(req) + '/pets/' + created.id + '/primary-photo' : null,
             },
         });
     } catch (e) {
@@ -125,7 +172,7 @@ router.post('/', requireAuth, requireRole('shelter_admin'), upload.single('photo
 
     res.status(201).json(withProxyPhotoUrls(req, {
         ...created,
-        primary_photo_url: photoUrl
+        primary_photo_url: primaryPhotoUrl
     }));
 }));
 

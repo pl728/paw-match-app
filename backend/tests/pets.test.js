@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
 import { registerVerifiedUser } from './helpers/auth.js';
+import { postPetWithPhotos } from './helpers/pet_photos.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -25,10 +26,7 @@ describe('pets endpoints', function () {
     it('creates and retrieves a pet', async function () {
         const { token } = await createShelter();
 
-        const created = await request(app)
-            .post('/pets')
-            .set('Authorization', 'Bearer ' + token)
-            .send({ name: 'Milo', species: 'Dog', age_years: 3 })
+        const created = await postPetWithPhotos(app, token, { name: 'Milo', species: 'Dog', age_years: 3 })
             .expect(201);
 
         const res = await request(app)
@@ -42,10 +40,7 @@ describe('pets endpoints', function () {
     it('lists pets', async function () {
         const { token } = await createShelter();
 
-        await request(app)
-            .post('/pets')
-            .set('Authorization', 'Bearer ' + token)
-            .send({ name: 'Luna', species: 'Cat' })
+        await postPetWithPhotos(app, token, { name: 'Luna', species: 'Cat' })
             .expect(201);
 
         const res = await request(app)
@@ -60,10 +55,7 @@ describe('pets endpoints', function () {
     it('updates a pet', async function () {
         const { token } = await createShelter();
 
-        const created = await request(app)
-            .post('/pets')
-            .set('Authorization', 'Bearer ' + token)
-            .send({ name: 'Otis', species: 'Dog' })
+        const created = await postPetWithPhotos(app, token, { name: 'Otis', species: 'Dog' })
             .expect(201);
 
         const res = await request(app)
@@ -79,10 +71,7 @@ describe('pets endpoints', function () {
     it('deletes a pet', async function () {
         const { token } = await createShelter();
 
-        const created = await request(app)
-            .post('/pets')
-            .set('Authorization', 'Bearer ' + token)
-            .send({ name: 'Zoe', species: 'Cat' })
+        const created = await postPetWithPhotos(app, token, { name: 'Zoe', species: 'Cat' })
             .expect(201);
 
         await request(app)
@@ -100,6 +89,15 @@ describe('pets endpoints', function () {
             .post('/pets')
             .send({ name: 'Unauthorized Pet', species: 'Dog' })
             .expect(401);
+    });
+
+    it('rejects creating a pet with fewer than three photos', async function () {
+        const { token } = await createShelter();
+
+        const res = await postPetWithPhotos(app, token, { name: 'Sparse Pet', species: 'Dog' }, 2)
+            .expect(400);
+
+        expect(res.body.error).toContain('At least 3 pet photos');
     });
 
     it('rejects creating a pet with adopter role', async function () {

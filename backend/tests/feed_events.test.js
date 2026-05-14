@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
 import { registerVerifiedUser } from './helpers/auth.js';
+import { postPetWithPhotos } from './helpers/pet_photos.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -35,10 +36,7 @@ describe('feed_events endpoints', function () {
   it('creating a pet emits a new_pet feed event', async function () {
     const { shelterId, token } = await createShelter();
 
-    const pet = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + token)
-      .send({ name: 'Biscuit', species: 'Dog' })
+    const pet = await postPetWithPhotos(app, token, { name: 'Biscuit', species: 'Dog' })
       .expect(201);
 
     const feed = await request(app).get('/feed_events?limit=100').expect(200);
@@ -53,10 +51,7 @@ describe('feed_events endpoints', function () {
   it('updating a pet status to adopted emits an adoption_event', async function () {
     const { shelterId, token } = await createShelter();
 
-    const pet = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + token)
-      .send({ name: 'Noodle', species: 'Cat' })
+    const pet = await postPetWithPhotos(app, token, { name: 'Noodle', species: 'Cat' })
       .expect(201);
 
     await request(app)
@@ -77,10 +72,7 @@ describe('feed_events endpoints', function () {
   it('updating a pet status to available emits a status_change event', async function () {
     const { shelterId, token } = await createShelter();
 
-    const pet = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + token)
-      .send({ name: 'Pickles', species: 'Dog', status: 'pending' })
+    const pet = await postPetWithPhotos(app, token, { name: 'Pickles', species: 'Dog', status: 'pending' })
       .expect(201);
 
     await request(app)

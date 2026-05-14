@@ -19,6 +19,9 @@ export async function runTests() {
 
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
     process.env.EMAIL_DELIVERY_DISABLED = 'true';
+    process.env.GOOGLE_MAPS_API_KEY = '';
+    process.env.GOOGLE_GEOCODING_API_KEY = '';
+    process.env.GCS_BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'test-pet-photos';
 
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     await resetDatabase(process.env.TEST_DATABASE_URL, 'TEST_DATABASE_URL');

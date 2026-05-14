@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Flex, Heading, Text, TextField, Select, Button } from "@radix-ui/themes";
+import { Card, Flex, Heading, Text, TextField, Select, Button, Box } from "@radix-ui/themes";
 import { createPet } from "../services/pets.js";
 import { getMyProfile } from "../services/users.js";
 
@@ -24,6 +24,15 @@ const PET_NAMES = [
 const SPECIES_OPTIONS = ["Dog", "Cat", "Bird", "Rabbit", "Guinea Pig", "Hamster", "Other"];
 const SEX_OPTIONS = ["Male", "Female", "Unknown"];
 const SIZE_OPTIONS = ["small", "medium", "large"];
+const MIN_PHOTOS = 3;
+const MAX_PHOTOS = 6;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ACCEPTED_PHOTO_EXTENSIONS = ".jpg,.jpeg,.png,.webp";
+
+function emptyPhotoSlots() {
+  return Array.from({ length: MAX_PHOTOS }, () => null);
+}
 
 function randomFrom(items) {
   return items[Math.floor(Math.random() * items.length)];
@@ -60,7 +69,25 @@ function CreatePet() {
 
   const [breedSearch, setBreedSearch] = useState("");
   const [checkingShelter, setCheckingShelter] = useState(true);
-  const [photoFile, setPhotoFile] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [photoFiles, setPhotoFiles] = useState(emptyPhotoSlots);
+  const [detailsError, setDetailsError] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const photoPreviews = useMemo(
+    () => photoFiles.map((file) => (file ? URL.createObjectURL(file) : null)),
+    [photoFiles]
+  );
+  const photoCount = photoFiles.filter(Boolean).length;
+
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [photoPreviews]);
 
   useEffect(() => {
     async function checkShelter() {
@@ -81,31 +108,102 @@ function CreatePet() {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setDetailsError("");
   }
 
   function handleFillRandom() {
     setFormData(buildRandomPetForm());
     setBreedSearch("");
-    setPhotoFile(null);
+    setPhotoFiles(emptyPhotoSlots());
+    setCurrentStep(1);
+    setDetailsError("");
+    setPhotoError("");
   }
 
   const filteredBreeds = BREEDS.filter(b =>
     b.toLowerCase().includes(breedSearch.toLowerCase())
   );
 
+  function handleDetailsSubmit(e) {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      setDetailsError("Pet name is required.");
+      return;
+    }
+
+    setDetailsError("");
+    setCurrentStep(2);
+  }
+
+  function handlePhotoSelect(index, e) {
+    const file = e.target.files?.[0] || null;
+    e.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) {
+      setPhotoError("Only JPG, PNG, and WEBP images are supported.");
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError("Each image must be 5 MB or smaller.");
+      return;
+    }
+
+    setPhotoFiles((currentFiles) =>
+      currentFiles.map((currentFile, currentIndex) =>
+        currentIndex === index ? file : currentFile
+      )
+    );
+    setPhotoError("");
+  }
+
+  function handleRemovePhoto(index) {
+    setPhotoFiles((currentFiles) =>
+      currentFiles.map((currentFile, currentIndex) =>
+        currentIndex === index ? null : currentFile
+      )
+    );
+    setPhotoError("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!formData.name.trim()) {
+      setCurrentStep(1);
+      setDetailsError("Pet name is required.");
+      return;
+    }
+
+    if (photoCount < MIN_PHOTOS) {
+      setCurrentStep(2);
+      setPhotoError(`Add at least ${MIN_PHOTOS} photos before creating this pet.`);
+      return;
+    }
+
+    setSubmitting(true);
+
     try {
       const payload = new FormData();
-      Object.entries(formData).forEach(([k, v]) => payload.append(k, v));
+      Object.entries(formData).forEach(([k, v]) => {
+        payload.append(k, k === "name" ? v.trim() : v);
+      });
 
-      if (photoFile) payload.append("photo", photoFile);
+      photoFiles.filter(Boolean).forEach((file) => {
+        payload.append("photos", file);
+      });
 
       await createPet(payload);
       navigate('/profile');
     } catch (err) {
       alert(`Error creating pet: ${err.message}`);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -126,90 +224,185 @@ function CreatePet() {
             Please submit details about this pet to add to the shelter database.
           </Text>
 
-          <form onSubmit={handleSubmit}>
-            <Flex direction="column" gap="3">
+          <div className="pet-create-stepper" aria-label="Create pet steps">
+            <span className={currentStep === 1 ? "active" : ""}>1. Details</span>
+            <span className={currentStep === 2 ? "active" : ""}>2. Photos</span>
+          </div>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Pet Name</Text>
-                <TextField.Root name="name" value={formData.name} onChange={handleChange} required />
-              </label>
+          <form onSubmit={currentStep === 1 ? handleDetailsSubmit : handleSubmit}>
+            {currentStep === 1 && (
+              <Flex direction="column" gap="3">
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Pet Name</Text>
+                  <TextField.Root name="name" value={formData.name} onChange={handleChange} required />
+                </label>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Species</Text>
-                <Select.Root value={formData.species} onValueChange={(v) => setFormData({...formData, species: v})}>
-                  <Select.Trigger className="full-width" />
-                  <Select.Content>
-                    {SPECIES_OPTIONS.map(s => (
-                      <Select.Item key={s} value={s}>{s}</Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Species</Text>
+                  <Select.Root
+                    value={formData.species}
+                    onValueChange={(v) => {
+                      setFormData({ ...formData, species: v });
+                      setDetailsError("");
+                    }}
+                  >
+                    <Select.Trigger className="full-width" />
+                    <Select.Content>
+                      {SPECIES_OPTIONS.map(s => (
+                        <Select.Item key={s} value={s}>{s}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </label>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Breed</Text>
-                <Select.Root value={formData.breed} onValueChange={(v) => setFormData({...formData, breed: v})}>
-                  <Select.Trigger className="full-width" />
-                  <Select.Content>
-                    <TextField.Root
-                      value={breedSearch}
-                      onChange={(e) => setBreedSearch(e.target.value)}
-                      className="select-search"
-                    />
-                    <Select.Separator />
-                    {filteredBreeds.map(b => (
-                      <Select.Item key={b} value={b}>{b}</Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Breed</Text>
+                  <Select.Root
+                    value={formData.breed}
+                    onValueChange={(v) => {
+                      setFormData({ ...formData, breed: v });
+                      setDetailsError("");
+                    }}
+                  >
+                    <Select.Trigger className="full-width" />
+                    <Select.Content>
+                      <TextField.Root
+                        value={breedSearch}
+                        onChange={(e) => setBreedSearch(e.target.value)}
+                        className="select-search"
+                      />
+                      <Select.Separator />
+                      {filteredBreeds.map(b => (
+                        <Select.Item key={b} value={b}>{b}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </label>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Age</Text>
-                <TextField.Root name="age_years" type="number" value={formData.age_years} onChange={handleChange} />
-              </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Age</Text>
+                  <TextField.Root name="age_years" type="number" value={formData.age_years} onChange={handleChange} />
+                </label>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Sex</Text>
-                <Select.Root value={formData.sex} onValueChange={(v) => setFormData({...formData, sex: v})}>
-                  <Select.Trigger className="full-width" />
-                  <Select.Content>
-                    {SEX_OPTIONS.map(s => (
-                      <Select.Item key={s} value={s}>{s}</Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Sex</Text>
+                  <Select.Root
+                    value={formData.sex}
+                    onValueChange={(v) => {
+                      setFormData({ ...formData, sex: v });
+                      setDetailsError("");
+                    }}
+                  >
+                    <Select.Trigger className="full-width" />
+                    <Select.Content>
+                      {SEX_OPTIONS.map(s => (
+                        <Select.Item key={s} value={s}>{s}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </label>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Size</Text>
-                <Select.Root value={formData.size} onValueChange={(v) => setFormData({...formData, size: v})}>
-                  <Select.Trigger className="full-width" />
-                  <Select.Content>
-                    {SIZE_OPTIONS.map(s => (
-                      <Select.Item key={s} value={s}>{s}</Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Size</Text>
+                  <Select.Root
+                    value={formData.size}
+                    onValueChange={(v) => {
+                      setFormData({ ...formData, size: v });
+                      setDetailsError("");
+                    }}
+                  >
+                    <Select.Trigger className="full-width" />
+                    <Select.Content>
+                      {SIZE_OPTIONS.map(s => (
+                        <Select.Item key={s} value={s}>{s}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </label>
 
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">Description</Text>
-                <TextField.Root name="description" value={formData.description} onChange={handleChange} />
-              </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="bold">Description</Text>
+                  <TextField.Root name="description" value={formData.description} onChange={handleChange} />
+                </label>
 
-              <input type="file" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
+                {detailsError && <Text size="2" color="red">{detailsError}</Text>}
 
-              <Flex gap="3" mt="3">
-                <Button type="button" variant="soft" onClick={handleFillRandom}>
-                  Fill random
-                </Button>
-                <Button type="submit" className="flex-grow">
-                  Create Pet
-                </Button>
+                <Flex gap="3" mt="3">
+                  <Button type="button" variant="soft" onClick={handleFillRandom}>
+                    Fill random
+                  </Button>
+                  <Button type="submit" className="flex-grow">
+                    Continue
+                  </Button>
+                </Flex>
               </Flex>
+            )}
 
-            </Flex>
+            {currentStep === 2 && (
+              <Flex direction="column" gap="3">
+                <Flex justify="between" align="center" gap="3" wrap="wrap">
+                  <Box>
+                    <Text as="div" size="2" weight="bold">Pet Photos</Text>
+                    <Text size="2" color={photoCount >= MIN_PHOTOS ? "green" : "gray"}>
+                      {photoCount} of {MAX_PHOTOS} selected
+                    </Text>
+                  </Box>
+                  <Text size="2" color="gray">
+                    Minimum {MIN_PHOTOS}
+                  </Text>
+                </Flex>
+
+                <div className="pet-photo-upload-grid">
+                  {photoFiles.map((file, index) => {
+                    const inputId = `pet-photo-${index}`;
+                    const previewUrl = photoPreviews[index];
+
+                    return (
+                      <div
+                        key={inputId}
+                        className={`pet-photo-upload-slot ${file ? "has-photo" : ""}`}
+                      >
+                        <input
+                          id={inputId}
+                          className="pet-photo-file-input"
+                          type="file"
+                          accept={ACCEPTED_PHOTO_EXTENSIONS}
+                          onChange={(e) => handlePhotoSelect(index, e)}
+                        />
+
+                        {previewUrl ? (
+                          <>
+                            <img src={previewUrl} alt={`Pet preview ${index + 1}`} />
+                            <div className="pet-photo-slot-actions">
+                              <label htmlFor={inputId}>Replace</label>
+                              <button type="button" onClick={() => handleRemovePhoto(index)}>
+                                Remove
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <label htmlFor={inputId} className="pet-photo-empty-slot">
+                            <span>Photo {index + 1}</span>
+                            <strong>Add image</strong>
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {photoError && <Text size="2" color="red">{photoError}</Text>}
+
+                <Flex gap="3" mt="3">
+                  <Button type="button" variant="soft" onClick={() => setCurrentStep(1)} disabled={submitting}>
+                    Back
+                  </Button>
+                  <Button type="submit" className="flex-grow" disabled={photoCount < MIN_PHOTOS || submitting}>
+                    {submitting ? "Creating..." : "Create Pet"}
+                  </Button>
+                </Flex>
+              </Flex>
+            )}
           </form>
         </Flex>
       </Card>

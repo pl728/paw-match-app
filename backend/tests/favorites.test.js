@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
 import { registerVerifiedUser } from './helpers/auth.js';
+import { postPetWithPhotos } from './helpers/pet_photos.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -25,10 +26,11 @@ describe('favorites engagement', function () {
       .send({ name: 'Engagement Shelter' })
       .expect(201);
 
-    const petRes = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + adminToken)
-      .send({ name: 'Engagement Pet', species: 'Dog', shelterId: shelterRes.body.id })
+    const petRes = await postPetWithPhotos(app, adminToken, {
+      name: 'Engagement Pet',
+      species: 'Dog',
+      shelterId: shelterRes.body.id,
+    })
       .expect(201);
 
     // adopter favorites pet

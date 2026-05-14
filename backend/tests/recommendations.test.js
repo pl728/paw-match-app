@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
 import { registerVerifiedUser } from './helpers/auth.js';
+import { postPetWithPhotos } from './helpers/pet_photos.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -31,10 +32,7 @@ async function createShelterWithPet({
         .send({ name: shelterName, city, state, postal_code: postalCode, latitude, longitude })
         .expect(201);
 
-    const petRes = await request(app)
-        .post('/pets')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .send(pet)
+    const petRes = await postPetWithPhotos(app, adminToken, pet)
         .expect(201);
 
     return { shelter: shelterRes.body, pet: petRes.body };
