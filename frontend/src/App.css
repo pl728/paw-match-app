@@ -309,6 +309,7 @@
 
 .flex-grow {
   flex: 1;
+  min-width: 0;
 }
 
 .faq-button {
@@ -779,6 +780,28 @@
   border: 1px solid rgba(47,143,168,0.2);
   background: white;
   color: #285f70;
+}
+
+.location-map-picker,
+.location-map-missing-key {
+  width: 100%;
+  min-height: 240px;
+  border-radius: 14px;
+  border: 1px solid rgba(47,143,168,0.2);
+  overflow: hidden;
+  background: rgba(255,255,255,0.85);
+}
+
+.location-map-missing-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+}
+
+.state-filter-field {
+  width: 92px;
 }
 
 .photo-frame {

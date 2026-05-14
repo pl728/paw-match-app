@@ -44,7 +44,7 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+button:not(.rt-reset) {
   border-radius: 12px;
   border: none;
   padding: 0.6em 1.2em;
@@ -57,12 +57,12 @@ button {
   transition: 0.2s;
 }
 
-button:hover {
+button:not(.rt-reset):hover {
   background-color: #93cf72;
 }
 
-button:focus,
-button:focus-visible {
+button:not(.rt-reset):focus,
+button:not(.rt-reset):focus-visible {
   outline: 3px solid rgba(47, 143, 168, 0.3);
 }
 

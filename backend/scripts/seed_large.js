@@ -19,13 +19,26 @@ const SHELTER_TYPES = [
 ];
 
 const CITIES = [
-  ['Portland', 'OR', '97201'], ['Seattle', 'WA', '98101'], ['Denver', 'CO', '80201'],
-  ['Austin', 'TX', '78701'], ['Chicago', 'IL', '60601'], ['Phoenix', 'AZ', '85001'],
-  ['Atlanta', 'GA', '30301'], ['Boston', 'MA', '02101'], ['Nashville', 'TN', '37201'],
-  ['Minneapolis', 'MN', '55401'], ['Corvallis', 'OR', '97330'], ['Eugene', 'OR', '97401'],
-  ['Bend', 'OR', '97701'], ['Boise', 'ID', '83701'], ['Salt Lake City', 'UT', '84101'],
-  ['Albuquerque', 'NM', '87101'], ['Tucson', 'AZ', '85701'], ['Reno', 'NV', '89501'],
-  ['Sacramento', 'CA', '95814'], ['San Diego', 'CA', '92101'],
+  ['Portland', 'OR', '97201', 45.5152, -122.6784],
+  ['Seattle', 'WA', '98101', 47.6062, -122.3321],
+  ['Denver', 'CO', '80201', 39.7392, -104.9903],
+  ['Austin', 'TX', '78701', 30.2672, -97.7431],
+  ['Chicago', 'IL', '60601', 41.8857, -87.6225],
+  ['Phoenix', 'AZ', '85001', 33.4484, -112.0740],
+  ['Atlanta', 'GA', '30301', 33.7490, -84.3880],
+  ['Boston', 'MA', '02101', 42.3601, -71.0589],
+  ['Nashville', 'TN', '37201', 36.1627, -86.7816],
+  ['Minneapolis', 'MN', '55401', 44.9778, -93.2650],
+  ['Corvallis', 'OR', '97330', 44.5646, -123.2620],
+  ['Eugene', 'OR', '97401', 44.0521, -123.0868],
+  ['Bend', 'OR', '97701', 44.0582, -121.3153],
+  ['Boise', 'ID', '83701', 43.6150, -116.2023],
+  ['Salt Lake City', 'UT', '84101', 40.7608, -111.8910],
+  ['Albuquerque', 'NM', '87101', 35.0844, -106.6504],
+  ['Tucson', 'AZ', '85701', 32.2226, -110.9747],
+  ['Reno', 'NV', '89501', 39.5296, -119.8138],
+  ['Sacramento', 'CA', '95814', 38.5816, -121.4944],
+  ['San Diego', 'CA', '92101', 32.7157, -117.1611],
 ];
 
 const DOG_BREEDS = [
@@ -107,9 +120,11 @@ const GENERIC_DESCRIPTIONS = [
 ];
 
 const PHOTO_BASE_URLS = {
-  Dog: (i) => `https://placedog.net/500/400?id=${i}`,
-  Cat: (i) => `https://placekitten.com/500/400?image=${(i % 16) + 1}`,
-  default: () => `https://placehold.co/500x400/e0e0e0/555?text=Pet+Photo`,
+  Dog: (i) => `https://loremflickr.com/500/400/dog?lock=${i}`,
+  Cat: (i) => `https://loremflickr.com/500/400/cat?lock=${i}`,
+  Rabbit: (i) => `https://loremflickr.com/500/400/rabbit?lock=${i}`,
+  Bird: (i) => `https://loremflickr.com/500/400/bird?lock=${i}`,
+  default: (i, species) => `https://loremflickr.com/500/400/${encodeURIComponent((species || 'pet').toLowerCase())}?lock=${i}`,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -154,7 +169,7 @@ function randomPet(shelterId, index) {
 
   const statusRoll = Math.random();
   const status = statusRoll < 0.75 ? 'available' : statusRoll < 0.90 ? 'pending' : 'adopted';
-  const photoUrl = (PHOTO_BASE_URLS[species] || PHOTO_BASE_URLS.default)(index);
+  const photoUrl = (PHOTO_BASE_URLS[species] || PHOTO_BASE_URLS.default)(index, species);
 
   return {
     id: uuid(),
@@ -183,23 +198,27 @@ async function main() {
     const userId = uuid();
     const shelterId = uuid();
     const username = `shelter_admin_${i + 1}`;
-    const [city, state, postal] = pick(CITIES);
+    const [city, state, postal, baseLat, baseLng] = pick(CITIES);
+    const latitude = baseLat + (Math.random() - 0.5) * 0.2;
+    const longitude = baseLng + (Math.random() - 0.5) * 0.2;
     const name = shelterName();
 
     await db.query(
-      `INSERT IGNORE INTO users (id, username, password_hash, role) VALUES (?, ?, ?, 'shelter_admin')`,
-      [userId, username, 'dev_hash']
+      `INSERT IGNORE INTO users (id, username, password_hash, role, email)
+       VALUES (?, ?, ?, 'shelter_admin', ?)`,
+      [userId, username, 'dev_hash', `${username}@example.test`]
     );
 
     await db.query(
-      `INSERT IGNORE INTO shelters (id, user_id, name, description, phone, email, city, state, postal_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT IGNORE INTO shelters (id, user_id, name, description, phone, email, city, state, postal_code, latitude, longitude, geocoded_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         shelterId, userId, name,
         `A welcoming shelter dedicated to finding loving homes for animals in the ${city} area.`,
         `555-${String(rand(1000, 9999))}`,
         `contact@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.test`,
         city, state, postal,
+        latitude, longitude,
       ]
     );
 
