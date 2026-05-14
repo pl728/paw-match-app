@@ -54,6 +54,7 @@ app.use('/auth', authRoutes);
 
 // Engagement & activity
 app.use('/favorites', favoritesRoutes);
+app.use('/api/favorites', favoritesRoutes);
 app.use('/shelter-follows', shelterFollowsRoutes);
 app.use('/shelter-posts', shelterPostsRoutes);
 app.use('/feed_events', feedEventsRoutes);
