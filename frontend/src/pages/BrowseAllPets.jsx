@@ -6,6 +6,7 @@ import { getPets } from "../services/pets.js";
 import { getFavorites, addFavorite, removeFavorite } from "../services/favorites.js";
 
 const PAGE_SIZE = 60;
+const FETCH_PAGE_SIZE = 100;
 
 export default function BrowseAllPets() {
   const navigate = useNavigate();
@@ -33,8 +34,22 @@ export default function BrowseAllPets() {
     async function fetchPets() {
       try {
         setLoading(true);
-        const result = await getPets();
-        const petData = Array.isArray(result?.data) ? result.data : [];
+        const firstPage = await getPets({ page: 1, limit: FETCH_PAGE_SIZE });
+        const firstPagePets = Array.isArray(firstPage?.data) ? firstPage.data : [];
+        const totalPets = Number(firstPage?.total) || firstPagePets.length;
+        const totalFetchPages = Math.max(1, Math.ceil(totalPets / FETCH_PAGE_SIZE));
+        const remainingPages = [];
+
+        for (let nextPage = 2; nextPage <= totalFetchPages; nextPage += 1) {
+          remainingPages.push(getPets({ page: nextPage, limit: FETCH_PAGE_SIZE }));
+        }
+
+        const remainingResults = await Promise.all(remainingPages);
+        const petData = remainingResults.reduce(
+          (items, result) => items.concat(Array.isArray(result?.data) ? result.data : []),
+          firstPagePets
+        );
+
         setAllPets(petData);
         setPets(petData);
       } catch (err) {
