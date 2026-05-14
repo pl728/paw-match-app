@@ -8,6 +8,19 @@ export function loginUser({ username, password }) {
   });
 }
 
+export function resendVerificationEmail({ username, email }) {
+  return apiFetch("/auth/send-verification-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, email }),
+  });
+}
+
+export function verifyEmailToken(token) {
+  const params = new URLSearchParams({ token });
+  return apiFetch(`/auth/verify-email?${params.toString()}`);
+}
+
 export function registerUser({
   username,
   email,

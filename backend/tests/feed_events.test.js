@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { registerVerifiedUser } from './helpers/auth.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -12,18 +13,15 @@ describe('feed_events endpoints', function () {
   async function createShelter() {
     const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-    const register = await request(app)
-      .post('/auth/register')
-      .send({ username: 'feedadmin_' + unique, email: 'feedadmin_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
-      .expect(201);
+    const register = await registerVerifiedUser(app, 'shelter_admin', 'feedadmin_' + unique);
 
     const shelter = await request(app)
       .post('/shelters')
-      .set('Authorization', 'Bearer ' + register.body.token)
+      .set('Authorization', 'Bearer ' + register.token)
       .send({ name: 'Feed Shelter' })
       .expect(201);
 
-    return { shelterId: shelter.body.id, token: register.body.token };
+    return { shelterId: shelter.body.id, token: register.token };
   }
 
   it('lists feed events (200) and returns an array', async function () {

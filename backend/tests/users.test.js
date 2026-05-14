@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { registerVerifiedUser } from './helpers/auth.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -10,13 +11,8 @@ afterAll(async function () {
 
 describe('users endpoints', function () {
     async function createAdminToken() {
-        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const res = await request(app)
-            .post('/auth/register')
-            .send({ username: 'admin_' + unique, email: 'admin_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
-            .expect(201);
-
-        return res.body.token;
+        const registered = await registerVerifiedUser(app, 'shelter_admin', 'admin');
+        return registered.token;
     }
 
     it('creates a user', async function () {

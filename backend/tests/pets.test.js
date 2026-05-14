@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { registerVerifiedUser } from './helpers/auth.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -10,19 +11,15 @@ afterAll(async function () {
 
 describe('pets endpoints', function () {
     async function createShelter() {
-        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        const register = await request(app)
-            .post('/auth/register')
-            .send({ username: 'petadmin_' + unique, email: 'petadmin_' + unique + '@example.test', password: 'password123', role: 'shelter_admin' })
-            .expect(201);
+        const register = await registerVerifiedUser(app, 'shelter_admin', 'petadmin');
 
         const shelter = await request(app)
             .post('/shelters')
-            .set('Authorization', 'Bearer ' + register.body.token)
+            .set('Authorization', 'Bearer ' + register.token)
             .send({ name: 'Pet Shelter' })
             .expect(201);
 
-        return { shelterId: shelter.body.id, token: register.body.token };
+        return { shelterId: shelter.body.id, token: register.token };
     }
 
     it('creates and retrieves a pet', async function () {
@@ -108,19 +105,11 @@ describe('pets endpoints', function () {
     it('rejects creating a pet with adopter role', async function () {
         const unique = Date.now().toString(36);
 
-        const user = await request(app)
-            .post('/auth/register')
-            .send({
-                username: 'adopterpet_' + unique,
-                email: 'adopterpet_' + unique + '@example.test',
-                password: 'password123',
-                role: 'adopter'
-            })
-            .expect(201);
+        const user = await registerVerifiedUser(app, 'adopter', 'adopterpet_' + unique);
 
         await request(app)
             .post('/pets')
-            .set('Authorization', 'Bearer ' + user.body.token)
+            .set('Authorization', 'Bearer ' + user.token)
             .send({ name: 'Adopter Pet', species: 'Dog' })
             .expect(403);
     });

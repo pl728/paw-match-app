@@ -6,8 +6,23 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('adopter', 'shelter_admin') NOT NULL DEFAULT 'adopter',
     email VARCHAR(255) NOT NULL UNIQUE,
+    email_verified_at DATETIME DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    token_hash CHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT email_verification_tokens_user_fk FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+    INDEX email_verification_tokens_user_idx (user_id),
+    INDEX email_verification_tokens_expires_idx (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS shelters (

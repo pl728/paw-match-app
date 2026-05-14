@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { registerVerifiedUser } from './helpers/auth.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -10,13 +11,8 @@ afterAll(async function () {
 
 describe('favorites engagement', function () {
   async function registerUser(role) {
-    const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    const username = `${role}_${unique}`;
-    const res = await request(app)
-      .post('/auth/register')
-      .send({ username, email: username + '@example.test', password: 'password123', role })
-      .expect(201);
-    return res.body.token;
+    const registered = await registerVerifiedUser(app, role);
+    return registered.token;
   }
 
   it('adopter can favorite a pet and retrieve favorites', async function () {

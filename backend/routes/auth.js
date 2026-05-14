@@ -2,9 +2,11 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/async-handler.js';
-import { createUser, getUserAuthByUsername } from '../dao/users.js';
+import { createUser, getUserAuthByUsername, getUserByUsernameOrEmail, markUserEmailVerified } from '../dao/users.js';
+import { getActiveEmailVerificationToken, markEmailVerificationTokenUsed } from '../dao/email_verification_tokens.js';
 import { updateRecommendationPreferences } from '../services/recommendations.js';
 import { reverseGeocodeLocation } from '../services/geocoding.js';
+import { sendVerificationEmail } from '../services/email_verification.js';
 
 const router = express.Router();
 
@@ -22,7 +24,8 @@ function buildUserResponse(user) {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        email_verified: Boolean(user.email_verified_at)
     };
 }
 
@@ -38,11 +41,6 @@ router.post('/register', asyncHandler(async function (req, res) {
 
     if (role !== 'adopter' && role !== 'shelter_admin') {
         return res.status(400).json({ error: 'role must be adopter or shelter_admin' });
-    }
-
-    const jwtSecret = requireJwtSecret(res);
-    if (!jwtSecret) {
-        return;
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -66,6 +64,7 @@ router.post('/register', asyncHandler(async function (req, res) {
                 await updateRecommendationPreferences(created.id, preferenceFields);
             }
         }
+        await sendVerificationEmail(created);
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'username or email already exists' });
@@ -76,13 +75,51 @@ router.post('/register', asyncHandler(async function (req, res) {
         throw err;
     }
 
-    const token = jwt.sign(
-        { sub: created.id, role: created.role },
-        jwtSecret,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    res.status(201).json({
+        message: 'Account created. Check your email to verify your account before logging in.',
+        user: buildUserResponse(created)
+    });
+}));
 
-    res.status(201).json({ user: buildUserResponse(created), token: token });
+router.post('/send-verification-email', asyncHandler(async function (req, res) {
+    const identifier = req.body.username || req.body.email;
+    const neutralMessage = 'If an unverified account exists for that username or email, a verification email has been sent.';
+
+    if (!identifier) {
+        return res.status(400).json({ error: 'username or email is required' });
+    }
+
+    const user = await getUserByUsernameOrEmail(identifier);
+    if (user && !user.email_verified_at) {
+        try {
+            await sendVerificationEmail(user);
+        } catch (err) {
+            console.error('Failed to resend verification email:', err);
+        }
+    }
+
+    res.json({ message: neutralMessage });
+}));
+
+router.get('/verify-email', asyncHandler(async function (req, res) {
+    const token = req.query.token;
+
+    if (!token) {
+        return res.status(400).json({ error: 'Verification token is required' });
+    }
+
+    const verificationToken = await getActiveEmailVerificationToken(token);
+    if (!verificationToken) {
+        return res.status(400).json({ error: 'Verification link is invalid or expired' });
+    }
+
+    const user = await markUserEmailVerified(verificationToken.user_id);
+    await markEmailVerificationTokenUsed(verificationToken.id);
+
+    res.json({
+        message: 'Email verified. You can now log in.',
+        user: buildUserResponse(user)
+    });
 }));
 
 router.post('/login', asyncHandler(async function (req, res) {
@@ -106,6 +143,13 @@ router.post('/login', asyncHandler(async function (req, res) {
     const matches = await bcrypt.compare(password, user.password_hash);
     if (!matches) {
         return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    if (!user.email_verified_at) {
+        return res.status(403).json({
+            error: 'Email address has not been verified',
+            code: 'EMAIL_NOT_VERIFIED'
+        });
     }
 
     const token = jwt.sign(

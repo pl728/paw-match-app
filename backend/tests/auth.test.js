@@ -1,6 +1,8 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { createEmailVerificationToken } from '../dao/email_verification_tokens.js';
+import { getUserByUsername, markUserEmailVerified } from '../dao/users.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -9,7 +11,7 @@ afterAll(async function () {
 });
 
 describe('auth endpoints', function () {
-    it('registers a user and returns a token', async function () {
+    it('registers a user and sends verification without returning a token', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const username = 'auth1_' + unique;
 
@@ -18,13 +20,14 @@ describe('auth endpoints', function () {
             .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
 
-        expect(res.body).toHaveProperty('token');
+        expect(res.body).not.toHaveProperty('token');
         expect(res.body).toHaveProperty('user');
         expect(res.body.user.username).toBe(username);
         expect(res.body.user.role).toBe('adopter');
+        expect(res.body.user.email_verified).toBe(false);
     });
 
-    it('logs in an existing user and returns a token', async function () {
+    it('rejects login for an unverified user', async function () {
         const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         const username = 'auth2_' + unique;
 
@@ -36,11 +39,73 @@ describe('auth endpoints', function () {
         const res = await request(app)
             .post('/auth/login')
             .send({ username: username, password: 'password123' })
+            .expect(403);
+
+        expect(res.body.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('verifies a user email token', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const username = 'authverify_' + unique;
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
+            .expect(201);
+
+        const user = await getUserByUsername(username);
+        const token = await createEmailVerificationToken(user.id, new Date(Date.now() + 60 * 60 * 1000));
+
+        const res = await request(app)
+            .get('/auth/verify-email')
+            .query({ token: token })
             .expect(200);
 
-        expect(res.body).toHaveProperty('token');
-        expect(res.body).toHaveProperty('user');
-        expect(res.body.user.username).toBe(username);
+        expect(res.body.user.email_verified).toBe(true);
+
+        const login = await request(app)
+            .post('/auth/login')
+            .send({ username: username, password: 'password123' })
+            .expect(200);
+
+        expect(login.body).toHaveProperty('token');
+        expect(login.body).toHaveProperty('user');
+        expect(login.body.user.username).toBe(username);
+    });
+
+    it('rejects expired verification tokens', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const username = 'authexpired_' + unique;
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
+            .expect(201);
+
+        const user = await getUserByUsername(username);
+        const token = await createEmailVerificationToken(user.id, new Date(Date.now() - 60 * 1000));
+
+        await request(app)
+            .get('/auth/verify-email')
+            .query({ token: token })
+            .expect(400);
+    });
+
+    it('resends verification emails with a neutral response', async function () {
+        const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const username = 'authresend_' + unique;
+
+        await request(app)
+            .post('/auth/register')
+            .send({ username: username, email: username + '@example.test', password: 'password123' })
+            .expect(201);
+
+        const res = await request(app)
+            .post('/auth/send-verification-email')
+            .send({ username: username })
+            .expect(200);
+
+        expect(res.body.message).toContain('verification email');
     });
 
     it('rejects duplicate registrations', async function () {
@@ -66,6 +131,9 @@ describe('auth endpoints', function () {
             .post('/auth/register')
             .send({ username: username, email: username + '@example.test', password: 'password123' })
             .expect(201);
+
+        const user = await getUserByUsername(username);
+        await markUserEmailVerified(user.id);
 
         await request(app)
             .post('/auth/login')

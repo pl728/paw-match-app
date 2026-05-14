@@ -41,6 +41,17 @@ export async function applySchema(databaseUrl = process.env.DATABASE_URL) {
 
     try {
         await connection.query(schemaSql);
+        const [columns] = await connection.query(
+            `SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = ?
+               AND TABLE_NAME = 'users'
+               AND COLUMN_NAME = 'email_verified_at'`,
+            [dbName]
+        );
+        if (columns.length === 0) {
+            await connection.query('ALTER TABLE users ADD COLUMN email_verified_at DATETIME DEFAULT NULL AFTER email');
+        }
     } finally {
         await connection.end();
     }

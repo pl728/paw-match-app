@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { Button, Card, Flex, Heading, Link, Select, Text, TextField } from "@radix-ui/themes";
-import { registerUser, reverseGeocodeLocation } from "../services/auth.js";
-import { useAuth } from "../auth/useAuth.js";
+import { registerUser, resendVerificationEmail, reverseGeocodeLocation } from "../services/auth.js";
 
 function Register() {
   const [username, setUsername] = useState("");
@@ -16,9 +15,10 @@ function Register() {
   const [coordinates, setCoordinates] = useState(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [resendMessage, setResendMessage] = useState("");
+  const [resending, setResending] = useState(false);
   const autoLocationAttempted = useRef(false);
-  const navigate = useNavigate();
-  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,7 +27,7 @@ function Register() {
       return;
     }
     try {
-      const data = await registerUser({
+      await registerUser({
         username,
         email,
         password,
@@ -38,10 +38,27 @@ function Register() {
         latitude: role === "adopter" ? coordinates?.latitude : undefined,
         longitude: role === "adopter" ? coordinates?.longitude : undefined,
       });
-      login({ user: data.user, token: data.token });
-      navigate("/home", { replace: true });
+      setPendingEmail(email);
+      setResendMessage("");
     } catch (err) {
       alert(err.message);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!pendingEmail) {
+      return;
+    }
+
+    setResending(true);
+    setResendMessage("");
+    try {
+      const data = await resendVerificationEmail({ email: pendingEmail });
+      setResendMessage(data.message || "Verification email sent.");
+    } catch (err) {
+      setResendMessage(err.message);
+    } finally {
+      setResending(false);
     }
   };
 
@@ -94,6 +111,34 @@ function Register() {
     autoLocationAttempted.current = true;
     handleUseBrowserLocation();
   }, [handleUseBrowserLocation, role]);
+
+  if (pendingEmail) {
+    return (
+      <div className="auth-page">
+        <Card size="3" variant="ghost">
+          <Flex direction="column" gap="4">
+            <Heading size="6">Verify your email</Heading>
+            <Text size="2" color="gray">
+              We sent a verification link to {pendingEmail}. Verify that email address before logging in.
+            </Text>
+            {resendMessage && (
+              <Text size="2" color="gray">
+                {resendMessage}
+              </Text>
+            )}
+            <Flex gap="3" wrap="wrap">
+              <Button type="button" variant="soft" onClick={handleResendVerification} disabled={resending}>
+                {resending ? "Sending..." : "Resend verification email"}
+              </Button>
+              <Button asChild>
+                <RouterLink to="/login">Go to login</RouterLink>
+              </Button>
+            </Flex>
+          </Flex>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page">

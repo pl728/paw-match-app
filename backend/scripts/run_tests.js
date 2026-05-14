@@ -18,6 +18,7 @@ export async function runTests() {
     }
 
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+    process.env.EMAIL_DELIVERY_DISABLED = 'true';
 
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     await resetDatabase(process.env.TEST_DATABASE_URL, 'TEST_DATABASE_URL');
