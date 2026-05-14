@@ -28,6 +28,7 @@ router.post('/register', asyncHandler(async function (req, res) {
     const password = req.body.password;
     const role = req.body.role || 'adopter';
     const shelterName = req.body.shelter_name;
+    const email = req.body.email || null;
 
     if (!username || !password) {
         return res.status(400).json({ error: 'username and password are required' });
@@ -46,7 +47,7 @@ router.post('/register', asyncHandler(async function (req, res) {
 
     let created;
     try {
-        created = await createUser({ username: username, passwordHash: passwordHash, role: role });
+        created = await createUser({ username: username, passwordHash: passwordHash, role: role, email: email });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'username already exists' });

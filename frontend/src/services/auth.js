@@ -8,10 +8,11 @@ export function loginUser({ username, password }) {
   });
 }
 
-export function registerUser({ username, password, role = "adopter" }) {
+export function registerUser({ username, email, password, role = "adopter" }) {
   return apiFetch("/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, role }),
+    body: JSON.stringify({ username, email, password, role }),
   });
 }
+

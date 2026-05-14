@@ -56,6 +56,7 @@ router.get('/me', requireAuth, asyncHandler(async function (req, res) {
     const profile = {
         id: user.id,
         username: user.username,
+        email: user.email || null,
         role: user.role,
         created_at: user.created_at
     };

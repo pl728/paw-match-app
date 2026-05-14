@@ -12,6 +12,7 @@ function Navbar() {
 
   const isShelterAdmin = user?.role === 'shelter_admin';
   const [unreadCount, setUnreadCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthed) return;
@@ -66,8 +67,15 @@ function Navbar() {
           )}
         </Link>
 
+        <button
+          className="burger-btn"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          ☰
+        </button>
+
         {isAuthed && (
-          <NavigationMenu.Root className="nav-menu">
+          <NavigationMenu.Root className={`nav-menu ${menuOpen ? 'open' : ''}`}>
             <NavigationMenu.List className="nav-list">
 
               <NavigationMenu.Item>
