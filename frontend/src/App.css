@@ -508,6 +508,18 @@
   text-decoration: underline;
 }
 
+.pet-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 1rem;
+}
+
+.pet-detail-header h1 {
+  margin: 0;
+}
+
 .pet-photo-frame {
   position: relative;
   width: 250px;

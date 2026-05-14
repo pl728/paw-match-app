@@ -66,17 +66,27 @@ export default function PetDetails() {
 
   return (
     <div className="page">
-      <h1>{pet.name}</h1>
-
-      <p className="muted">
-        {pet.species} • {pet.age_years} years old
+      <p>
+        <Link to="/">← Back to Home</Link>
       </p>
 
-      {pet.description && <p>{pet.description}</p>}
+      <div className="pet-detail-header">
+        <div>
+          <h1>{pet.name}</h1>
+          <p className="muted">
+            {pet.species} • {pet.age_years} years old
+          </p>
+        </div>
+        <StartConvo pet={pet} />
+      </div>
 
-      <StartConvo pet={pet} />
-
-      {!pet.photos?.length && (
+      {pet.photos?.length > 0 ? (
+        <div className="pet-photo-list">
+          {pet.photos.map((photo) => (
+            <PetPhoto key={photo.id} photo={photo} petName={pet.name} />
+          ))}
+        </div>
+      ) : (
         <div className="pet-detail-image-wrap">
           <img
             src={fallbackPhotoUrl}
@@ -85,6 +95,8 @@ export default function PetDetails() {
           />
         </div>
       )}
+
+      {pet.description && <p>{pet.description}</p>}
 
       {pet.shelter && (
         <>
@@ -95,21 +107,6 @@ export default function PetDetails() {
           </p>
         </>
       )}
-
-      {pet.photos?.length > 0 && (
-        <>
-          <h3>Photos</h3>
-          <div className="pet-photo-list">
-            {pet.photos.map((photo) => (
-              <PetPhoto key={photo.id} photo={photo} petName={pet.name} />
-            ))}
-          </div>
-        </>
-      )}
-
-      <p className="mt-32">
-        <Link to="/">← Back to Home</Link>
-      </p>
     </div>
   );
 }
