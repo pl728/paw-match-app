@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS shelter_posts (
 
 CREATE TABLE IF NOT EXISTS email_notifications (
     user_id CHAR(36) PRIMARY KEY,
+    message_notifications BOOLEAN NOT NULL DEFAULT TRUE,
     adoption_updates BOOLEAN NOT NULL DEFAULT TRUE,
     new_match_alerts BOOLEAN NOT NULL DEFAULT TRUE,
     saved_animal_updates BOOLEAN NOT NULL DEFAULT TRUE,
@@ -98,7 +99,7 @@ CREATE TABLE IF NOT EXISTS email_notifications (
     CONSTRAINT email_notifications_user_fk FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE
-)  ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;
+) ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;
 
 CREATE TABLE IF NOT EXISTS feed_events (
 	id CHAR(36) PRIMARY KEY DEFAULT (UUID()),

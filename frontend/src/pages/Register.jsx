@@ -49,7 +49,7 @@ function Register() {
                 <Text size="2" color="gray">Account Type</Text>
                 <Select.Root value={role} onValueChange={setRole}>
                   <Select.Trigger />
-                  <Select.Content>
+                  <Select.Content className="app-dropdown" position="popper" sideOffset={4}>
                     <Select.Item value="adopter">Adopter</Select.Item>
                     <Select.Item value="shelter_admin">Shelter</Select.Item>
                   </Select.Content>

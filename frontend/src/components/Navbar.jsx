@@ -121,12 +121,6 @@ function Navbar() {
 
                   <NavigationMenu.Item>
                     <NavigationMenu.Link asChild>
-                      <Link to="/admin-faq" className={navLinkClass('/admin-faq')}>FAQ</Link>
-                    </NavigationMenu.Link>
-                  </NavigationMenu.Item>
-
-                  <NavigationMenu.Item>
-                    <NavigationMenu.Link asChild>
                       <Link to="/view-admin-pets" className={navLinkClass('/view-admin-pets')}>View Pets</Link>
                     </NavigationMenu.Link>
                   </NavigationMenu.Item>

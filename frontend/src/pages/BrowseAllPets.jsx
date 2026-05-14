@@ -6,6 +6,15 @@ import { getFavorites, addFavorite, removeFavorite } from "../services/favorites
 
 const PAGE_SIZE = 60;
 
+const PET_PLACEHOLDER_BY_SPECIES = {
+  Cat: "/cat.png",
+  Dog: "/dog.png",
+};
+
+function getPetPlaceholderImage(species) {
+  return PET_PLACEHOLDER_BY_SPECIES[species] || "/animal.png";
+}
+
 export default function BrowseAllPets() {
   const [allPets, setAllPets] = useState([]);
   const [pets, setPets] = useState([]);
@@ -298,14 +307,12 @@ export default function BrowseAllPets() {
                 {pagedPets.map((pet) => (
                   <Card key={pet.id} size="2">
                     <Flex direction="column" gap="2">
-                      {pet.primary_photo_url && (
-                        <img
-                          src={pet.primary_photo_url}
-                          alt={pet.name}
-                          className="pet-card-image"
-                          loading="lazy"
-                        />
-                      )}
+                      <img
+                      src={pet.primary_photo_url || getPetPlaceholderImage(pet.species)}
+                      alt={pet.name}
+                      className="pet-card-image"
+                      loading="lazy"
+                    />
 
                       <Heading size="4">{pet.name}</Heading>
 
