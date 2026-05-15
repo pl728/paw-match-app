@@ -5,6 +5,7 @@ import { useAuth } from "../auth/useAuth.js";
 
 function AuthedHome() {
   const { user } = useAuth();
+  const isAdmin = user?.role === "shelter_admin";
 
   return (
     <main className="home-page">
@@ -14,80 +15,132 @@ function AuthedHome() {
             Welcome back, {user?.username || "user"}
           </Text>
 
-          <Heading size="9" className="home-title">
-            Helping pets find loving homes.
-          </Heading>
+          <h1 className="home-title">
+            {isAdmin ? "Manage your shelter listings." : "Helping pets find loving homes."}
+          </h1>
 
-          <Text size="4" className="home-subtitle">
-            Browse adoptable pets, connect with shelters, and keep track of the animals you care about.
-          </Text>
+          <p className="home-subtitle">
+            {isAdmin
+              ? "Add pets, update adoption statuses, manage listings, and connect with adopters."
+              : "Browse adoptable pets, connect with shelters, and keep track of the animals you care about."}
+          </p>
 
-          <Flex gap="3" wrap="wrap">
-            <Button asChild size="3">
-              <Link to="/pets">View Available Pets</Link>
-            </Button>
-
-            <Button asChild size="3" variant="soft">
-              <Link to="/favorites">My Favorites</Link>
-            </Button>
-          </Flex>
+          <div className="cta-row">
+            {isAdmin ? (
+              <>
+                <Link to="/view-admin-pets" className="cta">Manage Pets</Link>
+                <Link to="/create-pet" className="cta ghost">Add New Pet</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/browse-pets" className="cta">View Available Pets</Link>
+                <Link to="/favorites" className="cta ghost">My Favorites</Link>
+              </>
+            )}
+          </div>
         </div>
       </section>
 
       <Grid columns={{ initial: "1", sm: "3" }} gap="4" className="home-action-grid">
-        <Card className="home-action-card">
-          <Heading size="5">Adoptions</Heading>
-          <Text color="gray">
-            Search pets by species, breed, age, and size.
-          </Text>
-          <Button asChild variant="soft" mt="3">
-            <Link to="/pets">Browse Pets</Link>
-          </Button>
-        </Card>
+        {isAdmin ? (
+          <>
+            <Card className="home-action-card">
+              <Heading size="5">Manage Pets</Heading>
+              <Text color="gray">View, edit, and update pets listed by your shelter.</Text>
+              <Button asChild variant="soft" mt="3">
+                <Link to="/view-admin-pets">Open Listings</Link>
+              </Button>
+            </Card>
 
-        <Card className="home-action-card">
-          <Heading size="5">Messages</Heading>
-          <Text color="gray">
-            Continue conversations with shelters about pets you are interested in.
-          </Text>
-          <Button asChild variant="soft" mt="3">
-            <Link to="/messages">Open Messages</Link>
-          </Button>
-        </Card>
+            <Card className="home-action-card">
+              <Heading size="5">Add Pet</Heading>
+              <Text color="gray">Create a new pet profile with photos, breed, age, and status.</Text>
+              <Button asChild variant="soft" mt="3">
+                <Link to="/create-pet">Add Pet</Link>
+              </Button>
+            </Card>
 
-        <Card className="home-action-card">
-          <Heading size="5">Profile</Heading>
-          <Text color="gray">
-            Keep your account information and adoption preferences up to date.
-          </Text>
-          <Button asChild variant="soft" mt="3">
-            <Link to="/profile">View Profile</Link>
-          </Button>
-        </Card>
+            <Card className="home-action-card">
+              <Heading size="5">Messages</Heading>
+              <Text color="gray">Respond to adopters interested in your shelter animals.</Text>
+              <Button asChild variant="soft" mt="3">
+                <Link to="/conversations">Open Messages</Link>
+              </Button>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card className="home-action-card">
+              <Heading size="5">Adoptions</Heading>
+              <Text color="gray">Search pets by species, breed, age, and size.</Text>
+              <Button asChild variant="soft" mt="3">
+                <Link to="/browse-pets">Browse Pets</Link>
+              </Button>
+            </Card>
+
+            <Card className="home-action-card">
+              <Heading size="5">Messages</Heading>
+              <Text color="gray">Continue conversations with shelters about pets you are interested in.</Text>
+              <Button asChild variant="soft" mt="3">
+                <Link to="/conversations">Open Messages</Link>
+              </Button>
+            </Card>
+
+            <Card className="home-action-card">
+              <Heading size="5">Activity Feed</Heading>
+              <Text color="gray">See the latest shelter posts, new pets, and adoption updates.</Text>
+              <Button asChild variant="soft" mt="3">
+                <Link to="/feed">View Feed</Link>
+              </Button>
+            </Card>
+          </>
+        )}
       </Grid>
 
       <section className="home-mission">
         <div>
           <Text size="2" weight="bold" className="home-kicker">
-            Our Mission
+            {isAdmin ? "Shelter Dashboard" : "Latest Updates"}
           </Text>
 
           <Heading size="7">
-            Making adoption simple, organized, and accessible.
+            {isAdmin ? "Keep your pet listings updated." : "Stay connected with shelter activity."}
           </Heading>
 
           <Text size="3" color="gray" className="home-mission-text">
-            Pawfect Planner helps adopters and shelters stay connected so pets can move one step closer to a safe and caring home.
+            {isAdmin
+              ? "Make sure pet photos, details, and adoption statuses are current so adopters have accurate information."
+              : "Check the activity feed for new pets, shelter posts, photo updates, and adoption events."}
           </Text>
+
+          <Button asChild mt="4">
+            <Link to={isAdmin ? "/view-admin-pets" : "/feed"}>
+              {isAdmin ? "Manage Shelter Pets" : "Go to Animal Activity Feed"}
+            </Link>
+          </Button>
         </div>
 
         <Card className="home-news-card">
-          <Heading size="5">What you can do today</Heading>
+          <Heading size="5">
+            {isAdmin ? "Admin shortcuts" : "What you can do today"}
+          </Heading>
 
           <Flex direction="column" gap="3" mt="3">
-            <Link to="/pets" className="home-news-link">Find an adoptable pet</Link>
-            <Link to="/favorites" className="home-news-link">Review saved pets</Link>
-            <Link to="/messages" className="home-news-link">Follow up with a shelter</Link>
+            {isAdmin ? (
+              <>
+                <Link to="/create-pet" className="home-news-link">Add a new pet</Link>
+                <Link to="/view-admin-pets" className="home-news-link">Edit pet listings</Link>
+                <Link to="/conversations" className="home-news-link">Reply to adopter messages</Link>
+                <Link to="/setup-shelter" className="home-news-link">Update shelter profile</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/browse-pets" className="home-news-link">Find an adoptable pet</Link>
+                <Link to="/favorites" className="home-news-link">Review saved pets</Link>
+                <Link to="/feed" className="home-news-link">Check shelter updates</Link>
+                <Link to="/conversations" className="home-news-link">Follow up with a shelter</Link>
+              </>
+            )}
           </Flex>
         </Card>
       </section>

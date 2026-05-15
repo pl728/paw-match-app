@@ -30,3 +30,22 @@ export function updatePet(id, updates) {
     body: JSON.stringify(updates),
   });
 }
+
+export function deletePet(id) {
+  return apiFetch(`/pets/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function uploadPetPhotos(id, formData) {
+  return apiFetch(`/pets/${id}/photos`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export function deletePetPhoto(petId, photoId) {
+  return apiFetch(`/pets/${petId}/photos/${photoId}`, {
+    method: "DELETE",
+  });
+}

@@ -158,9 +158,11 @@ function CreatePet() {
         payload.append(key, value);
       });
 
-      photoFiles.forEach((file) => {
+      if (photoFiles.length > 0) {
+        photoFiles.forEach((file) => {
         payload.append("photos", file);
-      });
+});
+      }
 
       await createPet(payload);
       navigate("/profile");

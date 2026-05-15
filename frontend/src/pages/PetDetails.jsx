@@ -14,7 +14,7 @@ function getPetPlaceholderImage(species) {
   return PET_PLACEHOLDER_BY_SPECIES[species] || "/animal.png";
 }
 
-function PetPhoto({ photo, petName }) {
+function PetPhoto({ photoUrl, petName }) {
   const [loading, setLoading] = useState(true);
 
   return (
@@ -26,7 +26,7 @@ function PetPhoto({ photo, petName }) {
       )}
 
       <img
-        src={photo.url}
+        src={photoUrl}
         alt={petName}
         className="pet-detail-photo"
         onLoad={() => setLoading(false)}
@@ -43,6 +43,7 @@ export default function PetDetails() {
   const [shelter, setShelter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   useEffect(() => {
     async function fetchPet() {
@@ -68,8 +69,20 @@ export default function PetDetails() {
   if (error) return <p>{error}</p>;
   if (!pet) return <p>No pet found.</p>;
 
-  const fallbackPhotoUrl =
-    pet.primary_photo_url || getPetPlaceholderImage(pet.species);
+  const photoUrls =
+    pet.photos?.length > 0
+      ? pet.photos.map((photo) => photo.url)
+      : [pet.primary_photo_url || getPetPlaceholderImage(pet.species)];
+
+  const currentPhotoUrl = photoUrls[photoIndex];
+
+  function showPreviousPhoto() {
+    setPhotoIndex((photoIndex - 1 + photoUrls.length) % photoUrls.length);
+  }
+
+  function showNextPhoto() {
+    setPhotoIndex((photoIndex + 1) % photoUrls.length);
+  }
 
   return (
     <div className="page">
@@ -81,17 +94,56 @@ export default function PetDetails() {
           alignItems: "start",
         }}
       >
-        <div>
-          {pet.photos?.length > 0 ? (
-            <PetPhoto photo={pet.photos[0]} petName={pet.name} />
-          ) : (
-            <img
-              src={fallbackPhotoUrl}
-              alt={pet.name}
-              className="pet-detail-main-image"
-            />
-          )}
-        </div>
+        <div className="pet-slideshow">
+  <div className="pet-slideshow-main">
+    {photoUrls.length > 1 && (
+      <button
+        type="button"
+        className="pet-slide-arrow left"
+        onClick={showPreviousPhoto}
+      >
+        ‹
+      </button>
+    )}
+
+    <PetPhoto photoUrl={currentPhotoUrl} petName={pet.name} />
+
+    {photoUrls.length > 1 && (
+      <button
+        type="button"
+        className="pet-slide-arrow right"
+        onClick={showNextPhoto}
+      >
+        ›
+      </button>
+    )}
+  </div>
+
+  {photoUrls.length > 1 && (
+    <>
+      <div className="pet-slide-count">
+        {photoIndex + 1} / {photoUrls.length}
+      </div>
+
+      <div className="pet-slide-thumbnails">
+        {photoUrls.map((url, index) => (
+          <button
+            key={url}
+            type="button"
+            className={
+              index === photoIndex
+                ? "pet-slide-thumb active"
+                : "pet-slide-thumb"
+            }
+            onClick={() => setPhotoIndex(index)}
+          >
+            <img src={url} alt={`${pet.name} ${index + 1}`} />
+          </button>
+        ))}
+      </div>
+    </>
+  )}
+</div>
 
         <div>
           <h1>{pet.name}</h1>
@@ -158,18 +210,6 @@ export default function PetDetails() {
           )}
         </div>
       </div>
-
-      {pet.photos?.length > 1 && (
-        <>
-          <h2 style={{ marginTop: "48px" }}>More Photos</h2>
-
-          <div className="pet-photo-list">
-            {pet.photos.slice(1).map((photo) => (
-              <PetPhoto key={photo.id} photo={photo} petName={pet.name} />
-            ))}
-          </div>
-        </>
-      )}
 
       <p className="mt-32">
         <Link to="/">← Back to Home</Link>

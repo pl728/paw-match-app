@@ -29,6 +29,7 @@ import PetCare from "./pages/Footer/PetCare.jsx";
 import Guidelines from "./pages/Footer/Guidelines.jsx";
 import Shelters from "./pages/Footer/Shelters.jsx";
 import Partner from "./pages/Footer/Partner.jsx";
+import EditPet from "./pages/EditPet.jsx";
 
 import './App.css'
 
@@ -38,49 +39,95 @@ import { useAuth } from "./auth/useAuth.js"
 
 function Home() {
   return (
-    <div className="page">
-      <div className="landing">
-        <header className="top-bar">
-          <Link to="/" className="brand">
-            <span className="brand-name">Paw Match</span>
-          </Link>
-        </header>
+    <main className="home-page">
+      <section className="home-hero">
+        <div className="home-hero-content">
+          <span className="home-kicker">
+            Paw Match
+          </span>
 
-        <main className="hero hero-split">
-          <div>
-            <h1>Find a fur-ever friend</h1>
+          <h1 className="home-title">
+            Helping pets find loving homes.
+          </h1>
+
+          <p className="home-subtitle">
+            Browse adoptable pets, connect with shelters, and make the adoption process easier.
+          </p>
+
+          <div className="cta-row">
+            <Link to="/register" className="cta">
+              Get Started
+            </Link>
+
+            <Link to="/login" className="cta ghost">
+              Log In
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="home-action-grid">
+        <div className="grid3">
+          <div className="home-action-card">
+            <h3>Find Pets</h3>
+
             <p className="muted">
-              Browse adoptable pets from verified shelters. Save favorites and
-              match by lifestyle in minutes.
+              Search pets by breed, species, age, and shelter.
             </p>
-
-            <div className="cta-row">
-              <Link to="/register" className="cta">Get started</Link>
-            </div>
-
-            <div className="stats">
-              <div className="stat"><strong>Verified<br />Shelters</strong></div>
-              <div className="stat"><strong>Keep your<br />Favorites</strong></div>
-              <div className="stat"><strong>Easy<br />Applications</strong></div>
-            </div>
           </div>
 
-          <div className="hero-art" aria-hidden="true">
-            <div className="art-card"></div>
-            <div className="art-card small"></div>
-          </div>
-        </main>
+          <div className="home-action-card">
+            <h3>Connect</h3>
 
-        <section className="section">
-          <h2>How it works</h2>
-          <div className="grid3">
-            <div className="card"><h3>Create a profile</h3><p className="muted">Tell us what you want.</p></div>
-            <div className="card"><h3>Browse & favorite</h3><p className="muted">Save pets you love.</p></div>
-            <div className="card"><h3>Meet & adopt</h3><p className="muted">Contact shelters easily.</p></div>
+            <p className="muted">
+              Reach out to shelters and learn more about pets.
+            </p>
           </div>
-        </section>
+
+          <div className="home-action-card">
+            <h3>Adopt</h3>
+
+            <p className="muted">
+              Take the next step toward giving a pet a loving home.
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <section className="home-mission">
+        <div>
+          <span className="home-kicker">
+            Our Mission
+          </span>
+
+          <h2>
+            Making pet adoption easier for everyone.
+          </h2>
+
+          <p className="home-mission-text">
+            Paw Match helps adopters and shelters stay organized, connected, and focused on finding the right match.
+          </p>
+        </div>
+
+        <div className="home-news-card">
+          <h3>Start here</h3>
+
+          <div className="section">
+            <Link to="/register" className="home-news-link">
+              Create an account
+            </Link>
+
+            <Link to="/login" className="home-news-link">
+              Log in
+            </Link>
+
+            <Link to="/browse-pets" className="home-news-link">
+              Browse available pets
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -160,6 +207,7 @@ function App() {
           <Route path="/user-faq" element={<RequireAuth><UserFAQ /></RequireAuth>} />
           <Route path="/admin-faq" element={<RequireRole role="shelter_admin"><AdminFAQ /></RequireRole>} />
           <Route path="/view-admin-pets" element={<RequireRole role="shelter_admin"><ViewPetsAdmin /></RequireRole>} />
+          <Route path="/edit-pet/:id" element={<RequireRole role="shelter_admin"><EditPet /></RequireRole>}/>
           <Route path="/about" element={<About />} />
           <Route path="/team" element={<Team />} />
           <Route path="/privacy" element={<Privacy />} />

@@ -452,7 +452,7 @@ function Profile() {
               </Flex>
 
               <Flex gap="2" wrap="wrap">
-                <Button onClick={() => openPetEditor(pet)}>
+                <Button onClick={() => navigate(`/edit-pet/${pet.id}`)}>
                   Edit
                 </Button>
                 <Button variant="soft" onClick={() => navigate(`/pets/${pet.id}`)}>

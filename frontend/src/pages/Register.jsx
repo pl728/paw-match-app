@@ -81,7 +81,19 @@ function Register() {
                   Passwords do not match
                 </Text>
               )}
-              <Button type="submit">Create account</Button>
+              <Text size="1" color="gray">
+              By creating an account, you agree to Paw Match&apos;s{" "}
+              <Link asChild>
+                <RouterLink to="/guidelines">Community Guidelines</RouterLink>
+              </Link>{" "}
+              and{" "}
+              <Link asChild>
+                <RouterLink to="/privacy">Privacy Policy</RouterLink>
+              </Link>
+              .
+            </Text>
+
+            <Button type="submit">Create account</Button>
             </Flex>
           </form>
 

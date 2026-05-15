@@ -67,12 +67,15 @@ function Navbar() {
           )}
         </Link>
 
+        {isAuthed && (
         <button
           className="burger-btn"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation menu"
         >
           ☰
         </button>
+      )}
 
         {isAuthed && (
           <NavigationMenu.Root className={`nav-menu ${menuOpen ? 'open' : ''}`}>
