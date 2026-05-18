@@ -186,11 +186,6 @@ function Register() {
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <Flex direction="column" gap="3">
-              {registerError && (
-                <Text size="2" color="red">
-                  {registerError}
-                </Text>
-              )}
               <TextField.Root
                 ref={usernameInputRef}
                 type="text"
@@ -258,16 +253,6 @@ function Register() {
                   Passwords do not match
                 </Text>
               )}
-              <Flex direction="column" gap="2">
-                <Text size="2" color="gray">Account Type</Text>
-                <Select.Root value={role} onValueChange={setRole} size="2">
-                  <Select.Trigger className="full-width" />
-                  <Select.Content position="popper" sideOffset={4} style={{ maxHeight: 200 }}>
-                    <Select.Item value="adopter">Adopter</Select.Item>
-                    <Select.Item value="shelter_admin">Shelter</Select.Item>
-                  </Select.Content>
-                </Select.Root>
-              </Flex>
               {role === "adopter" && (
                 <Flex direction="column" gap="3">
                   <Button type="button" variant="soft" onClick={handleUseBrowserLocation} disabled={detectingLocation}>
@@ -305,7 +290,6 @@ function Register() {
                   </Text>
                 </Flex>
               )}
-              <Button type="submit">Create account</Button>
               <Text size="1" color="gray">
               By creating an account, you agree to Paw Match&apos;s{" "}
               <Link asChild>
