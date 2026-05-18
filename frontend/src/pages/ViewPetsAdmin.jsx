@@ -2,9 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Flex, Heading, Text, Box, Button } from "@radix-ui/themes";
 import { getMyProfile } from "../services/users.js";
-import { updatePet } from "../services/pets.js";
-
-const STATUS_OPTIONS = ["available", "pending", "adopted"];
 
 const PET_PLACEHOLDER_BY_SPECIES = {
   Cat: "/cat.png",
@@ -18,12 +15,6 @@ function getPetPlaceholderImage(species) {
 function prettyStatus(status) {
   if (!status) return "Unknown";
   return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
-function buildPetStatusDrafts(pets) {
-  return Object.fromEntries(
-    (pets || []).map((pet) => [pet.id, pet.status || "available"])
-  );
 }
 
 function renderPetImage(pet) {
@@ -41,11 +32,6 @@ function ViewPetsAdmin() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [petStatusDrafts, setPetStatusDrafts] = useState({});
-  const [savingPetId, setSavingPetId] = useState(null);
-  const [editingPetId, setEditingPetId] = useState(null);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [statusError, setStatusError] = useState("");
 
   useEffect(() => {
     fetchProfileData();
@@ -54,84 +40,14 @@ function ViewPetsAdmin() {
   async function fetchProfileData() {
     setLoading(true);
     setError(null);
+
     try {
       const data = await getMyProfile();
       setProfile(data);
-      setPetStatusDrafts(buildPetStatusDrafts(data?.pets));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  }
-
-  function handlePetStatusChange(petId, nextStatus) {
-    setPetStatusDrafts((currentDrafts) => ({
-      ...currentDrafts,
-      [petId]: nextStatus,
-    }));
-    setStatusMessage("");
-    setStatusError("");
-  }
-
-  function openPetEditor(pet) {
-    setEditingPetId(pet.id);
-    setPetStatusDrafts((currentDrafts) => ({
-      ...currentDrafts,
-      [pet.id]: currentDrafts[pet.id] || pet.status || "available",
-    }));
-    setStatusMessage("");
-    setStatusError("");
-  }
-
-  function closePetEditor() {
-    if (savingPetId) return;
-    setEditingPetId(null);
-  }
-
-  async function handleSavePetStatus(pet) {
-    const nextStatus = petStatusDrafts[pet.id] || pet.status;
-    if (!nextStatus || nextStatus === pet.status) return;
-
-    setSavingPetId(pet.id);
-    setStatusMessage("");
-    setStatusError("");
-
-    try {
-      const updatedPet = await updatePet(pet.id, { status: nextStatus });
-
-      setProfile((currentProfile) => ({
-        ...currentProfile,
-        pets: currentProfile.pets.map((currentPet) =>
-          currentPet.id === pet.id
-            ? {
-                ...currentPet,
-                ...updatedPet,
-                primary_photo_url:
-                  updatedPet.primary_photo_url ||
-                  currentPet.primary_photo_url ||
-                  null,
-              }
-            : currentPet
-        ),
-      }));
-
-      setPetStatusDrafts((currentDrafts) => ({
-        ...currentDrafts,
-        [pet.id]: updatedPet.status || nextStatus,
-      }));
-
-      setStatusMessage(
-        `${pet.name}'s status was updated to ${prettyStatus(
-          updatedPet.status || nextStatus
-        )}.`
-      );
-
-      setEditingPetId(null);
-    } catch (err) {
-      setStatusError(err.message || "Could not update pet status.");
-    } finally {
-      setSavingPetId(null);
     }
   }
 
@@ -151,27 +67,22 @@ function ViewPetsAdmin() {
                     <Heading size="4">{pet.name}</Heading>
 
                     <Text size="2" color="gray">
-                      {pet.species || "Unknown"} •{" "}
-                      {pet.breed || "Unknown breed"}
+                      {pet.species || "Unknown"} • {pet.breed || "Unknown breed"}
                     </Text>
 
                     <Text size="2" color="gray" className="pet-meta">
-                      Age: {pet.age_years ?? "?"} • Sex:{" "}
-                      {pet.sex || "?"} • Size: {pet.size || "?"}
+                      Age: {pet.age_years ?? "?"} • Sex: {pet.sex || "?"} • Size: {pet.size || "?"}
                     </Text>
                   </Box>
                 </Flex>
 
-                <Text
-                  size="1"
-                  className={`status-badge ${pet.status}`}
-                >
+                <Text size="1" className={`status-badge ${pet.status}`}>
                   {prettyStatus(pet.status)}
                 </Text>
               </Flex>
 
               <Flex gap="2" wrap="wrap">
-                <Button onClick={() => openPetEditor(pet)}>
+                <Button onClick={() => navigate(`/edit-pet/${pet.id}`)}>
                   Edit
                 </Button>
 
@@ -190,16 +101,43 @@ function ViewPetsAdmin() {
   }
 
   return (
-    <Flex direction="column" gap="4">
-      {loading && <Text>Loading...</Text>}
-      {error && <Text color="red">{error}</Text>}
+    <div className="page">
+      <Flex direction="column" gap="4">
+        <Box>
+          <Heading size="7">Manage Pets</Heading>
+          <Text size="2" color="gray">
+            View, edit, and manage pets listed by your shelter.
+          </Text>
+        </Box>
 
-      {profile?.pets?.length > 0 ? (
-        renderPetsGrid()
-      ) : (
-        <Text>No pets found.</Text>
-      )}
-    </Flex>
+        <Flex justify="between" align="center" gap="3" wrap="wrap">
+          <Button onClick={() => navigate("/create-pet")}>
+            Add Pet
+          </Button>
+        </Flex>
+
+        {loading && <Text>Loading...</Text>}
+
+        {error && <Text color="red">{error}</Text>}
+
+        {!loading && !error && profile?.pets?.length > 0 && renderPetsGrid()}
+
+        {!loading && !error && (!profile?.pets || profile.pets.length === 0) && (
+          <Card size="3" className="center-card">
+            <Flex direction="column" gap="3" align="center">
+              <Heading size="5">No Pets Found</Heading>
+              <Text size="2" color="gray">
+                Add your first pet to start managing your shelter listings.
+              </Text>
+
+              <Button onClick={() => navigate("/create-pet")}>
+                Add Pet
+              </Button>
+            </Flex>
+          </Card>
+        )}
+      </Flex>
+    </div>
   );
 }
 

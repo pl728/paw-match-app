@@ -160,3 +160,10 @@ export async function updatePet(petId, fields) {
 export async function deletePet(petId) {
     await db.query('DELETE FROM pets WHERE id = ?', [petId]);
 }
+
+export async function deletePetPhoto(petId, photoId) {
+    await db.query(
+        'DELETE FROM pet_photos WHERE pet_id = ? AND id = ?',
+        [petId, photoId]
+    );
+}

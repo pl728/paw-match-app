@@ -7,6 +7,7 @@ import { useAuth } from "../auth/useAuth.js";
 function UserLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,12 +16,14 @@ function UserLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
     try {
       const data = await loginUser({ username, password });
       login({ user: data.user, token: data.token });
       navigate(from, { replace: true });
     } catch (err) {
-      alert(err.message);
+      setErrorMessage(err.message || "Could not log in.");
     }
   };
 
@@ -32,6 +35,12 @@ function UserLogin() {
           <Text size="2" color="gray">
             Please Log in to Continue
           </Text>
+
+          {errorMessage && (
+            <div className="status-message error">
+              {errorMessage}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="auth-form">
             <Flex direction="column" gap="3">
@@ -66,6 +75,6 @@ function UserLogin() {
       </Card>
     </div>
   );
-}   
+}
 
 export default UserLogin;

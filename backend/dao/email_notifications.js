@@ -4,6 +4,7 @@ export async function getEmailNotifications(userId) {
     const result = await db.query(
         `SELECT
             user_id,
+            message_notifications,
             adoption_updates,
             new_match_alerts,
             saved_animal_updates,
