@@ -452,7 +452,7 @@ function Profile() {
               </Flex>
 
               <Flex gap="2" wrap="wrap">
-                <Button onClick={() => openPetEditor(pet)}>
+                <Button onClick={() => navigate(`/edit-pet/${pet.id}`)}>
                   Edit
                 </Button>
                 <Button variant="soft" onClick={() => navigate(`/pets/${pet.id}`)}>
@@ -860,6 +860,7 @@ function Profile() {
       { field: "adoption_updates", label: "Adoption updates", description: "When a pet you're following is adopted" },
       { field: "saved_animal_updates", label: "Saved animal updates", description: "When a favorited pet's status changes" },
       { field: "new_match_alerts", label: "New match alerts", description: "When a new pet matches your preferences" },
+      { field: "message_notifications",label: "Messages / Chat",description: "When someone sends you a new chat message",},
       { field: "reminders", label: "Reminders", description: "Periodic reminders about pets you've saved" },
     ];
 

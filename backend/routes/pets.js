@@ -1,14 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import asyncHandler from '../utils/async-handler.js';
-import {
-    createPet,
-    listPets,
-    getPetById,
-    addPetPhoto,
-    updatePet,
-    deletePet
-} from '../dao/pets.js';
+import { createPet, listPets,getPetById,addPetPhoto, updatePet,deletePet, deletePetPhoto} from '../dao/pets.js';
 import { getShelterByUserId } from '../dao/shelters.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { createFeedEvent } from '../dao/feed_events.js';
@@ -295,13 +288,121 @@ router.put('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async
     res.json(withProxyPhotoUrls(req, refreshed || updated));
 }));
 
+router.post('/:id/photos', requireAuth, requireRole('shelter_admin'), upload.array('photos', 10), asyncHandler(async function (req, res) {
+
+    const shelter = await getShelterByUserId(req.userId);
+
+    if (!shelter) {
+        return res.status(404).json({
+            error: 'Shelter not found'
+        });
+    }
+
+    const pet = await getPetById(req.params.id);
+
+    if (!pet) {
+        return res.status(404).json({
+            error: 'Pet not found'
+        });
+    }
+
+    if (pet.shelter_id !== shelter.id) {
+        return res.status(403).json({
+            error: 'Not allowed'
+        });
+    }
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+            error: 'No photos uploaded'
+        });
+    }
+
+    if ((pet.photos?.length || 0) + req.files.length > 10) {
+        return res.status(400).json({
+            error: 'You can only upload up to 10 photos.'
+        });
+    }
+
+    for (const file of req.files) {
+
+        const uploadedUrl = await uploadPetPhoto({
+            petId: pet.id,
+            shelterId: shelter.id,
+            file
+        });
+
+        await addPetPhoto(
+            pet.id,
+            uploadedUrl
+        );
+    }
+
+    const refreshed = await getPetById(pet.id);
+
+    res.status(201).json(
+        withProxyPhotoUrls(req, refreshed)
+    );
+}));
+
+router.delete('/:id/photos/:photoId', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
+
+    const shelter = await getShelterByUserId(req.userId);
+
+    if (!shelter) {
+        return res.status(404).json({
+            error: 'Shelter not found'
+        });
+    }
+
+    const pet = await getPetById(req.params.id);
+
+    if (!pet) {
+        return res.status(404).json({
+            error: 'Pet not found'
+        });
+    }
+
+    if (pet.shelter_id !== shelter.id) {
+        return res.status(403).json({
+            error: 'Not allowed'
+        });
+    }
+
+    const photo = pet.photos.find(function (item) {
+        return item.id === req.params.photoId;
+    });
+
+    if (!photo) {
+        return res.status(404).json({
+            error: 'Photo not found'
+        });
+    }
+
+    await deletePetPhoto(
+    req.params.id,
+    req.params.photoId
+);
+
+res.json({
+    success: true,
+    deleted: req.params.photoId
+});
+
+    res.json({
+        success: true
+    });
+}));
+
 router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(async function (req, res) {
     const shelter = await getShelterByUserId(req.userId);
+
     if (!shelter) {
         return res.status(404).json({ error: 'Shelter not found for user' });
     }
 
     const pet = await getPetById(req.params.id);
+
     if (!pet) {
         return res.status(404).json({ error: 'Pet not found' });
     }
@@ -311,6 +412,7 @@ router.delete('/:id', requireAuth, requireRole('shelter_admin'), asyncHandler(as
     }
 
     await deletePet(req.params.id);
+
     res.json({ deleted: true, id: pet.id });
 }));
 

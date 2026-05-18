@@ -17,6 +17,7 @@ import feedEventsRoutes from './routes/feed_events.js';
 import emailNotificationsRoutes from './routes/email_notifications.js';
 import conversationsRoutes from './routes/conversations.js';
 import recommendationsRoutes from './routes/recommendations.js';
+import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +28,7 @@ const PORT = process.env.PORT || 4516;
 app.set('trust proxy', true);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 if (!process.env.DATABASE_URL) {
     console.warn('DATABASE_URL is not set; database requests will fail.');

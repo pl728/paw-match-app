@@ -4,17 +4,46 @@ import { Card, Flex, Heading, Text, TextField, Select, Button, Box } from "@radi
 import { createPet } from "../services/pets.js";
 import { getMyProfile } from "../services/users.js";
 
-const BREEDS = [
-  "Labrador Retriever", "German Shepherd", "Golden Retriever", "French Bulldog", "Bulldog",
-  "Poodle", "Beagle", "Rottweiler", "German Shorthaired Pointer", "Dachshund",
-  "Pembroke Welsh Corgi", "Australian Shepherd", "Yorkshire Terrier", "Boxer", "Great Dane",
-  "Siberian Husky", "Cavalier King Charles Spaniel", "Doberman Pinscher", "Miniature Schnauzer",
-  "Shih Tzu", "Boston Terrier", "Bernese Mountain Dog", "Pomeranian", "Havanese", "English Springer Spaniel",
-  "Brittany", "Shetland Sheepdog", "Cocker Spaniel", "Border Collie", "Chihuahua",
-  "Persian", "Maine Coon", "Ragdoll", "British Shorthair", "Siamese",
-  "American Shorthair", "Scottish Fold", "Sphynx", "Bengal", "Abyssinian",
-  "Birman", "Oriental Shorthair", "Devon Rex", "Burmese", "Russian Blue", "Mixed Breed"
-].sort();
+const BREEDS_BY_SPECIES = {
+  Dog: [
+    "Labrador Retriever", "German Shepherd", "Golden Retriever", "French Bulldog",
+    "Bulldog", "Poodle", "Beagle", "Rottweiler", "Dachshund", "Corgi",
+    "Australian Shepherd", "Yorkshire Terrier", "Boxer", "Great Dane",
+    "Siberian Husky", "Doberman Pinscher", "Shih Tzu", "Boston Terrier",
+    "Pomeranian", "Chihuahua", "Mixed Breed", "Other"
+  ],
+
+  Cat: [
+    "Persian", "Maine Coon", "Ragdoll", "British Shorthair", "Siamese",
+    "American Shorthair", "Scottish Fold", "Sphynx", "Bengal", "Abyssinian",
+    "Russian Blue", "Mixed Breed", "Other"
+  ],
+
+  Bird: [
+    "Parakeet", "Cockatiel", "Canary", "Lovebird", "Macaw", "Cockatoo",
+    "African Grey Parrot", "Conure", "Finch", "Budgie", "Mixed Breed", "Other"
+  ],
+
+  Rabbit: [
+    "Holland Lop", "Netherland Dwarf", "Mini Rex", "Lionhead",
+    "Flemish Giant", "Dutch Rabbit", "Mixed Breed", "Other"
+  ],
+
+  "Guinea Pig": [
+    "American Guinea Pig", "Abyssinian Guinea Pig", "Peruvian Guinea Pig",
+    "Teddy Guinea Pig", "Skinny Pig", "Mixed Breed", "Other"
+  ],
+
+  Hamster: [
+    "Syrian Hamster", "Dwarf Hamster", "Roborovski Hamster",
+    "Chinese Hamster", "Mixed Breed", "Other"
+  ],
+
+  Other: [
+    "Ferret", "Chinchilla", "Hedgehog", "Mouse", "Rat", "Gerbil",
+    "Turtle", "Lizard", "Snake", "Mixed Breed", "Other"
+  ]
+};
 
 const PET_NAMES = [
   "Mochi", "Biscuit", "Noodle", "Pepper", "Maple", "Clover", "Scout", "Luna",
@@ -40,8 +69,9 @@ function randomFrom(items) {
 
 function buildRandomPetForm() {
   const species = randomFrom(SPECIES_OPTIONS);
-  const breed = randomFrom(BREEDS);
   const name = randomFrom(PET_NAMES);
+  const breedOptions = BREEDS_BY_SPECIES[species] || ["Mixed Breed"];
+  const breed = randomFrom(breedOptions.filter((b) => b !== "Other"));
 
   return {
     name,
@@ -68,6 +98,7 @@ function CreatePet() {
   });
 
   const [breedSearch, setBreedSearch] = useState("");
+  const [customBreed, setCustomBreed] = useState("");
   const [checkingShelter, setCheckingShelter] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [photoFiles, setPhotoFiles] = useState(emptyPhotoSlots);
@@ -93,8 +124,9 @@ function CreatePet() {
     async function checkShelter() {
       try {
         const profile = await getMyProfile();
+
         if (!profile.shelter) {
-          navigate('/setup-shelter', { replace: true });
+          navigate("/setup-shelter", { replace: true });
         }
       } catch (err) {
         console.error(err);
@@ -102,6 +134,7 @@ function CreatePet() {
         setCheckingShelter(false);
       }
     }
+
     checkShelter();
   }, [navigate]);
 
@@ -120,8 +153,23 @@ function CreatePet() {
     setPhotoError("");
   }
 
-  const filteredBreeds = BREEDS.filter(b =>
-    b.toLowerCase().includes(breedSearch.toLowerCase())
+  function handlePhotoChange(e) {
+    const files = Array.from(e.target.files || []);
+
+    if (files.length > MAX_PHOTOS) {
+      alert("Error: You can only upload up to 10 photos.");
+      e.target.value = "";
+      setPhotoFiles([]);
+      return;
+    }
+
+    setPhotoFiles(files);
+  }
+
+  const breedOptions = BREEDS_BY_SPECIES[formData.species] || [];
+
+  const filteredBreeds = breedOptions.filter((breed) =>
+    breed.toLowerCase().includes(breedSearch.toLowerCase())
   );
 
   function handleDetailsSubmit(e) {
@@ -189,6 +237,8 @@ function CreatePet() {
     setSubmitting(true);
 
     try {
+      const finalBreed = formData.breed === "Other" ? customBreed : formData.breed;
+
       const payload = new FormData();
       Object.entries(formData).forEach(([k, v]) => {
         payload.append(k, k === "name" ? v.trim() : v);
@@ -199,7 +249,7 @@ function CreatePet() {
       });
 
       await createPet(payload);
-      navigate('/profile');
+      navigate("/profile");
     } catch (err) {
       alert(`Error creating pet: ${err.message}`);
     } finally {
@@ -210,7 +260,9 @@ function CreatePet() {
   if (checkingShelter) {
     return (
       <div className="setup-container">
-        <Text size="2" color="gray">Loading...</Text>
+        <Text size="2" color="gray">
+          Loading...
+        </Text>
       </div>
     );
   }
@@ -219,7 +271,10 @@ function CreatePet() {
     <div className="setup-container">
       <Card size="4" className="setup-card">
         <Flex direction="column" gap="4">
-          <Heading size="6" align="center">Add a Pet</Heading>
+          <Heading size="6" align="center">
+            Add a Pet
+          </Heading>
+
           <Text size="2" color="gray" align="center">
             Please submit details about this pet to add to the shelter database.
           </Text>

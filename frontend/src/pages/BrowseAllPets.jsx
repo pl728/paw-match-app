@@ -8,6 +8,15 @@ import { getFavorites, addFavorite, removeFavorite } from "../services/favorites
 const PAGE_SIZE = 60;
 const FETCH_PAGE_SIZE = 100;
 
+const PET_PLACEHOLDER_BY_SPECIES = {
+  Cat: "/cat.png",
+  Dog: "/dog.png",
+};
+
+function getPetPlaceholderImage(species) {
+  return PET_PLACEHOLDER_BY_SPECIES[species] || "/animal.png";
+}
+
 export default function BrowseAllPets() {
   const navigate = useNavigate();
   const [allPets, setAllPets] = useState([]);

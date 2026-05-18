@@ -26,6 +26,7 @@ router.get('/:userId', requireAuth, asyncHandler(async function (req, res) {
     }
 
     const preferences = await getEmailNotifications(userId);
+
     if (!preferences) {
         return res.status(404).json({ error: 'Notification preferences not found' });
     }
@@ -33,7 +34,6 @@ router.get('/:userId', requireAuth, asyncHandler(async function (req, res) {
     res.json(preferences);
 }));
 
-// Updates one or more email notification preferences.
 router.patch('/:userId', requireAuth, asyncHandler(async function (req, res) {
     const userId = req.params.userId;
 
@@ -46,6 +46,10 @@ router.patch('/:userId', requireAuth, asyncHandler(async function (req, res) {
     }
 
     const updates = {};
+
+    if (typeof req.body.message_notifications === 'boolean') {
+        updates.message_notifications = req.body.message_notifications;
+    }
 
     if (typeof req.body.adoption_updates === 'boolean') {
         updates.adoption_updates = req.body.adoption_updates;
@@ -76,11 +80,13 @@ router.patch('/:userId', requireAuth, asyncHandler(async function (req, res) {
     }
 
     const result = await updateEmailNotifications(userId, updates);
+
     if (!result || result.affectedRows === 0) {
         return res.status(404).json({ error: 'Notification preferences not found' });
     }
 
     const updated = await getEmailNotifications(userId);
+
     res.json(updated);
 }));
 
