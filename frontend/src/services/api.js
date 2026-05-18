@@ -20,7 +20,11 @@ export async function apiFetch(path, options = {}) {
       errorPayload = { error: response.statusText };
     }
     const message = errorPayload?.error || response.statusText || "Request failed";
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    error.code = errorPayload?.code;
+    error.payload = errorPayload;
+    throw error;
   }
 
   if (response.status === 204) return null;

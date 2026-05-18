@@ -1,5 +1,4 @@
 import React from 'react'
-import comingsoon from './assets/photo-coming-soon.png'
 import CreatePet from './pages/CreatePet.jsx'
 import BrowseShelters from './pages/BrowseShelters.jsx'
 import UserLogin from './pages/UserLogin.jsx'
@@ -20,6 +19,7 @@ import AdminFAQ from "./pages/Footer/AdminFAQ.jsx";
 import Discover from "./pages/Discover.jsx";
 import ViewPetsAdmin from "./pages/ViewPetsAdmin.jsx";
 import PetFinder from './pages/PetFinder.jsx'
+import VerifyEmail from './pages/VerifyEmail.jsx'
 import About from "./pages/Footer/About.jsx";
 import Team from "./pages/Footer/Team.jsx";
 import Privacy from "./pages/Footer/Privacy.jsx";
@@ -213,6 +213,7 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/verify" element={<Verify />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/pet-care" element={<PetCare />} />
           <Route path="/guidelines" element={<Guidelines />} />
           <Route path="/shelters" element={<Shelters />} />

@@ -30,14 +30,15 @@ router.post('/', requireAuth, requireRole('shelter_admin'), asyncHandler(async f
     const username = req.body.username;
     const passwordHash = req.body.password_hash;
     const role = req.body.role || 'adopter';
+    const email = req.body.email;
 
-    if (!username || !passwordHash) {
-        return res.status(400).json({ error: 'username and password_hash are required' });
+    if (!username || !email || !passwordHash) {
+        return res.status(400).json({ error: 'username, email, and password_hash are required' });
     }
 
     let created;
     try {
-        created = await createUser({ username: username, passwordHash: passwordHash, role: role });
+        created = await createUser({ username: username, passwordHash: passwordHash, role: role, email: email });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'username already exists' });

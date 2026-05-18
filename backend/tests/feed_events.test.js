@@ -1,6 +1,8 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { registerVerifiedUser } from './helpers/auth.js';
+import { postPetWithPhotos } from './helpers/pet_photos.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -12,18 +14,15 @@ describe('feed_events endpoints', function () {
   async function createShelter() {
     const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-    const register = await request(app)
-      .post('/auth/register')
-      .send({ username: 'feedadmin_' + unique, password: 'password123', role: 'shelter_admin' })
-      .expect(201);
+    const register = await registerVerifiedUser(app, 'shelter_admin', 'feedadmin_' + unique);
 
     const shelter = await request(app)
       .post('/shelters')
-      .set('Authorization', 'Bearer ' + register.body.token)
+      .set('Authorization', 'Bearer ' + register.token)
       .send({ name: 'Feed Shelter' })
       .expect(201);
 
-    return { shelterId: shelter.body.id, token: register.body.token };
+    return { shelterId: shelter.body.id, token: register.token };
   }
 
   it('lists feed events (200) and returns an array', async function () {
@@ -37,10 +36,7 @@ describe('feed_events endpoints', function () {
   it('creating a pet emits a new_pet feed event', async function () {
     const { shelterId, token } = await createShelter();
 
-    const pet = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + token)
-      .send({ name: 'Biscuit', species: 'Dog' })
+    const pet = await postPetWithPhotos(app, token, { name: 'Biscuit', species: 'Dog' })
       .expect(201);
 
     const feed = await request(app).get('/feed_events?limit=100').expect(200);
@@ -55,10 +51,7 @@ describe('feed_events endpoints', function () {
   it('updating a pet status to adopted emits an adoption_event', async function () {
     const { shelterId, token } = await createShelter();
 
-    const pet = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + token)
-      .send({ name: 'Noodle', species: 'Cat' })
+    const pet = await postPetWithPhotos(app, token, { name: 'Noodle', species: 'Cat' })
       .expect(201);
 
     await request(app)
@@ -79,10 +72,7 @@ describe('feed_events endpoints', function () {
   it('updating a pet status to available emits a status_change event', async function () {
     const { shelterId, token } = await createShelter();
 
-    const pet = await request(app)
-      .post('/pets')
-      .set('Authorization', 'Bearer ' + token)
-      .send({ name: 'Pickles', species: 'Dog', status: 'pending' })
+    const pet = await postPetWithPhotos(app, token, { name: 'Pickles', species: 'Dog', status: 'pending' })
       .expect(201);
 
     await request(app)

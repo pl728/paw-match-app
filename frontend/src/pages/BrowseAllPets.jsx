@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
+import { Link, useNavigate } from "react-router-dom";
+import { HeartFilledIcon, HeartIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { Card, Flex, Heading, Text, Button, IconButton, TextField } from "@radix-ui/themes";
 import { getPets } from "../services/pets.js";
 import { getFavorites, addFavorite, removeFavorite } from "../services/favorites.js";
 
 const PAGE_SIZE = 60;
+const FETCH_PAGE_SIZE = 100;
 
 const PET_PLACEHOLDER_BY_SPECIES = {
   Cat: "/cat.png",
@@ -16,6 +18,7 @@ function getPetPlaceholderImage(species) {
 }
 
 export default function BrowseAllPets() {
+  const navigate = useNavigate();
   const [allPets, setAllPets] = useState([]);
   const [pets, setPets] = useState([]);
   const [view, setView] = useState("grid");
@@ -40,8 +43,22 @@ export default function BrowseAllPets() {
     async function fetchPets() {
       try {
         setLoading(true);
-        const result = await getPets();
-        const petData = Array.isArray(result?.data) ? result.data : [];
+        const firstPage = await getPets({ page: 1, limit: FETCH_PAGE_SIZE });
+        const firstPagePets = Array.isArray(firstPage?.data) ? firstPage.data : [];
+        const totalPets = Number(firstPage?.total) || firstPagePets.length;
+        const totalFetchPages = Math.max(1, Math.ceil(totalPets / FETCH_PAGE_SIZE));
+        const remainingPages = [];
+
+        for (let nextPage = 2; nextPage <= totalFetchPages; nextPage += 1) {
+          remainingPages.push(getPets({ page: nextPage, limit: FETCH_PAGE_SIZE }));
+        }
+
+        const remainingResults = await Promise.all(remainingPages);
+        const petData = remainingResults.reduce(
+          (items, result) => items.concat(Array.isArray(result?.data) ? result.data : []),
+          firstPagePets
+        );
+
         setAllPets(petData);
         setPets(petData);
       } catch (err) {
@@ -59,7 +76,7 @@ export default function BrowseAllPets() {
       try {
         const result = await getFavorites();
         const ids = Array.isArray(result)
-          ? result.map((f) => Number(f.pet_id))
+          ? result.map((f) => f.pet_id)
           : [];
 
         setFavoritePetIds(ids);
@@ -147,6 +164,17 @@ export default function BrowseAllPets() {
     }
   }
 
+  function openPetDetails(petId) {
+    navigate(`/pets/${petId}`);
+  }
+
+  function handlePetCardKeyDown(event, petId) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPetDetails(petId);
+    }
+  }
+
   const speciesOptions = ["Dog", "Cat", "Rabbit", "Other"];
 
   const allBreedOptions = {
@@ -166,16 +194,19 @@ export default function BrowseAllPets() {
         <Card size="2">
           <Flex direction="column" gap="4">
             <Flex justify="between" align="center" gap="3">
-              <input
-                type="text"
+              <TextField.Root
                 placeholder="Search pets..."
-                className="form-input"
+                className="pet-search-field"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   applyFilters(e.target.value);
                 }}
-              />
+              >
+                <TextField.Slot>
+                  <MagnifyingGlassIcon />
+                </TextField.Slot>
+              </TextField.Root>
 
               <Button
                 variant="soft"
@@ -268,10 +299,12 @@ export default function BrowseAllPets() {
         </Card>
 
         <Card size="2">
-          <Flex justify="between" align="center">
-            <Flex gap="2" align="center">
-              <Text size="2" color="gray">View:</Text>
+          <Flex justify="between" align="center" gap="3" wrap="wrap">
+            <Text size="2" color="gray">
+              {total} pets found
+            </Text>
 
+            <Flex gap="2" align="center">
               <Button
                 variant={view === "grid" ? "solid" : "soft"}
                 onClick={() => setView("grid")}
@@ -286,10 +319,6 @@ export default function BrowseAllPets() {
                 Table
               </Button>
             </Flex>
-
-            <Text size="2" color="gray">
-              {total} pets found
-            </Text>
           </Flex>
         </Card>
 
@@ -305,14 +334,26 @@ export default function BrowseAllPets() {
             {view === "grid" && (
               <div className="pets-grid">
                 {pagedPets.map((pet) => (
-                  <Card key={pet.id} size="2">
+                  <Card
+                    key={pet.id}
+                    size="2"
+                    className="pet-card-clickable"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => openPetDetails(pet.id)}
+                    onKeyDown={(event) => handlePetCardKeyDown(event, pet.id)}
+                  >
                     <Flex direction="column" gap="2">
-                      <img
-                      src={pet.primary_photo_url || getPetPlaceholderImage(pet.species)}
-                      alt={pet.name}
-                      className="pet-card-image"
-                      loading="lazy"
-                    />
+                      <div className="pet-card-image-wrap">
+                        {pet.primary_photo_url && (
+                          <img
+                            src={pet.primary_photo_url}
+                            alt={pet.name}
+                            className="pet-card-image"
+                            loading="lazy"
+                          />
+                        )}
+                      </div>
 
                       <Heading size="4">{pet.name}</Heading>
 
@@ -324,15 +365,22 @@ export default function BrowseAllPets() {
                         Age: {pet.age_years ?? "?"} • Size: {pet.size || "?"}
                       </Text>
 
-                      <Button
-                        size="1"
-                        variant={favoritePetIds.includes(pet.id) ? "solid" : "soft"}
-                        onClick={() => handleToggleFavorite(pet.id)}
+                      <IconButton
+                        type="button"
+                        size="3"
+                        radius="full"
+                        variant="soft"
+                        color="red"
+                        className={`pet-card-favorite-button ${favoritePetIds.includes(pet.id) ? "is-favorited" : "is-unfavorited"}`}
+                        aria-label={favoritePetIds.includes(pet.id) ? `Remove ${pet.name} from favorites` : `Add ${pet.name} to favorites`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleToggleFavorite(pet.id);
+                        }}
+                        onKeyDown={(event) => event.stopPropagation()}
                       >
-                        {favoritePetIds.includes(pet.id) ? "Unfavorite" : "Favorite"}
-                      </Button>
-
-                      <Link to={`/pets/${pet.id}`}>View full details</Link>
+                        {favoritePetIds.includes(pet.id) ? <HeartFilledIcon /> : <HeartIcon />}
+                      </IconButton>
                     </Flex>
                   </Card>
                 ))}

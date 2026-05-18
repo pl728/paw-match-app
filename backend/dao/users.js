@@ -5,19 +5,20 @@ export async function createUser(options) {
     const username = options.username;
     const passwordHash = options.passwordHash;
     const role = options.role || 'adopter';
-    const email = options.email || null;
+    const email = options.email;
+    const emailVerifiedAt = options.emailVerifiedAt || null;
 
     const userId = crypto.randomUUID();
 
     await db.query(
-        'INSERT INTO users (id, username, password_hash, role, email) VALUES (?, ?, ?, ?, ?)',
-        [userId, username, passwordHash, role, email]
+        'INSERT INTO users (id, username, password_hash, role, email, email_verified_at) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, username, passwordHash, role, email, emailVerifiedAt]
     );
 
     await db.query('INSERT INTO email_notifications (user_id) VALUES (?)', [userId]);
 
     const result = await db.query(
-        'SELECT id, username, role, email, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, role, email, email_verified_at, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -26,7 +27,7 @@ export async function createUser(options) {
 
 export async function getUserById(userId) {
     const result = await db.query(
-        'SELECT id, username, role, email, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, role, email, email_verified_at, created_at, updated_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -39,7 +40,7 @@ export async function getUserById(userId) {
 
 export async function getUserByUsername(username) {
     const result = await db.query(
-        'SELECT id, username, role, email, created_at, updated_at FROM users WHERE username = ?',
+        'SELECT id, username, role, email, email_verified_at, created_at, updated_at FROM users WHERE username = ?',
         [username]
     );
 
@@ -52,7 +53,7 @@ export async function getUserByUsername(username) {
 
 export async function getUserAuthByUsername(username) {
     const result = await db.query(
-        'SELECT id, username, role, password_hash FROM users WHERE username = ?',
+        'SELECT id, username, role, email, email_verified_at, password_hash FROM users WHERE username = ?',
         [username]
     );
 
@@ -61,6 +62,69 @@ export async function getUserAuthByUsername(username) {
     }
 
     return result.rows[0];
+}
+
+export async function getUserRegistrationConflicts({ username, email }) {
+    const result = await db.query(
+        `SELECT
+            MAX(CASE WHEN username = ? THEN 1 ELSE 0 END) AS username_exists,
+            MAX(CASE WHEN email = ? THEN 1 ELSE 0 END) AS email_exists
+         FROM users
+         WHERE username = ? OR email = ?`,
+        [username, email, username, email]
+    );
+
+    const row = result.rows[0] || {};
+    return {
+        username: Boolean(row.username_exists),
+        email: Boolean(row.email_exists)
+    };
+}
+
+export async function deleteExpiredUnverifiedRegistrationConflicts({ username, email, cutoff }) {
+    const result = await db.query(
+        `DELETE FROM users
+         WHERE email_verified_at IS NULL
+           AND created_at < ?
+           AND (username = ? OR email = ?)`,
+        [cutoff, username, email]
+    );
+
+    return result.rows.affectedRows || 0;
+}
+
+export async function deleteExpiredUnverifiedUser(userId, cutoff) {
+    const result = await db.query(
+        `DELETE FROM users
+         WHERE id = ?
+           AND email_verified_at IS NULL
+           AND created_at < ?`,
+        [userId, cutoff]
+    );
+
+    return result.rows.affectedRows || 0;
+}
+
+export async function getUserByUsernameOrEmail(identifier) {
+    const result = await db.query(
+        'SELECT id, username, role, email, email_verified_at, created_at, updated_at FROM users WHERE username = ? OR email = ? LIMIT 1',
+        [identifier, identifier]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+export async function markUserEmailVerified(userId) {
+    await db.query(
+        'UPDATE users SET email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP) WHERE id = ?',
+        [userId]
+    );
+
+    return getUserById(userId);
 }
 
 export async function getUsersByFavoritedPet(petId) {

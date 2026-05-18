@@ -1,6 +1,8 @@
 import request from 'supertest';
 import app from '../main.js';
 import db from '../db/index.js';
+import { registerVerifiedUser } from './helpers/auth.js';
+import { postPetWithPhotos } from './helpers/pet_photos.js';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -9,27 +11,28 @@ afterAll(async function () {
 });
 
 async function registerUser(role) {
-    const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    const res = await request(app)
-        .post('/auth/register')
-        .send({ username: `recommend_${role}_${unique}`, password: 'password123', role })
-        .expect(201);
-    return res.body.token;
+    const registered = await registerVerifiedUser(app, role, 'recommend_' + role);
+    return registered.token;
 }
 
-async function createShelterWithPet({ shelterName, city = 'Corvallis', state = 'OR', postalCode = '97330', pet }) {
+async function createShelterWithPet({
+    shelterName,
+    city = 'Corvallis',
+    state = 'OR',
+    postalCode = '97330',
+    latitude = 44.5646,
+    longitude = -123.2620,
+    pet
+}) {
     const adminToken = await registerUser('shelter_admin');
 
     const shelterRes = await request(app)
         .post('/shelters')
         .set('Authorization', 'Bearer ' + adminToken)
-        .send({ name: shelterName, city, state, postal_code: postalCode })
+        .send({ name: shelterName, city, state, postal_code: postalCode, latitude, longitude })
         .expect(201);
 
-    const petRes = await request(app)
-        .post('/pets')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .send(pet)
+    const petRes = await postPetWithPhotos(app, adminToken, pet)
         .expect(201);
 
     return { shelter: shelterRes.body, pet: petRes.body };
@@ -76,25 +79,31 @@ describe('recommendations', function () {
             shelterName: 'Recommendation Oregon Shelter',
             city: 'Corvallis',
             state: 'OR',
+            latitude: 44.5646,
+            longitude: -123.2620,
             pet: { name: 'Queue Match', species: 'Dog', breed: 'Lab Mix', age_years: 3, sex: 'M', size: 'Medium' }
         });
         await createShelterWithPet({
             shelterName: 'Recommendation Washington Shelter',
             city: 'Seattle',
             state: 'WA',
+            latitude: 47.6062,
+            longitude: -122.3321,
             pet: { name: 'Queue Far Away', species: 'Dog', breed: 'Lab Mix', age_years: 3, sex: 'M', size: 'Medium' }
         });
         await createShelterWithPet({
             shelterName: 'Recommendation Cat Shelter',
             city: 'Corvallis',
             state: 'OR',
+            latitude: 44.5646,
+            longitude: -123.2620,
             pet: { name: 'Queue Cat', species: 'Cat', breed: 'Tabby', age_years: 3, sex: 'F', size: 'Small' }
         });
 
         await request(app)
             .patch('/recommendations/preferences')
             .set('Authorization', 'Bearer ' + adopterToken)
-            .send({ species: ['Dog'], state: 'OR' })
+            .send({ species: ['Dog'], latitude: 44.5646, longitude: -123.2620, radius_miles: 75 })
             .expect(200);
 
         const firstQueue = await request(app)
@@ -104,7 +113,8 @@ describe('recommendations', function () {
 
         expect(firstQueue.body.items.some((pet) => pet.id === matching.pet.id)).toBe(true);
         expect(firstQueue.body.items.every((pet) => pet.species === 'Dog')).toBe(true);
-        expect(firstQueue.body.items.every((pet) => pet.shelter_state === 'OR')).toBe(true);
+        expect(firstQueue.body.items.every((pet) => Number(pet.distance_miles) <= 75)).toBe(true);
+        expect(firstQueue.body.items.some((pet) => pet.name === 'Queue Far Away')).toBe(false);
 
         await request(app)
             .post('/recommendations/interactions')

@@ -1,16 +1,26 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Card, Dialog, Flex, Heading, Text } from "@radix-ui/themes";
+import { Button, Card, Dialog, Flex, Heading, IconButton, Slider, Text } from "@radix-ui/themes";
+import { Cross2Icon, HeartFilledIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import {
   getRecommendationPreferences,
   getRecommendationQueue,
   recordRecommendationInteraction,
   updateRecommendationPreferences,
 } from "../services/recommendations.js";
+import { reverseGeocodeLocation } from "../services/auth.js";
 
 const SPECIES_OPTIONS = ["Dog", "Cat", "Rabbit", "Bird"];
 const SIZE_OPTIONS = ["Small", "Medium", "Large", "XL"];
 const SEX_OPTIONS = ["M", "F"];
+const MIN_RADIUS_MILES = 5;
+const MAX_RADIUS_MILES = 100;
+const RADIUS_STEP_MILES = 5;
+const MIN_AGE_YEARS = 0;
+const MAX_AGE_YEARS = 20;
+const DEFAULT_MAP_CENTER = { latitude: 44.5646, longitude: -123.262 };
+
+let googleMapsPromise = null;
 
 const emptyPreferences = {
   species: [],
@@ -22,6 +32,8 @@ const emptyPreferences = {
   city: "",
   state: "",
   postal_code: "",
+  latitude: null,
+  longitude: null,
   radius_miles: 50,
 };
 
@@ -38,6 +50,8 @@ function normalizePreferences(preferences) {
     city: preferences?.city || "",
     state: preferences?.state || "",
     postal_code: preferences?.postal_code || "",
+    latitude: preferences?.latitude ?? null,
+    longitude: preferences?.longitude ?? null,
     radius_miles: preferences?.radius_miles ?? 50,
   };
 }
@@ -52,6 +66,43 @@ function optionButtonVariant(values, value) {
   return values.includes(value) ? "solid" : "soft";
 }
 
+function getMapApiKey() {
+  return import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+}
+
+function loadGoogleMaps() {
+  if (window.google?.maps) {
+    return Promise.resolve(window.google.maps);
+  }
+
+  const apiKey = getMapApiKey();
+  if (!apiKey) {
+    return Promise.reject(new Error("VITE_GOOGLE_MAPS_API_KEY is not set"));
+  }
+
+  if (!googleMapsPromise) {
+    googleMapsPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector("script[data-paw-match-google-maps]");
+      if (existingScript) {
+        existingScript.addEventListener("load", () => resolve(window.google.maps), { once: true });
+        existingScript.addEventListener("error", () => reject(new Error("Google Maps failed to load")), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`;
+      script.async = true;
+      script.defer = true;
+      script.dataset.pawMatchGoogleMaps = "true";
+      script.onload = () => resolve(window.google.maps);
+      script.onerror = () => reject(new Error("Google Maps failed to load"));
+      document.head.appendChild(script);
+    });
+  }
+
+  return googleMapsPromise;
+}
+
 function toPayload(preferences) {
   return {
     species: preferences.species,
@@ -63,6 +114,8 @@ function toPayload(preferences) {
     city: preferences.city,
     state: preferences.state,
     postal_code: preferences.postal_code,
+    latitude: preferences.latitude,
+    longitude: preferences.longitude,
     radius_miles: Number(preferences.radius_miles) || 50,
   };
 }
@@ -81,12 +134,6 @@ export default function Discover() {
   const [error, setError] = useState("");
 
   const currentPet = queue[currentIndex] || null;
-  const remainingCount = Math.max(queue.length - currentIndex, 0);
-
-  const locationLabel = useMemo(() => {
-    const parts = [preferences.city, preferences.state, preferences.postal_code].filter(Boolean);
-    return parts.length ? parts.join(", ") : "Any location";
-  }, [preferences.city, preferences.state, preferences.postal_code]);
 
   useEffect(() => {
     let active = true;
@@ -149,7 +196,6 @@ export default function Discover() {
       const result = await getRecommendationQueue({ limit: 20 });
       setQueue(Array.isArray(result?.items) ? result.items : []);
       setCurrentIndex(0);
-      setMessage("Preferences saved.");
     } catch (err) {
       setError(err?.message || "Failed to save preferences.");
     } finally {
@@ -198,7 +244,6 @@ export default function Discover() {
         <Flex direction={{ initial: "column", sm: "row" }} justify="between" align={{ initial: "start", sm: "center" }} gap="3">
           <div>
             <Heading size="7">Discover Pets</Heading>
-            <Text size="2" color="gray">Queue based on your saved filters and location.</Text>
           </div>
           <Flex gap="2" wrap="wrap">
             <Button variant="soft" onClick={openFilters} disabled={loading || saving || acting}>
@@ -251,10 +296,6 @@ export default function Discover() {
         </Dialog.Root>
 
         <Flex direction="column" align="center" gap="3">
-            <Text size="2" color="gray">
-              {cardBusy ? "Loading queue..." : `${remainingCount} pets in queue for ${locationLabel}`}
-            </Text>
-
             {cardBusy && (
               <Card size="3" className="discover-card">
                 <Flex direction="column" justify="center" align="center" gap="3" className="discover-loading">
@@ -319,16 +360,33 @@ export default function Discover() {
                     <Text size="2" className="description-text">{currentPet.description}</Text>
                   )}
 
-                  <Flex gap="3" justify="center" wrap="wrap">
-                    <Button size="3" variant="soft" color="gray" disabled={acting} onClick={() => handleInteraction("passed")}>
-                      Pass
-                    </Button>
-                    <Button size="3" disabled={acting} onClick={() => handleInteraction("liked")}>
-                      Like
-                    </Button>
-                    <Button size="3" variant="soft" asChild>
-                      <Link to={`/pets/${currentPet.id}`}>Details</Link>
-                    </Button>
+                  <Flex gap="3" justify="center" align="center" wrap="wrap">
+                    <IconButton
+                      size="4"
+                      radius="full"
+                      variant="soft"
+                      color="gray"
+                      disabled={acting}
+                      onClick={() => handleInteraction("passed")}
+                      aria-label="Pass"
+                    >
+                      <Cross2Icon width="22" height="22" />
+                    </IconButton>
+                    <IconButton
+                      size="4"
+                      radius="full"
+                      color="red"
+                      disabled={acting}
+                      onClick={() => handleInteraction("liked")}
+                      aria-label="Like"
+                    >
+                      <HeartFilledIcon width="22" height="22" />
+                    </IconButton>
+                    <IconButton size="4" radius="full" variant="soft" asChild aria-label="Details">
+                      <Link to={`/pets/${currentPet.id}`}>
+                        <InfoCircledIcon width="22" height="22" />
+                      </Link>
+                    </IconButton>
                   </Flex>
                 </Flex>
               </Card>
@@ -336,6 +394,156 @@ export default function Discover() {
         </Flex>
       </Flex>
     </div>
+  );
+}
+
+function LocationMapPicker({ preferences, setPreferences, saving }) {
+  const mapRef = React.useRef(null);
+  const markerRef = React.useRef(null);
+  const containerRef = React.useRef(null);
+  const savingRef = React.useRef(saving);
+  const [initialCenter] = React.useState(() => (
+    preferences.latitude !== null && preferences.longitude !== null
+      ? { latitude: Number(preferences.latitude), longitude: Number(preferences.longitude) }
+      : DEFAULT_MAP_CENTER
+  ));
+  const [status, setStatus] = React.useState("");
+  const [mapReady, setMapReady] = React.useState(false);
+  const hasMapKey = Boolean(getMapApiKey());
+
+  React.useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
+
+  const updateLocationFromCoordinates = React.useCallback(async function updateLocationFromCoordinates(nextCoordinates) {
+    setPreferences((current) => ({
+      ...current,
+      latitude: nextCoordinates.latitude,
+      longitude: nextCoordinates.longitude,
+    }));
+
+    try {
+      setStatus("Looking up city, state, and ZIP...");
+      const detected = await reverseGeocodeLocation(nextCoordinates);
+      setPreferences((current) => ({
+        ...current,
+        city: detected.city || current.city,
+        state: detected.state || current.state,
+        postal_code: detected.postal_code || current.postal_code,
+      }));
+      const label = [detected.city, detected.state, detected.postal_code].filter(Boolean).join(", ");
+      setStatus(label ? `Search location set to ${label}.` : "Search location updated.");
+    } catch {
+      setStatus("Search location updated. City/state/ZIP can still be edited manually.");
+    }
+  }, [setPreferences]);
+
+  function handleUseBrowserLocation() {
+    if (!navigator.geolocation) {
+      setStatus("Your browser does not support location detection.");
+      return;
+    }
+
+    setStatus("Detecting your location...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextCoordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        mapRef.current?.setCenter({ lat: nextCoordinates.latitude, lng: nextCoordinates.longitude });
+        markerRef.current?.setPosition({ lat: nextCoordinates.latitude, lng: nextCoordinates.longitude });
+        updateLocationFromCoordinates(nextCoordinates);
+      },
+      () => setStatus("Could not detect your location. Pick a point on the map instead."),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  }
+
+  React.useEffect(() => {
+    if (!hasMapKey || !containerRef.current) return undefined;
+
+    let cancelled = false;
+
+    loadGoogleMaps()
+      .then((maps) => {
+        if (cancelled || !containerRef.current) return;
+
+        const center = { lat: initialCenter.latitude, lng: initialCenter.longitude };
+        const map = new maps.Map(containerRef.current, {
+          center,
+          zoom: initialCenter === DEFAULT_MAP_CENTER ? 5 : 11,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        });
+        const marker = new maps.Marker({
+          map,
+          position: center,
+          draggable: true,
+          title: "Search location",
+        });
+
+        map.addListener("click", (event) => {
+          if (savingRef.current || !event.latLng) return;
+          const nextCoordinates = {
+            latitude: event.latLng.lat(),
+            longitude: event.latLng.lng(),
+          };
+          marker.setPosition(event.latLng);
+          updateLocationFromCoordinates(nextCoordinates);
+        });
+        marker.addListener("dragend", (event) => {
+          if (savingRef.current || !event.latLng) return;
+          updateLocationFromCoordinates({
+            latitude: event.latLng.lat(),
+            longitude: event.latLng.lng(),
+          });
+        });
+
+        mapRef.current = map;
+        markerRef.current = marker;
+        setMapReady(true);
+      })
+      .catch((err) => {
+        if (!cancelled) setStatus(err.message || "Google Maps failed to load.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasMapKey, initialCenter, updateLocationFromCoordinates]);
+
+  React.useEffect(() => {
+    if (!mapReady || !markerRef.current || !mapRef.current) return;
+    if (preferences.latitude === null || preferences.longitude === null) return;
+
+    const position = { lat: Number(preferences.latitude), lng: Number(preferences.longitude) };
+    markerRef.current.setPosition(position);
+    mapRef.current.setCenter(position);
+  }, [mapReady, preferences.latitude, preferences.longitude]);
+
+  return (
+    <Flex direction="column" gap="2">
+      <Flex justify="between" align="center" gap="3" wrap="wrap">
+        <Text size="2" weight="bold">Location</Text>
+        <Button type="button" variant="soft" size="1" onClick={handleUseBrowserLocation} disabled={saving}>
+          Use my location
+        </Button>
+      </Flex>
+
+      {hasMapKey ? (
+        <div ref={containerRef} className="location-map-picker" />
+      ) : (
+        <div className="location-map-missing-key">
+          <Text size="2" color="gray">
+            Add VITE_GOOGLE_MAPS_API_KEY to enable the map picker.
+          </Text>
+        </div>
+      )}
+
+      {status && <Text size="2" color="gray">{status}</Text>}
+    </Flex>
   );
 }
 
@@ -393,62 +601,51 @@ function renderFilterControls({ preferences, setPreferences, setArrayPreference,
         </Flex>
       </Flex>
 
-      <Flex gap="2">
-        <label className="flex-grow">
-          <Text as="div" size="2" mb="1" weight="bold">Min age</Text>
-          <input
-            type="number"
-            min="0"
-            value={preferences.min_age_years}
-            onChange={(e) => setPreferences((current) => ({ ...current, min_age_years: e.target.value }))}
-            disabled={saving}
-            className="form-input"
-          />
-        </label>
-        <label className="flex-grow">
-          <Text as="div" size="2" mb="1" weight="bold">Max age</Text>
-          <input
-            type="number"
-            min="0"
-            value={preferences.max_age_years}
-            onChange={(e) => setPreferences((current) => ({ ...current, max_age_years: e.target.value }))}
-            disabled={saving}
-            className="form-input"
-          />
-        </label>
-      </Flex>
+      {(() => {
+        const minAge = preferences.min_age_years === "" || preferences.min_age_years === null
+          ? MIN_AGE_YEARS
+          : Number(preferences.min_age_years);
+        const maxAge = preferences.max_age_years === "" || preferences.max_age_years === null
+          ? MAX_AGE_YEARS
+          : Number(preferences.max_age_years);
+        return (
+          <Flex direction="column" gap="2">
+            <Flex justify="between" align="center">
+              <Text size="2" weight="bold">Age</Text>
+              <Text size="2" color="gray">{minAge} – {maxAge} yrs</Text>
+            </Flex>
+            <Slider
+              min={MIN_AGE_YEARS}
+              max={MAX_AGE_YEARS}
+              step={1}
+              value={[minAge, maxAge]}
+              onValueChange={(values) => setPreferences((current) => ({
+                ...current,
+                min_age_years: values[0],
+                max_age_years: values[1],
+              }))}
+              disabled={saving}
+            />
+          </Flex>
+        );
+      })()}
 
-      <Flex gap="2">
-        <label className="flex-grow">
-          <Text as="div" size="2" mb="1" weight="bold">City</Text>
-          <input
-            value={preferences.city}
-            onChange={(e) => setPreferences((current) => ({ ...current, city: e.target.value }))}
-            disabled={saving}
-            className="form-input"
-          />
-        </label>
-        <label className="state-filter-field">
-          <Text as="div" size="2" mb="1" weight="bold">State</Text>
-          <input
-            value={preferences.state}
-            onChange={(e) => setPreferences((current) => ({ ...current, state: e.target.value.toUpperCase() }))}
-            maxLength={2}
-            disabled={saving}
-            className="form-input"
-          />
-        </label>
-      </Flex>
-
-      <label>
-        <Text as="div" size="2" mb="1" weight="bold">Postal code</Text>
-        <input
-          value={preferences.postal_code}
-          onChange={(e) => setPreferences((current) => ({ ...current, postal_code: e.target.value }))}
+      <Flex direction="column" gap="2">
+        <Flex justify="between" align="center">
+          <Text size="2" weight="bold">Distance</Text>
+          <Text size="2" color="gray">{Number(preferences.radius_miles) || 50} mi</Text>
+        </Flex>
+        <Slider
+          min={MIN_RADIUS_MILES}
+          max={MAX_RADIUS_MILES}
+          step={RADIUS_STEP_MILES}
+          value={[Number(preferences.radius_miles) || 50]}
+          onValueChange={(values) => setPreferences((current) => ({ ...current, radius_miles: values[0] }))}
           disabled={saving}
-          className="form-input"
         />
-      </label>
+      </Flex>
+
+      <LocationMapPicker preferences={preferences} setPreferences={setPreferences} saving={saving} />
     </>
   );
 }

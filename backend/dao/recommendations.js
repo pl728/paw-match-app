@@ -27,7 +27,7 @@ function mapPreferenceRow(row) {
 export async function getUserPetPreferences(userId) {
     const result = await db.query(
         `SELECT user_id, species, breeds, sex, sizes, min_age_years, max_age_years,
-                city, state, postal_code, radius_miles, created_at, updated_at
+                city, state, postal_code, latitude, longitude, geocoded_at, radius_miles, created_at, updated_at
          FROM user_pet_preferences
          WHERE user_id = ?`,
         [userId]
@@ -42,10 +42,14 @@ export async function upsertUserPetPreferences(userId, preferences) {
     const sex = preferences.sex ? JSON.stringify(preferences.sex) : null;
     const sizes = preferences.sizes ? JSON.stringify(preferences.sizes) : null;
 
+    const latitude = preferences.latitude ?? null;
+    const longitude = preferences.longitude ?? null;
+    const geocodedAt = latitude !== null && longitude !== null ? new Date() : null;
+
     await db.query(
         `INSERT INTO user_pet_preferences
-            (user_id, species, breeds, sex, sizes, min_age_years, max_age_years, city, state, postal_code, radius_miles)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, species, breeds, sex, sizes, min_age_years, max_age_years, city, state, postal_code, latitude, longitude, geocoded_at, radius_miles)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             species = VALUES(species),
             breeds = VALUES(breeds),
@@ -56,6 +60,9 @@ export async function upsertUserPetPreferences(userId, preferences) {
             city = VALUES(city),
             state = VALUES(state),
             postal_code = VALUES(postal_code),
+            latitude = VALUES(latitude),
+            longitude = VALUES(longitude),
+            geocoded_at = VALUES(geocoded_at),
             radius_miles = VALUES(radius_miles),
             updated_at = CURRENT_TIMESTAMP`,
         [
@@ -69,6 +76,9 @@ export async function upsertUserPetPreferences(userId, preferences) {
             preferences.city || null,
             preferences.state || null,
             preferences.postal_code || null,
+            latitude,
+            longitude,
+            geocodedAt,
             preferences.radius_miles ?? 50
         ]
     );
@@ -87,6 +97,9 @@ export async function createPetInteraction(userId, petId, interactionType) {
 
 export async function listRecommendedPets(userId, preferences = {}, limit = 20) {
     const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 50));
+    const hasCoordinates = preferences.latitude !== null && preferences.latitude !== undefined
+        && preferences.longitude !== null && preferences.longitude !== undefined;
+    const selectParams = [];
     const filters = [
         `p.status = 'available'`,
         `NOT EXISTS (
@@ -98,6 +111,16 @@ export async function listRecommendedPets(userId, preferences = {}, limit = 20) 
         )`
     ];
     const params = [userId];
+    const distanceExpression = `ST_Distance_Sphere(POINT(s.longitude, s.latitude), POINT(?, ?)) / 1609.344`;
+    const distanceSelect = hasCoordinates ? `${distanceExpression} AS distance_miles` : 'NULL AS distance_miles';
+
+    if (hasCoordinates) {
+        selectParams.push(Number(preferences.longitude), Number(preferences.latitude));
+        filters.push('s.latitude IS NOT NULL');
+        filters.push('s.longitude IS NOT NULL');
+        filters.push(`${distanceExpression} <= ?`);
+        params.push(Number(preferences.longitude), Number(preferences.latitude), Number(preferences.radius_miles) || 50);
+    }
 
     function addInFilter(column, values) {
         if (!Array.isArray(values) || values.length === 0) return;
@@ -125,17 +148,19 @@ export async function listRecommendedPets(userId, preferences = {}, limit = 20) 
         params.push(Number(preferences.max_age_years));
     }
 
-    if (preferences.postal_code) {
-        filters.push('s.postal_code = ?');
-        params.push(preferences.postal_code);
-    } else {
-        if (preferences.city) {
-            filters.push('s.city = ?');
-            params.push(preferences.city);
-        }
-        if (preferences.state) {
-            filters.push('s.state = ?');
-            params.push(preferences.state);
+    if (!hasCoordinates) {
+        if (preferences.postal_code) {
+            filters.push('s.postal_code = ?');
+            params.push(preferences.postal_code);
+        } else {
+            if (preferences.city) {
+                filters.push('s.city = ?');
+                params.push(preferences.city);
+            }
+            if (preferences.state) {
+                filters.push('s.state = ?');
+                params.push(preferences.state);
+            }
         }
     }
 
@@ -149,6 +174,8 @@ export async function listRecommendedPets(userId, preferences = {}, limit = 20) 
             s.city AS shelter_city,
             s.state AS shelter_state,
             s.postal_code AS shelter_postal_code,
+            s.latitude AS shelter_latitude,
+            s.longitude AS shelter_longitude,
             p.name,
             p.species,
             p.breed,
@@ -160,16 +187,19 @@ export async function listRecommendedPets(userId, preferences = {}, limit = 20) 
             (SELECT url FROM pet_photos WHERE pet_id = p.id ORDER BY created_at DESC LIMIT 1) AS primary_photo_url,
             (SELECT COUNT(*) FROM pet_interactions WHERE pet_id = p.id AND interaction_type = 'liked') AS liked_count,
             (SELECT COUNT(*) FROM pet_interactions WHERE pet_id = p.id AND interaction_type = 'passed') AS passed_count,
-            (SELECT COUNT(*) FROM pet_interactions WHERE pet_id = p.id AND interaction_type = 'shown') AS shown_count
+            (SELECT COUNT(*) FROM pet_interactions WHERE pet_id = p.id AND interaction_type = 'shown') AS shown_count,
+            ${distanceSelect}
          FROM pets p
          JOIN shelters s ON s.id = p.shelter_id
          WHERE ${filters.join(' AND ')}
          ORDER BY
+            distance_miles IS NULL ASC,
+            distance_miles ASC,
             ((SELECT COUNT(*) FROM pet_interactions WHERE pet_id = p.id AND interaction_type = 'liked') * 2
              - (SELECT COUNT(*) FROM pet_interactions WHERE pet_id = p.id AND interaction_type = 'passed')) DESC,
             p.created_at DESC
          LIMIT ?`,
-        params
+        [...selectParams, ...params]
     );
 
     return result.rows;
